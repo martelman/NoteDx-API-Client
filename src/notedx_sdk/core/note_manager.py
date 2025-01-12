@@ -32,7 +32,7 @@ VALID_LANGUAGES = ['en', 'fr']
 VALID_TEMPLATES = [
     'primaryCare', 'er', 'psychiatry', 'surgicalSpecialties',
     'medicalSpecialties', 'nursing', 'radiology', 'procedures',
-    'letter', 'social', 'wfw'
+    'letter', 'social', 'wfw','smartInsert'
 ]
 
 class NoteManager:
@@ -94,7 +94,35 @@ class NoteManager:
             self._client._handle_request_error(e)
 
     def _validate_input(self, **kwargs) -> None:
-        """Validate input parameters against API requirements."""
+        """
+        Validate input parameters against API requirements.
+        
+        Special handling for templates:
+        - For 'wfw' (word for word) and 'smartInsert' templates:
+          * Only language ('lang') is required
+          * visitType and recordingType are not required
+        - For all other templates:
+          * All fields (visitType, recordingType, lang, template) are required
+          * Patient consent is required for conversation mode
+        """
+        template = kwargs.get('template')
+        
+        # Special case for 'wfw' and 'smartInsert' templates
+        if template in ['wfw', 'smartInsert']:
+            # Only validate language and template
+            if template not in VALID_TEMPLATES:
+                raise InvalidFieldError(
+                    'template',
+                    f"Invalid value for template. Must be one of: {', '.join(VALID_TEMPLATES)}"
+                )
+            if 'lang' not in kwargs or kwargs['lang'] not in VALID_LANGUAGES:
+                raise InvalidFieldError(
+                    'lang',
+                    f"Invalid value for lang. Must be one of: {', '.join(VALID_LANGUAGES)}"
+                )
+            return
+
+        # Standard validation for other templates
         required_fields = {
             'visitType': VALID_VISIT_TYPES,
             'recordingType': VALID_RECORDING_TYPES,
@@ -130,7 +158,7 @@ class NoteManager:
         output_language: Optional[Literal['en', 'fr']] = None,
         template: Optional[Literal['primaryCare', 'er', 'psychiatry', 'surgicalSpecialties', 
                                  'medicalSpecialties', 'nursing', 'radiology', 'procedures', 
-                                 'letter', 'social', 'wfw']] = None,
+                                 'letter', 'social', 'wfw', 'smartInsert']] = None,
         custom: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
@@ -142,18 +170,27 @@ class NoteManager:
         3. Uploading the file
         4. Initiating note generation
 
+        Special Template Handling:
+        - For 'wfw' (word for word) and 'smartInsert' templates:
+          * Only file_path and lang are required
+          * visit_type and recording_type are optional and will be ignored
+          * patient_consent is not required
+        - For all other templates:
+          * file_path, visit_type, recording_type, and lang are required
+          * patient_consent is required for conversation mode
+
         Args:
             file_path: Path to the audio file (.mp3 format)
                       The file must be readable and a valid MP3
-            visit_type: Type of medical visit
+            visit_type: Type of medical visit (optional for 'wfw' or 'smartInsert' templates)
                 - 'initialEncounter': First visit with patient
                 - 'followUp': Subsequent visit
-            recording_type: Type of audio recording
+            recording_type: Type of audio recording (optional for 'wfw' or 'smartInsert' templates)
                 - 'dictation': Single speaker dictation
                 - 'conversation': Multi-speaker conversation
             patient_consent: Whether patient consent was obtained
-                           Required to be True for conversation mode
-            lang: Source language of the audio
+                           Required for conversation mode, optional for 'wfw' or 'smartInsert'
+            lang: Source language of the audio (required for all templates)
                 - 'en': English (default)
                 - 'fr': French
             output_language: Target language for the note
@@ -161,6 +198,7 @@ class NoteManager:
                 - 'en': English
                 - 'fr': French
             template: Medical note template to use
+                Standard templates (require visit_type and recording_type):
                 - 'primaryCare': Primary care visit
                 - 'er': Emergency room visit
                 - 'psychiatry': Psychiatric evaluation
@@ -171,7 +209,9 @@ class NoteManager:
                 - 'procedures': Procedure notes
                 - 'letter': Medical letters
                 - 'social': Social worker notes
-                - 'wfw': Word for word dictation 
+                Special templates (only require file_path and lang):
+                - 'wfw': Word for word dictation
+                - 'smartInsert': Smart insert mode
             custom: Optional custom parameters for note generation
                    See API documentation for available options
 
@@ -186,7 +226,10 @@ class NoteManager:
             ValidationError: If:
                 - File doesn't exist or isn't readable
                 - Invalid parameters provided
-                - Patient consent missing for conversation
+                - Required fields missing based on template type:
+                  * Standard templates: visit_type, recording_type, lang required
+                  * Special templates (wfw/smartInsert): only file_path and lang required
+                - Patient consent missing for conversation mode (except wfw/smartInsert)
             UploadError: If file upload fails
             NetworkError: If connection issues occur
             BadRequestError: If API rejects the request
@@ -196,6 +239,7 @@ class NoteManager:
             InternalServerError: If server error occurs
 
         Example:
+            >>> # Standard template usage (all fields required)
             >>> response = client.notes.process_audio(
             ...     file_path="visit.mp3",
             ...     visit_type="initialEncounter",
@@ -203,6 +247,13 @@ class NoteManager:
             ...     patient_consent=True,
             ...     lang="en",
             ...     template="primaryCare"
+            ... )
+            >>> 
+            >>> # Word for word template usage (simplified)
+            >>> response = client.notes.process_audio(
+            ...     file_path="dictation.mp3",
+            ...     lang="en",
+            ...     template="wfw"
             ... )
             >>> job_id = response["job_id"]
             >>> # Use job_id to check status and fetch results
@@ -212,6 +263,9 @@ class NoteManager:
             - For conversation mode, ensure clear separation between speakers
             - Large files (>100MB) may take longer to upload
             - The job_id should be stored to fetch results later
+            - Template choice determines required fields:
+              * Standard templates need all fields
+              * 'wfw' and 'smartInsert' only need file_path and lang
         """
         # Validate file
         self._validate_audio_file(file_path)
@@ -295,7 +349,7 @@ class NoteManager:
         job_id: str,
         template: Optional[Literal['primaryCare', 'er', 'psychiatry', 'surgicalSpecialties', 
                                  'medicalSpecialties', 'nursing', 'radiology', 'procedures', 
-                                 'letter', 'social', 'wfw']] = None,
+                                 'letter', 'social', 'wfw', 'smartInsert']] = None,
         output_language: Optional[Literal['en', 'fr']] = None,
         custom: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
@@ -321,7 +375,8 @@ class NoteManager:
                 - 'procedures': Procedure notes
                 - 'letter': Medical letters
                 - 'social': Social worker notes
-                - 'wfw': Work fitness/wellness
+                - 'wfw': Word for word dictation
+                - 'smartInsert': Smart insert mode
             output_language: Target language for the note
                 - None: Same as source language
                 - 'en': English
