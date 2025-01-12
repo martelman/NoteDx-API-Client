@@ -1,3 +1,7 @@
+[![Tests](https://github.com/martelman/NoteDx-API-Client/actions/workflows/test.yml/badge.svg)](https://github.com/martelman/NoteDx-API-Client/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/martelman/NoteDx-API-Client/graph/badge.svg?token=O64HJ8B0BF)](https://codecov.io/gh/martelman/NoteDx-API-Client)
+
+
 # NoteDx API Python Client
 
 Official Python SDK for the NoteDx API - a powerful medical note generation service that converts audio recordings into structured medical notes, fully compliant with data privay laws in Canada and the US.
@@ -60,11 +64,14 @@ if status["status"] == "completed":
 ## Development
 
 ```bash
-# Install development dependencies
-pip install -r requirements-dev.txt
+# Install Poetry (if not already installed)
+curl -sSL https://install.python-poetry.org | python3 -
+
+# Install dependencies
+poetry install
 
 # Run tests
-pytest
+poetry run pytest
 ```
 
 ## Documentation
@@ -74,6 +81,3 @@ For complete documentation, visit [NoteDx API Documentation](https://notedx.gitb
 ## License
 
 Copyright © 2025 Technologies Medicales JLA Shiftpal inc. All rights reserved.
-
-[![Tests](https://github.com/martelman/NoteDx-API-Client/actions/workflows/test.yml/badge.svg)](https://github.com/martelman/NoteDx-API-Client/actions/workflows/test.yml)
-[![codecov](https://codecov.io/gh/martelman/NoteDx-API-Client/graph/badge.svg?token=O64HJ8B0BF)](https://codecov.io/gh/martelman/NoteDx-API-Client)
