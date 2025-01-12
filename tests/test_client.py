@@ -2,7 +2,6 @@ import pytest
 import os
 import requests
 from unittest.mock import patch, MagicMock, Mock
-import requests_mock
 
 from src.notedx_sdk import NoteDxClient
 from src.notedx_sdk.exceptions import (
@@ -18,7 +17,7 @@ from src.notedx_sdk.exceptions import (
     InvalidFieldError
 )
 
-TEST_BASE_URL = "https://api.notedx.com/v1"
+TEST_BASE_URL = "https://api.notedx.io/v1"
 
 # Basic initialization tests
 def test_client_initialization():
@@ -244,9 +243,9 @@ class TestClient:
         mock_open.return_value.__enter__.return_value.read.return_value = b'test'
         mock_client.notes._validate_audio_file("test.mp3") 
 
-def test_refresh_token_success(client):
+def test_refresh_token_success(mock_client):
     """Test successful token refresh"""
-    client._refresh_token = "old_refresh_token"
+    mock_client._refresh_token = "old_refresh_token"
     expected_response = {
         "id_token": "new_id_token",
         "refresh_token": "new_refresh_token",
@@ -254,96 +253,100 @@ def test_refresh_token_success(client):
         "email": "test@example.com"
     }
     
-    with requests_mock.Mocker() as m:
-        m.post(f"{BASE_URL}/auth/refresh", json=expected_response)
-        result = client.refresh_token()
+    with patch.object(mock_client, '_request') as mock_request:
+        mock_request.return_value = expected_response
+        result = mock_client.refresh_token()
     
+    mock_request.assert_called_once_with(
+        "POST",
+        "auth/refresh",
+        data={"refresh_token": "old_refresh_token"}
+    )
     assert result == expected_response
-    assert client._token == "new_id_token"
-    assert client._refresh_token == "new_refresh_token"
+    assert mock_client._token == "new_id_token"
+    assert mock_client._refresh_token == "new_refresh_token"
 
-def test_refresh_token_no_refresh_token():
+def test_refresh_token_no_refresh_token(mock_client):
     """Test refresh token failure when no refresh token is available"""
-    client = NoteDxClient(BASE_URL, api_key="test_key")
-    client._refresh_token = None
+    mock_client._refresh_token = None
     
     with pytest.raises(AuthenticationError, match="No refresh token available"):
-        client.refresh_token()
+        mock_client.refresh_token()
 
-def test_set_token():
+def test_set_token(mock_client):
     """Test manually setting tokens"""
-    client = NoteDxClient(BASE_URL, api_key="test_key")
-    client.set_token("new_token", "new_refresh_token")
+    mock_client.set_token("new_token", "new_refresh_token")
     
-    assert client._token == "new_token"
-    assert client._refresh_token == "new_refresh_token"
+    assert mock_client._token == "new_token"
+    assert mock_client._refresh_token == "new_refresh_token"
 
-def test_set_api_key():
+def test_set_api_key(mock_client):
     """Test setting API key"""
-    client = NoteDxClient(BASE_URL, email="test@example.com", password="test123")
-    client.set_api_key("new_api_key")
+    mock_client.set_api_key("new_api_key")
     
-    assert client._api_key == "new_api_key"
+    assert mock_client._api_key == "new_api_key"
 
-def test_handle_auth_retry_success(client):
+def test_handle_auth_retry_success(mock_client):
     """Test successful authentication retry"""
     endpoint = "test/endpoint"
-    client._auth_retry_counts[endpoint] = 0
-    client._token = "old_token"
-    
+    mock_client._auth_retry_counts[endpoint] = 0
+    mock_client._token = "old_token"
+    mock_client._email = "test@example.com"
+    mock_client._password = "test_password"
+
     mock_login_response = {
         "id_token": "new_token",
         "user_id": "user123"
     }
-    
-    with requests_mock.Mocker() as m:
-        m.post(f"{BASE_URL}/auth/login", json=mock_login_response)
-        result = client._handle_auth_retry(
+
+    def mock_login():
+        mock_client._token = mock_login_response["id_token"]
+        return mock_login_response
+
+    with patch.object(mock_client, 'login', side_effect=mock_login) as mock_login_fn:
+        result = mock_client._handle_auth_retry(
             endpoint=endpoint,
             error_msg="Token expired",
             error_code="TOKEN_EXPIRED",
             response_data={"error": "Token expired"}
         )
-    
-    assert result is True
-    assert client._token == "new_token"
-    assert client._auth_retry_counts[endpoint] == 1
 
-def test_handle_auth_retry_max_retries(client):
+    assert result is True
+    assert mock_client._token == "new_token"
+    assert mock_client._auth_retry_counts[endpoint] == 1
+
+def test_handle_auth_retry_max_retries(mock_client):
     """Test auth retry when max retries exceeded"""
     endpoint = "test/endpoint"
-    client._auth_retry_counts[endpoint] = client.MAX_AUTH_RETRIES
-    
-    result = client._handle_auth_retry(
-        endpoint=endpoint,
-        error_msg="Token expired",
-        error_code="TOKEN_EXPIRED",
-        response_data={"error": "Token expired"}
-    )
-    
-    assert result is False
+    mock_client._auth_retry_counts[endpoint] = mock_client.MAX_AUTH_RETRIES
 
-def test_maybe_login_with_existing_token():
+    with pytest.raises(AuthenticationError, match=f"Authorization failed after {mock_client.MAX_AUTH_RETRIES} retries"):
+        mock_client._handle_auth_retry(
+            endpoint=endpoint,
+            error_msg="Token expired",
+            error_code="TOKEN_EXPIRED",
+            response_data={"error": "Token expired"}
+        )
+
+def test_maybe_login_with_existing_token(mock_client):
     """Test _maybe_login when token already exists"""
     mock_login = Mock()
-    client = NoteDxClient(BASE_URL, email="test@example.com", password="test123")
     
-    with patch.object(client, 'login', mock_login):
-        client._token = "existing_token"
-        client._maybe_login()
+    with patch.object(mock_client, 'login', mock_login):
+        mock_client._token = "existing_token"
+        mock_client._maybe_login()
         # Should not attempt to login since token exists
         mock_login.assert_not_called()
 
-def test_maybe_login_no_credentials():
+def test_maybe_login_no_credentials(mock_client):
     """Test _maybe_login with no credentials"""
     mock_login = Mock()
-    client = NoteDxClient(BASE_URL, api_key="test_key")
     
-    with patch.object(client, 'login', mock_login):
-        client._token = None
-        client._email = None
-        client._password = None
+    with patch.object(mock_client, 'login', mock_login):
+        mock_client._token = None
+        mock_client._email = None
+        mock_client._password = None
         
-        client._maybe_login()
+        mock_client._maybe_login()
         # Should not attempt to login since no credentials
         mock_login.assert_not_called() 

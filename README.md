@@ -74,3 +74,6 @@ For complete documentation, visit [NoteDx API Documentation](https://notedx.gitb
 ## License
 
 Copyright © 2025 Technologies Medicales JLA Shiftpal inc. All rights reserved.
+
+[![Tests](https://github.com/martelman/NoteDx-API-Client/actions/workflows/test.yml/badge.svg)](https://github.com/martelman/NoteDx-API-Client/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/martelman/NoteDx-API-Client/graph/badge.svg?token=O64HJ8B0BF)](https://codecov.io/gh/martelman/NoteDx-API-Client)
