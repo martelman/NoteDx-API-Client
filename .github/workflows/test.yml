@@ -8,23 +8,24 @@ on:
 
 jobs:
   test:
+    name: Test Python 3.11
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.11"]
 
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: "3.11"
     
     - name: Install Poetry
       run: |
         curl -sSL https://install.python-poetry.org | python3 -
     
+    - name: Update poetry.lock
+      run: poetry lock --no-update
+
     - name: Install dependencies
       run: poetry install
     
@@ -36,4 +37,7 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./coverage.xml
-        fail_ci_if_error: true 
+        fail_ci_if_error: true
+        flags: python311
+        name: codecov-py311
+        verbose: true 
