@@ -1,46 +1,33 @@
-# Introduction
+# NoteDx API & SDK Documentation
 
-Welcome to the **NoteDx** API! Our platform offers:
+Welcome to the **NoteDx** API documentation! Here you will find everything you need to:
 
-* **State-of-the-art speech-to-text**
-* **Fully compliant to healthcare data privacy in Canada and the US**
-* **Automatic medical note generation** using advanced language models
-* Fully supports **English** and **French**
-* **Flexible integration** via Python SDK or raw REST API endpoints (HTTP/cURL)
+* **Create and manage your account**
+* **Generate medical notes** from audio files using our powerful speech-to-text and NLP pipeline
+* Fully supports **French** and **English**
+* **Manage your API keys**
+* **Set up webhooks** for event notifications ( preferred method )
+* **Monitor usage and billing**
+* Use the **NoteDx Python SDK** or **cURL/HTTP** to interact with the API
 
-This introduction covers:
+## Table of Contents
 
-* **Core Concepts**
-* **System Requirements**
-* **Roadmap Overview**
+1. [Introduction](<README (1).md>)
+2. [Authentication](authentication.md)
+3. [Billing & Pricing](billing.md)
+4. [Account Management](account-management.md)
+5. [API Key Management](api-key-management.md)
+6. [Note Generation](note-generation.md)
+7. [Usage & Statistics](usage-management.md)
+8. [Webhooks](webhook-management.md)
+9. [Error Handling](error-handling.md)
+10. [SDK Reference](sdk-reference.md)
+11. [cURL & HTTP Examples](curl-examples.md)
+12. [FAQ & Troubleshooting](faq.md)
 
-## Core Concepts
+## Getting Started
 
-1. **Authentication**
-   * Use Firebase-based email/password for _full account management_.
-   * Use an **API key** for _note generation only_.
-2. **Medical Note Generation**
-   * Upload audio files  via a pre-signed URL.
-   * Process notes using templates like “primaryCare”, “er”, “wfw” (word-for-word), and more.
-3. **Billing & Usage**
-   * Track the number of jobs (each job corresponds to a transcription & note-generation task).
-   * Tiered discounts available based on total job counts.
-   * See [Billing & Pricing](billing.md) for details.
+* If you don’t have an account yet, please [request an account creation here](https://example.com/form).
+* Once your account is created, you’ll receive credentials (email + password) and/or an API key.
 
-## System Requirements
-
-* **Python 3.7+** (for the SDK)
-* **requests** library (automatically installed if using `pip install` from PyPI)
-* **HTTPS** support to call the endpoints
-
-## Roadmap Overview
-
-* **Real-time streaming Transcription**
-* **Expanded Language Support (** Spanish **)**
-* **Additional Medical Templates (** Dental medicine **)**
-* **Veterinary support** 🐕 coming up as well!
-* Custom `json` note generation outputs.&#x20;
-
-
-
-**Next step:** [Authentication](authentication.md)
+**Next step:** [Read the Introduction](<README (1).md>)
