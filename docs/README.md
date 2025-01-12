@@ -30,4 +30,14 @@ Welcome to the **NoteDx** API documentation! Here you will find everything you n
 * If you don’t have an account yet, please [request an account creation here](https://example.com/form).
 * Once your account is created, you’ll receive credentials (email + password) and/or an API key.
 
+## Installation
+
+To install the python package, use pip.
+
+```python
+pip install notedx-sdk
+```
+
+
+
 **Next step:** [Read the Introduction](<README (1).md>)
