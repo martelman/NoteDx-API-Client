@@ -324,8 +324,10 @@ class NoteManager:
             'visit_type': visit_type,
             'recording_type': recording_type,
             'lang': lang,
-            'patient_consent': patient_consent
         }
+        
+        if patient_consent is not None:
+            data['patient_consent'] = patient_consent
 
         if output_language:
             if output_language not in VALID_LANGUAGES:
