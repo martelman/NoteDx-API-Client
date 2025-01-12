@@ -1,4 +1,4 @@
-name: Test
+name: CodeCov
 
 on:
   push:
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11"]
+        python-version: ['3.11']
 
     steps:
     - uses: actions/checkout@v4
@@ -30,16 +30,15 @@ jobs:
 
     - name: Install dependencies
       run: poetry install
-    
+        
     - name: Run tests with coverage
-      run: PYTHONPATH=$PYTHONPATH:. poetry run pytest --cov=src.notedx_sdk --cov-report=xml
-    
+      run: |
+        PYTHONPATH=$PYTHONPATH:. poetry run pytest --cov=src.notedx_sdk --cov-report=xml
+        
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        files: ./coverage.xml
-        fail_ci_if_error: true
-        flags: python311
-        name: python-${{ matrix.python-version }}
-        verbose: true 
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: true 
