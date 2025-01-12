@@ -187,11 +187,9 @@ def test_successful_request(mock_session):
 # URL handling tests
 def test_base_url_trailing_slash():
     """Test that base_url handles trailing slashes correctly."""
-    client1 = NoteDxClient(base_url=TEST_BASE_URL + "/", api_key="test_key")
-    client2 = NoteDxClient(base_url=TEST_BASE_URL, api_key="test_key")
-    
-    assert client1.base_url == client2.base_url
-    assert not client1.base_url.endswith("/")
+    client = NoteDxClient(api_key="test_key")
+    assert not client.base_url.endswith("/")
+    assert client.base_url == NoteDxClient.BASE_URL
 
 @pytest.mark.parametrize("endpoint,expected", [
     ("/test", "/test"),

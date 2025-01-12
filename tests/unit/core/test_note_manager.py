@@ -12,10 +12,7 @@ def mock_open(mocker):
 @pytest.fixture
 def mock_client():
     """Mock client with API key."""
-    client = NoteDxClient(
-        api_key="test-api-key",
-        base_url="https://api.test.notedx.com"
-    )
+    client = NoteDxClient(api_key="test-api-key")
     return client
 
 @pytest.fixture
