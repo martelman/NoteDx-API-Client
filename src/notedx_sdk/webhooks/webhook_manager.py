@@ -84,8 +84,8 @@ class WebhookManager:
 
         data = {}
         if webhook_dev is not None:
-            data['webhookDev'] = webhook_dev
+            data['webhook_dev'] = webhook_dev
         if webhook_prod is not None:
-            data['webhookProd'] = webhook_prod
+            data['webhook_prod'] = webhook_prod
 
         return self._client._request("POST", "user/webhook", data=data) 
