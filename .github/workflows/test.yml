@@ -8,18 +8,18 @@ on:
 
 jobs:
   test:
-    name: Test Python 3.11
     runs-on: ubuntu-latest
-    env:
-      PYTHON_VERSION: "3.11"
+    strategy:
+      matrix:
+        python-version: ["3.11"]
 
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up Python 3.11
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
-        python-version: "3.11"
+        python-version: ${{ matrix.python-version }}
     
     - name: Install Poetry
       run: |
@@ -41,10 +41,5 @@ jobs:
         files: ./coverage.xml
         fail_ci_if_error: true
         flags: python311
-        name: python-3.11
-        verbose: true
-        override_branch: main
-        override_commit: ${{ github.sha }}
-        override_pr: ${{ github.event.pull_request.number }}
-        override_build: ${{ github.run_id }}
-        env_vars: PYTHON_VERSION 
+        name: python-${{ matrix.python-version }}
+        verbose: true 
