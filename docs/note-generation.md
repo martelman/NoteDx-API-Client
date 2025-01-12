@@ -15,6 +15,10 @@ Many audio formats are available ( mp3, mp4, mp2, m4a, aac, wav, flac, pcm, ogg,
 
 
 
+{% hint style="info" %}
+Note: Sandbox keys return a mock transcription and note to test out the functionalities. Use a live key to get real api responses.
+{% endhint %}
+
 ***
 
 ## 1. Process Audio
@@ -48,7 +52,7 @@ Flow:
 SDK:
 
 ```python
-response = client.scribe.process_audio(
+response = client.notes.process_audio(
     file_path="visit.mp3",
     visit_type="initialEncounter",
     recording_type="conversation",
@@ -75,7 +79,7 @@ Use the existing transcript to generate a new note with a different template or 
 SDK:
 
 ```python
-new_job_response = client.scribe.regenerate_note(
+new_job_response = client.notes.regenerate_note(
     job_id="existing-job-id",
     template="er",
     output_language="fr"
@@ -96,7 +100,7 @@ Possible statuses: `pending`, `transcribing`, `transcribed`, `completed`, `error
 SDK:
 
 ```python
-status = client.scribe.fetch_status("some-job-id")
+status = client.notes.fetch_status("some-job-id")
 print(status["status"])
 ```
 
@@ -111,7 +115,7 @@ print(status["status"])
 SDK:
 
 ```python
-note_response = client.scribe.fetch_note("some-job-id")
+note_response = client.notes.fetch_note("some-job-id")
 print(note_response["note"])
 ```
 
@@ -126,7 +130,7 @@ print(note_response["note"])
 SDK:
 
 ```python
-transcript = client.scribe.fetch_transcript(job_id)
+transcript = client.notes.fetch_transcript(job_id)
 ```
 
 ***

@@ -124,7 +124,7 @@ curl -X GET "https://api.notedx.io/v1/user/webhooks" \
 
 ```bash
 # Update Webhook
-curl -X POST "https://api.notedx.io/v1/user/webhook" \
+curl -X POST "https://api.notedx.io/v1/user/webhooks" \
     -H "Authorization: Bearer <your_id_token>" \
     -H "Content-Type: application/json" \
     -d '{
