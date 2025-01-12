@@ -1,13 +1,40 @@
+codecov:
+  require_ci_to_pass: yes
+  notify:
+    wait_for_ci: yes
+
 coverage:
   status:
     project:
       default:
         target: auto
         threshold: 1%
+        only_pulls: false
+        informational: true
     patch:
       default:
         target: auto
         threshold: 1%
+        only_pulls: false
+        informational: true
+
+  notify:
+    slack:
+      default:
+        url: ""
+        threshold: 1%
+        only_pulls: false
+        branches: null
+        flags: null
+        paths: null
+
+parsers:
+  gcov:
+    branch_detection:
+      conditional: yes
+      loop: yes
+      method: no
+      macro: no
 
 comment:
   layout: "reach, diff, flags, files"
@@ -15,4 +42,14 @@ comment:
   require_changes: false
 
 github_checks:
-  annotations: true 
+  annotations: true
+
+flags:
+  python311:
+    paths:
+      - src/
+    carryforward: true
+
+ignore:
+  - "tests/"
+  - "setup.py" 
