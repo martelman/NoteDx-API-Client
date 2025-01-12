@@ -35,6 +35,21 @@ VALID_TEMPLATES = [
     'letter', 'social', 'wfw','smartInsert'
 ]
 
+# Valid audio formats and their MIME types
+VALID_AUDIO_FORMATS = {
+    '.mp3': 'audio/mpeg',
+    '.mp4': 'audio/mp4',
+    '.mp2': 'audio/mpeg',
+    '.m4a': 'audio/mp4',
+    '.aac': 'audio/aac',
+    '.wav': 'audio/wav',
+    '.flac': 'audio/flac',
+    '.pcm': 'audio/x-pcm',
+    '.ogg': 'audio/ogg',
+    '.opus': 'audio/opus',
+    '.webm': 'audio/webm'
+}
+
 class NoteManager:
     """
     Handles core note generation operations for the NoteDx API.
@@ -180,8 +195,16 @@ class NoteManager:
           * patient_consent is required for conversation mode
 
         Args:
-            file_path: Path to the audio file (.mp3 format)
-                      The file must be readable and a valid MP3
+            file_path: Path to the audio file. Supported formats:
+                - .mp3, .mp2 (audio/mpeg)
+                - .mp4, .m4a (audio/mp4)
+                - .aac (audio/aac)
+                - .wav (audio/wav)
+                - .flac (audio/flac)
+                - .pcm (audio/x-pcm)
+                - .ogg (audio/ogg)
+                - .opus (audio/opus)
+                - .webm (audio/webm)
             visit_type: Type of medical visit (optional for 'wfw' or 'smartInsert' templates)
                 - 'initialEncounter': First visit with patient
                 - 'followUp': Subsequent visit
@@ -225,6 +248,7 @@ class NoteManager:
         Raises:
             ValidationError: If:
                 - File doesn't exist or isn't readable
+                - Invalid audio format
                 - Invalid parameters provided
                 - Required fields missing based on template type:
                   * Standard templates: visit_type, recording_type, lang required
@@ -316,11 +340,14 @@ class NoteManager:
 
             # Upload file using presigned URL
             try:
+                file_ext = os.path.splitext(file_path)[1].lower()
+                mime_type = VALID_AUDIO_FORMATS[file_ext]
+                
                 with open(file_path, 'rb') as f:
                     upload_response = requests.put(
                         presigned_url,
                         data=f,
-                        headers={'Content-Type': 'audio/mpeg'},
+                        headers={'Content-Type': mime_type},
                         timeout=60
                     )
                     upload_response.raise_for_status()
@@ -709,7 +736,19 @@ class NoteManager:
             raise ServiceUnavailableError("System status check failed", details={"error": str(e)})
 
     def _validate_audio_file(self, file_path: str) -> None:
-        """Validate audio file existence and readability."""
+        """
+        Validate audio file existence, readability, and format.
+        
+        Args:
+            file_path: Path to the audio file
+            
+        Raises:
+            MissingFieldError: If file_path is empty
+            ValidationError: If:
+                - File doesn't exist
+                - File isn't readable
+                - File format is not supported
+        """
         if not file_path:
             raise MissingFieldError("file_path")
             
@@ -718,6 +757,19 @@ class NoteManager:
                 f"Audio file not found: {file_path}",
                 field="file_path",
                 details={"path": file_path}
+            )
+
+        # Check file extension
+        file_ext = os.path.splitext(file_path)[1].lower()
+        if file_ext not in VALID_AUDIO_FORMATS:
+            raise ValidationError(
+                f"Unsupported audio format: {file_ext}. Supported formats: {', '.join(VALID_AUDIO_FORMATS.keys())}",
+                field="file_path",
+                details={
+                    "path": file_path,
+                    "extension": file_ext,
+                    "supported_formats": list(VALID_AUDIO_FORMATS.keys())
+                }
             )
 
         try:
