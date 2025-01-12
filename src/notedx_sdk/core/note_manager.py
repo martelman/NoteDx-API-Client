@@ -324,7 +324,7 @@ class NoteManager:
             'visit_type': visit_type,
             'recording_type': recording_type,
             'lang': lang,
-            'consent': str(patient_consent).lower()
+            'patient_consent': str(patient_consent).lower()
         }
 
         if output_language:

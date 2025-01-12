@@ -104,7 +104,7 @@ curl -X POST "https://api.notedx.io/v1/process-audio" \
            "visit_type": "initialEncounter",
            "recording_type": "conversation",
            "lang": "en",
-           "consent": "true",
+           "patient_consent": "true",
            "template": "primaryCare"
          }'
 ```

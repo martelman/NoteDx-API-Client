@@ -71,7 +71,7 @@ curl -X POST "https://api.notedx.io/v1/process-audio" \
    -d '{
          "visit_type": "initialEncounter",
          "recording_type": "dictation",
-         "consent": "true",
+         "patient_consent": "true",
          "lang": "en",
          "template": "primaryCare"
        }'
