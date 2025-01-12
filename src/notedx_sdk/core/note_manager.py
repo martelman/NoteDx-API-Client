@@ -96,26 +96,19 @@ class NoteManager:
             )
             
             if response.status_code == 401:
-                raise AuthenticationError("Invalid API key")
+                raise AuthenticationError(f"Invalid API key: {response.text}")
             elif response.status_code == 403:
-                raise AuthorizationError("API key does not have required permissions")
+                raise AuthorizationError(f"API key does not have required permissions: {response.text}")
             elif response.status_code == 402:
-                raise PaymentRequiredError("Payment required")
+                raise PaymentRequiredError(f"Payment required: {response.text}")
             elif response.status_code == 429:
-                raise RateLimitError("Rate limit exceeded")
+                raise RateLimitError(f"Rate limit exceeded: {response.text}")
             elif response.status_code == 404:
-                raise NotFoundError("Resource not found")
+                raise NotFoundError(f"Resource not found: {response.text}")
             elif response.status_code == 400:
-                error_msg = "Bad request"
-                try:
-                    error_data = response.json()
-                    if isinstance(error_data, dict):
-                        error_msg = error_data.get('message', error_msg)
-                except:
-                    pass
-                raise BadRequestError(error_msg)
+                raise BadRequestError(response.text)
             elif response.status_code >= 500:
-                raise InternalServerError("Server error")
+                raise InternalServerError(f"Server error: {response.text}")
             
             response.raise_for_status()
             return response.json()
@@ -374,10 +367,16 @@ class NoteManager:
                         headers={'Content-Type': mime_type},
                         timeout=60
                     )
+                    if upload_response.status_code >= 400:
+                        raise UploadError(f"Upload failed: {upload_response.text}", job_id=job_id)
                     upload_response.raise_for_status()
                 logger.info(f"Successfully uploaded file for job {job_id}")
+            except requests.exceptions.RequestException as e:
+                if hasattr(e, 'response') and e.response is not None:
+                    raise UploadError(f"Upload failed: {e.response.text}", job_id=job_id)
+                raise UploadError(f"Upload failed: {str(e)}", job_id=job_id)
             except Exception as e:
-                self._handle_upload_error(e, job_id)
+                raise UploadError(f"Unexpected error during upload: {str(e)}", job_id=job_id)
 
             return response
 
@@ -387,11 +386,17 @@ class NoteManager:
             AuthorizationError,  # 403 - Permission denied
             PaymentRequiredError,  # 402 - Payment required
             InactiveAccountError,  # 403 - Account inactive
-            RateLimitError  # 429 - Too many requests
+            RateLimitError,  # 429 - Too many requests
+            BadRequestError,  # 400 - Bad request
+            ValidationError,  # Validation error
+            UploadError  # Upload failed
         ):
             # Let API-specific errors propagate as is
             raise
         except Exception as e:
+            if hasattr(e, 'response') and e.response is not None:
+                logger.error(f"Error in process_audio: {e.response.text}")
+                raise InternalServerError(f"Unexpected error: {e.response.text}")
             logger.error(f"Error in process_audio: {str(e)}")
             raise InternalServerError(f"Unexpected error: {str(e)}")
 
@@ -817,6 +822,11 @@ class NoteManager:
                 details={"job_id": job_id}
             )
         elif isinstance(e, requests.RequestException):
+            if hasattr(e, 'response') and e.response is not None:
+                raise UploadError(
+                    f"Failed to upload file: {e.response.text}",
+                    job_id=job_id
+                )
             raise UploadError(
                 f"Failed to upload file: {str(e)}",
                 job_id=job_id
