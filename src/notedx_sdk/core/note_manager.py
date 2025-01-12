@@ -23,6 +23,7 @@ from ..exceptions import (
 )
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 # Valid values for fields
 VALID_VISIT_TYPES = ['initialEncounter', 'followUp']
@@ -98,12 +99,35 @@ class NoteManager:
                 raise AuthenticationError("Invalid API key")
             elif response.status_code == 403:
                 raise AuthorizationError("API key does not have required permissions")
+            elif response.status_code == 402:
+                raise PaymentRequiredError("Payment required")
+            elif response.status_code == 429:
+                raise RateLimitError("Rate limit exceeded")
+            elif response.status_code == 404:
+                raise NotFoundError("Resource not found")
+            elif response.status_code == 400:
+                error_msg = "Bad request"
+                try:
+                    error_data = response.json()
+                    if isinstance(error_data, dict):
+                        error_msg = error_data.get('message', error_msg)
+                except:
+                    pass
+                raise BadRequestError(error_msg)
+            elif response.status_code >= 500:
+                raise InternalServerError("Server error")
             
             response.raise_for_status()
             return response.json()
             
+        except requests.exceptions.ConnectionError as e:
+            raise NetworkError(f"Connection error: {str(e)}")
+        except requests.exceptions.Timeout as e:
+            raise NetworkError(f"Request timed out: {str(e)}")
         except requests.exceptions.RequestException as e:
-            self._client._handle_request_error(e)
+            if not isinstance(e, requests.exceptions.HTTPError):
+                raise NetworkError(f"Request failed: {str(e)}")
+            raise
 
     def _validate_input(self, **kwargs) -> None:
         """
@@ -327,7 +351,8 @@ class NoteManager:
         try:
             # Get presigned URL and job_id
             response = self._request("POST", "process-audio", data=data)
-            
+
+            print(response)
             job_id = response.get('job_id')
             presigned_url = response.get('presigned_url')
             
