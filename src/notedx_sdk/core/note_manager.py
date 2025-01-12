@@ -163,9 +163,9 @@ class NoteManager:
     def process_audio(
         self,
         file_path: str,
-        visit_type: Literal['initialEncounter', 'followUp'],
-        recording_type: Literal['dictation', 'conversation'],
-        patient_consent: bool,
+        visit_type: Optional[Literal['initialEncounter', 'followUp']] = None,
+        recording_type: Optional[Literal['dictation', 'conversation']] = None,
+        patient_consent: Optional[bool] = None,
         lang: Literal['en', 'fr'] = 'en',
         output_language: Optional[Literal['en', 'fr']] = None,
         template: Optional[Literal['primaryCare', 'er', 'psychiatry', 'surgicalSpecialties', 
