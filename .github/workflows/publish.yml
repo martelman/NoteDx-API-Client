@@ -28,7 +28,19 @@ jobs:
       run: |
         poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
     
-    - name: Build and publish
+    - name: Verify package metadata
       run: |
-        poetry build
-        poetry publish 
+        poetry check
+        poetry run pip debug --verbose
+    
+    - name: Build package
+      run: poetry build
+    
+    - name: Verify built package
+      run: |
+        ls -l dist/
+        poetry run pip install dist/*.whl
+        poetry run python -c "import notedx_sdk; print(notedx_sdk.__version__)"
+    
+    - name: Publish to PyPI
+      run: poetry publish 

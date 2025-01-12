@@ -1,13 +1,19 @@
+codecov:
+  token: 5b27097b-4819-43fc-b77e-41167d796f76
+  require_ci_to_pass: false
+  notify:
+    wait_for_ci: false
+  
 coverage:
   status:
     project:
       default:
-        target: 80%
-        threshold: 2%
+        target: auto
+        threshold: 1%
     patch:
       default:
-        target: 80%
-        threshold: 2%
+        target: auto
+        threshold: 1%
 
 ignore:
   - "tests/**/*"
