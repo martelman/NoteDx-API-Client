@@ -10,7 +10,7 @@ def api_key():
 
 @pytest.fixture
 def mock_client(api_key):
-    client = NoteDxClient(api_key=api_key, base_url=TEST_BASE_URL)
+    client = NoteDxClient(api_key=api_key)
     client._request = Mock()  # Mock the _request method
     return client
 

@@ -56,24 +56,21 @@ class NoteDxClient:
         NOTEDX_EMAIL: Email for authentication
         NOTEDX_PASSWORD: Password for authentication
         NOTEDX_API_KEY: API key for authentication
-        NOTEDX_BASE_URL: Base URL for the API (optional)
 
     Examples:
         Using email/password authentication:
         >>> client = NoteDxClient(
-        ...     base_url="https://api.notedx.io/v1",
         ...     email="user@example.com",
         ...     password="password123"
         ... )
 
         Using API key authentication:
         >>> client = NoteDxClient(
-        ...     base_url="https://api.notedx.io/v1",
         ...     api_key="your-api-key"
         ... )
 
         Using environment variables:
-        >>> client = NoteDxClient(base_url="https://api.notedx.io/v1")
+        >>> client = NoteDxClient()
 
     Note:
         - The client uses Firebase Authentication for email/password auth
@@ -82,11 +79,11 @@ class NoteDxClient:
         - Network errors are properly propagated
     """
 
-    MAX_AUTH_RETRIES = 3  # Maximum number of authentication retry attempts
+    MAX_AUTH_RETRIES = 3
+    BASE_URL = "https://api.notedx.io/v1"
 
     def __init__(
         self,
-        base_url: str,
         email: Optional[str] = None,
         password: Optional[str] = None,
         api_key: Optional[str] = None,
@@ -102,7 +99,6 @@ class NoteDxClient:
         3. No credentials (will read from environment variables)
 
         Args:
-            base_url: Base URL for the API (e.g., "https://api.notedx.io/v1")
             email: Email for authentication. If not provided, reads from NOTEDX_EMAIL env var
             password: Password for authentication. If not provided, reads from NOTEDX_PASSWORD env var
             api_key: API key for authentication. If not provided, reads from NOTEDX_API_KEY env var
@@ -120,7 +116,7 @@ class NoteDxClient:
             - The session parameter allows for custom SSL, proxy, and timeout configuration
             - Auto-login can be disabled if you want to handle authentication manually
         """
-        self.base_url = base_url.rstrip("/")
+        self.base_url = self.BASE_URL
         self.session = session or requests.Session()
 
         # Environment fallback

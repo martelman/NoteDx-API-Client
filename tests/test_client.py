@@ -20,20 +20,19 @@ TEST_BASE_URL = "https://api.notedx.io/v1"
 # Basic initialization tests
 def test_client_initialization():
     """Test basic client initialization with API key."""
-    client = NoteDxClient(base_url=TEST_BASE_URL, api_key="test_key")
+    client = NoteDxClient(api_key="test_key")
     assert isinstance(client, NoteDxClient)
     assert client._api_key == "test_key"
-    assert client.base_url == TEST_BASE_URL
+    assert client.base_url == NoteDxClient.BASE_URL
 
 def test_client_initialization_no_key():
     """Test client initialization without API key raises error."""
     with pytest.raises(AuthenticationError):
-        NoteDxClient(base_url=TEST_BASE_URL, api_key=None)
+        NoteDxClient(api_key=None)
 
 def test_client_initialization_with_email_password():
     """Test client initialization with email and password."""
     client = NoteDxClient(
-        base_url=TEST_BASE_URL,
         email="test@example.com",
         password="test_password",
         auto_login=False
@@ -41,11 +40,11 @@ def test_client_initialization_with_email_password():
     assert isinstance(client, NoteDxClient)
     assert client._email == "test@example.com"
     assert client._password == "test_password"
-    assert client.base_url == TEST_BASE_URL
+    assert client.base_url == NoteDxClient.BASE_URL
 
 def test_set_api_key():
     """Test setting API key after initialization."""
-    client = NoteDxClient(base_url=TEST_BASE_URL, api_key="initial_key")
+    client = NoteDxClient(api_key="initial_key")
     client.set_api_key("new_key")
     assert client._api_key == "new_key"
 
@@ -65,7 +64,7 @@ def mock_env_vars():
 
 def test_client_initialization_from_env(mock_env_vars):
     """Test client initialization using environment variables."""
-    client = NoteDxClient(base_url=TEST_BASE_URL, auto_login=False)
+    client = NoteDxClient(auto_login=False)
     assert client._email == "env_test@example.com"
     assert client._password == "env_password"
     assert client._api_key == "env_api_key"
@@ -89,7 +88,6 @@ def test_successful_login(mock_session):
     mock_session.post.return_value = mock_response
 
     client = NoteDxClient(
-        base_url=TEST_BASE_URL,
         email="test@example.com",
         password="test_password",
         session=mock_session
@@ -111,7 +109,6 @@ def test_failed_login(mock_session):
 
     with pytest.raises(AuthenticationError) as exc_info:
         client = NoteDxClient(
-            base_url=TEST_BASE_URL,
             email="wrong@example.com",
             password="wrong_password",
             session=mock_session
@@ -121,7 +118,7 @@ def test_failed_login(mock_session):
 
 def test_manual_token_setting():
     """Test manually setting tokens."""
-    client = NoteDxClient(base_url=TEST_BASE_URL, api_key="test_key")
+    client = NoteDxClient(api_key="test_key")
     client.set_token("manual_token", "manual_refresh")
     assert client._token == "manual_token"
     assert client._refresh_token == "manual_refresh"
@@ -144,7 +141,7 @@ def test_request_error_handling(mock_session, status_code, exception_class, erro
     }
     mock_session.request.return_value = mock_response
 
-    client = NoteDxClient(base_url=TEST_BASE_URL, api_key="test_key", session=mock_session)
+    client = NoteDxClient(api_key="test_key", session=mock_session)
 
     with pytest.raises(exception_class) as exc_info:
         client._request("GET", "/test")
@@ -155,7 +152,7 @@ def test_network_timeout(mock_session):
     """Test handling of network timeouts."""
     mock_session.request.side_effect = requests.Timeout("Connection timed out")
     
-    client = NoteDxClient(base_url=TEST_BASE_URL, api_key="test_key", session=mock_session)
+    client = NoteDxClient(api_key="test_key", session=mock_session)
     
     with pytest.raises(NetworkError) as exc_info:
         client._request("GET", "/test")
@@ -166,7 +163,7 @@ def test_connection_error(mock_session):
     """Test handling of connection errors."""
     mock_session.request.side_effect = requests.ConnectionError("Connection failed")
     
-    client = NoteDxClient(base_url=TEST_BASE_URL, api_key="test_key", session=mock_session)
+    client = NoteDxClient(api_key="test_key", session=mock_session)
     
     with pytest.raises(NetworkError) as exc_info:
         client._request("GET", "/test")
@@ -181,7 +178,7 @@ def test_successful_request(mock_session):
     mock_response.json.return_value = expected_data
     mock_session.request.return_value = mock_response
 
-    client = NoteDxClient(base_url=TEST_BASE_URL, api_key="test_key", session=mock_session)
+    client = NoteDxClient(api_key="test_key", session=mock_session)
     result = client._request("GET", "/test")
 
     assert result == expected_data
@@ -209,7 +206,7 @@ def test_endpoint_slash_handling(mock_session, endpoint, expected):
     mock_response.json.return_value = {}
     mock_session.request.return_value = mock_response
 
-    client = NoteDxClient(base_url=TEST_BASE_URL, api_key="test_key", session=mock_session)
+    client = NoteDxClient(api_key="test_key", session=mock_session)
     client._request("GET", endpoint)
 
     called_url = mock_session.request.call_args[1]["url"]
