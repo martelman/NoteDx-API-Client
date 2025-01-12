@@ -10,9 +10,7 @@ from src.notedx_sdk.exceptions import (
     NetworkError,
     RateLimitError,
     NotFoundError,
-    BadRequestError,
     InternalServerError,
-    MissingFieldError,
     ValidationError,
     InvalidFieldError
 )

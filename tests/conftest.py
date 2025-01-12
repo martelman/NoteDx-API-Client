@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import Mock
-from notedx_sdk import NoteDxClient
+from src.notedx_sdk import NoteDxClient
 
 TEST_BASE_URL = "https://api.notedx.io/v1"
 

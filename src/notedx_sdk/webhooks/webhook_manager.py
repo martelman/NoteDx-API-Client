@@ -1,6 +1,6 @@
-from typing import Optional, Dict, Any
+from typing import Dict, Any, Optional
 
-from src.notedx_sdk.exceptions import MissingFieldError, InvalidFieldError
+from ..exceptions import InvalidFieldError
 
 class WebhookManager:
     """
@@ -38,7 +38,7 @@ class WebhookManager:
             - Requires authentication with email/password
             - Returns None for unconfigured webhooks
         """
-        return self._client._request("GET", "user/webhooks")
+        return self._client._request("GET", "user/webhook")
 
     def update_webhook_settings(
         self,

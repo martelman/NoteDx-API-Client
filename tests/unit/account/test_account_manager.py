@@ -1,12 +1,10 @@
 import pytest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
-from notedx_sdk.exceptions import (
+from src.notedx_sdk.exceptions import (
     AuthenticationError,
     AuthorizationError,
-    InvalidFieldError,
-    MissingFieldError,
-    InactiveAccountError
+    InactiveAccountError,
 )
 
 @pytest.mark.unit

@@ -1,4 +1,6 @@
-from typing import Optional, Dict, Any, List, Literal
+from typing import Dict, Any, Optional, List, Literal
+
+from ..exceptions import InvalidFieldError
 
 class KeyManager:
     """

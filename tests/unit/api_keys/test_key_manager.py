@@ -1,15 +1,8 @@
 import pytest
-from unittest.mock import Mock, patch
-from notedx_sdk.api_keys.key_manager import KeyManager
-from notedx_sdk.exceptions import (
-    AuthenticationError,
-    AuthorizationError,
-    BadRequestError,
-    ValidationError,
-    NotFoundError,
-    NetworkError,
-    PaymentRequiredError
-)
+from unittest.mock import Mock
+
+from src.notedx_sdk.api_keys.key_manager import KeyManager
+
 
 class TestKeyManager:
     @pytest.fixture

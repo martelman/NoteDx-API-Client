@@ -1,5 +1,4 @@
-from typing import Optional, Dict, Any, Literal
-
+from typing import Dict, Any, Optional, Literal
 import os
 import requests
 import logging

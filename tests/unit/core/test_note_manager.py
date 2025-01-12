@@ -1,13 +1,8 @@
 import pytest
 from unittest.mock import patch, MagicMock
-import requests
-import os
 
-from notedx_sdk.exceptions import (
-    NotFoundError, JobNotFoundError, ValidationError, 
-    MissingFieldError, InvalidFieldError, NetworkError,
-    JobError, BadRequestError
-)
+from src.notedx_sdk import NoteDxClient
+
 
 @pytest.fixture
 def mock_open(mocker):
@@ -17,7 +12,6 @@ def mock_open(mocker):
 @pytest.fixture
 def mock_client():
     """Mock client with API key."""
-    from notedx_sdk import NoteDxClient
     client = NoteDxClient(
         api_key="test-api-key",
         base_url="https://api.test.notedx.com"
