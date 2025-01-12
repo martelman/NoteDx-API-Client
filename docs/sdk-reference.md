@@ -11,7 +11,6 @@ This section provides an overview of the Python SDK classes and methods. For det
 ```python
 def __init__(
     self,
-    base_url: str,
     email: Optional[str] = None,
     password: Optional[str] = None,
     api_key: Optional[str] = None,
@@ -20,7 +19,6 @@ def __init__(
 )
 ```
 
-* `base_url`: e.g. `"https://api.notedx.io/v1"`.
 * `email` + `password`: For Firebase auth.
 * `api_key`: For note-generation auth.
 * `auto_login`: If True, logs in automatically with email/password.
@@ -46,7 +44,6 @@ def __init__(
 ```python
 # Initialize with email/password (Full Account Access)
 client = NoteDxClient(
-    base_url="https://api.notedx.io/v1",
     email="user@example.com",
     password="secret",
     auto_login=True
@@ -57,7 +54,7 @@ acct = client.account.get_account()
 
 # Switch to an API key for note generation
 client.set_api_key("YOUR_API_KEY")
-res = client.scribe.process_audio(
+res = client.notes.process_audio(
     file_path="visit.mp3",
     visit_type="initialEncounter",
     recording_type="conversation",
