@@ -37,7 +37,7 @@ This introduction covers:
 
 * **Real-time streaming Transcription**
 * **Expanded Language Support (** Spanish **)**
-* **Additional Medical Templates (** Dental medicine **)**
+* **Additional Medical Templates (** Dental medicine, pharma **) - Coming really soon!**
 * **Veterinary support** 🐕 coming up as well!
 * Custom `json` note generation outputs.&#x20;
 
