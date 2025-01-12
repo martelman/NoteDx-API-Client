@@ -36,6 +36,8 @@ Flow:
 1. Request a presigned URL & job ID.
 2. Upload the file.
 3. The job transitions through statuses (`queued`, `transcribing`, `completed`, etc.).
+4. You can select the `output_language` to be different from the `lang`.
+5. You can pass a `custom` object to the template to customize the note. This is optional.
 
 Example:
 
@@ -45,7 +47,11 @@ Example:
         recording_type="conversation",
         patient_consent=True,
         lang="en",
-        template="primaryCare"
+        template="primaryCare",
+        custom={
+            "template": "A complete note template with all the sections and custom format of your choice.",
+            "context": "This is additionnal context about the patient you can include (e.g. age, gender, medical history, past medical history, etc. It will be passed to the model in the prompt.)"
+            }
     )
     job_id = response["job_id"]
 

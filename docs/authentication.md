@@ -91,8 +91,8 @@ Once approved, you’ll receive:
          -H "Content-Type: application/json" \
          -H "x-api-key: YOUR_API_KEY" \
          -d '{
-               "visitType": "initialEncounter",
-               "recordingType": "conversation",
+               "visit_type": "initialEncounter",
+               "recording_type": "conversation",
                "lang": "en",
                "consent": "true",
                "template": "primaryCare"

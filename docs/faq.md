@@ -12,7 +12,7 @@
    - Our presigned URLs support large uploads (500MB). However, it may take longer. Ensure a stable connection.
 
 4. **Error "Patient consent is required for conversation mode"**  
-   - When `recordingType` is `"conversation"`, you **must** include `"patient_consent": "true"`.
+   - When `recording_type` is `"conversation"`, you **must** include `"patient_consent": "true"`.
 
 5. **Who can I contact for support?**  
    - Email: `team@notedxai.com`

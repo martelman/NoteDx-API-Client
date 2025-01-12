@@ -115,9 +115,9 @@ class NoteManager:
         Special handling for templates:
         - For 'wfw' (word for word) and 'smartInsert' templates:
           * Only language ('lang') is required
-          * visitType and recordingType are not required
+          * visit_type and recording_type are not required
         - For all other templates:
-          * All fields (visitType, recordingType, lang, template) are required
+          * All fields (visit_type, recording_type, lang, template) are required
           * Patient consent is required for conversation mode
         """
         template = kwargs.get('template')
@@ -139,8 +139,8 @@ class NoteManager:
 
         # Standard validation for other templates
         required_fields = {
-            'visitType': VALID_VISIT_TYPES,
-            'recordingType': VALID_RECORDING_TYPES,
+            'visit_type': VALID_VISIT_TYPES,
+            'recording_type': VALID_RECORDING_TYPES,
             'lang': VALID_LANGUAGES,
             'template': VALID_TEMPLATES
         }
@@ -156,7 +156,7 @@ class NoteManager:
                 )
         
         # Special validation for conversation mode
-        if kwargs.get('recordingType') == 'conversation' and not kwargs.get('patient_consent'):
+        if kwargs.get('recording_type') == 'conversation' and not kwargs.get('patient_consent'):
             raise ValidationError(
                 "Patient consent is required for conversation mode",
                 field="patient_consent",
@@ -236,7 +236,9 @@ class NoteManager:
                 - 'wfw': Word for word dictation
                 - 'smartInsert': Smart insert mode
             custom: Optional custom parameters for note generation
-                   See API documentation for available options
+                    the dict can contain the following keys:
+                    - template: the template to use for the note
+                    - context: additionnal context about the patient you can include (e.g. age, gender, medical history, past medical history, etc. It will be passed to the model in the prompt.)
 
         Returns:
             Dict containing:
@@ -296,8 +298,8 @@ class NoteManager:
 
         # Validate input parameters
         self._validate_input(
-            visitType=visit_type,
-            recordingType=recording_type,
+            visit_type=visit_type,
+            recording_type=recording_type,
             lang=lang,
             template=template,
             patient_consent=patient_consent
@@ -305,8 +307,8 @@ class NoteManager:
 
         # Prepare request data
         data = {
-            'visitType': visit_type,
-            'recordingType': recording_type,
+            'visit_type': visit_type,
+            'recording_type': recording_type,
             'lang': lang,
             'consent': str(patient_consent).lower()
         }
@@ -314,10 +316,10 @@ class NoteManager:
         if output_language:
             if output_language not in VALID_LANGUAGES:
                 raise InvalidFieldError(
-                    'outputLanguage',
-                    f"Invalid value for outputLanguage. Must be one of: {', '.join(VALID_LANGUAGES)}"
+                    'output_language',
+                    f"Invalid value for output_language. Must be one of: {', '.join(VALID_LANGUAGES)}"
                 )
-            data['outputLanguage'] = output_language
+            data['output_language'] = output_language
             
         if template:
             data['template'] = template
@@ -461,10 +463,10 @@ class NoteManager:
         if output_language:
             if output_language not in VALID_LANGUAGES:
                 raise InvalidFieldError(
-                    'outputLanguage',
-                    f"Invalid value for outputLanguage. Must be one of: {', '.join(VALID_LANGUAGES)}"
+                    'output_language',
+                    f"Invalid value for output_language. Must be one of: {', '.join(VALID_LANGUAGES)}"
                 )
-            data['outputLanguage'] = output_language
+            data['output_language'] = output_language
             
         if custom:
             data['custom'] = custom

@@ -65,8 +65,8 @@ Here are quick cURL snippets for each major endpoint. Replace `https://api.noted
          -H "Content-Type: application/json" \
          -H "x-api-key: YOUR_API_KEY" \
          -d '{
-               "visitType": "initialEncounter",
-               "recordingType": "dictation",
+               "visit_type": "initialEncounter",
+               "recording_type": "dictation",
                "consent": "true",
                "lang": "en",
                "template": "primaryCare"
