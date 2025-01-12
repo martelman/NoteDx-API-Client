@@ -47,7 +47,7 @@ class KeyManager:
             - Metadata is only present for live keys
         """
         params = {'showFull': 'true'} if show_full else None
-        return self._client._request("GET", "user/api-keys", params=params)
+        return self._client._request("GET", "user/list-api-keys", params=params)
 
     def create_api_key(
         self,
@@ -89,7 +89,7 @@ class KeyManager:
             'keyType': key_type,
             'metadata': metadata
         }
-        return self._client._request("POST", "user/api-keys", data=data)
+        return self._client._request("POST", "user/create-api-key", data=data)
 
     def update_metadata(
         self,
@@ -128,7 +128,7 @@ class KeyManager:
             'apiKey': api_key,
             'metadata': metadata
         }
-        return self._client._request("POST", f"user/api-keys/{api_key}/metadata", data=data)
+        return self._client._request("POST", f"user/update-api-key-metadata", data=data)
 
     def update_status(
         self,

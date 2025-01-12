@@ -190,3 +190,4 @@ logs/
 *.log.*
 
 requirements-dev.txt
+nb.ipynb
