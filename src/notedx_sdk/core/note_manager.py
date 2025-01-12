@@ -61,7 +61,7 @@ class NoteManager:
     - Result retrieval
     """
     
-    _API_BASE_URL = "https://36c498e49l.execute-api.ca-central-1.amazonaws.com/dev"
+    _API_BASE_URL = "https://api.notedx.io/v1"
     
     def __init__(self, client):
         """
@@ -71,8 +71,6 @@ class NoteManager:
             client: The parent NoteDxClient instance
         """
         self._client = client
-        if not self._client._api_key:
-            raise AuthenticationError("API key is required for note generation operations")
 
     def _request(self, method: str, endpoint: str, data: Any = None, params: Dict[str, Any] = None, timeout: int = 60) -> Dict[str, Any]:
         """
@@ -484,17 +482,14 @@ class NoteManager:
                 )
             raise
         except (
-            NoteDxError,
             AuthenticationError,
             AuthorizationError,
             PaymentRequiredError,
             InactiveAccountError,
-            RateLimitError
-        ):
+            RateLimitError,
+            NoteDxError
+        ) as e:
             raise
-        except Exception as e:
-            logger.error(f"Error regenerating note from job {job_id}: {str(e)}")
-            raise InternalServerError(f"Unexpected error: {str(e)}")
 
     def fetch_status(self, job_id: str) -> Dict[str, Any]:
         """

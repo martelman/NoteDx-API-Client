@@ -1,6 +1,6 @@
 from typing import Optional, Dict, Any
 
-from src.notedx_sdk.exceptions import MissingFieldError
+from src.notedx_sdk.exceptions import MissingFieldError, InvalidFieldError
 
 class WebhookManager:
     """
@@ -80,7 +80,10 @@ class WebhookManager:
             - At least one URL must be provided
         """
         if webhook_dev is None and webhook_prod is None:
-            raise MissingFieldError("At least one webhook URL (webhook_dev or webhook_prod) must be provided")
+            raise InvalidFieldError(
+                "webhook_urls",
+                "At least one webhook URL must be provided"
+            )
 
         data = {}
         if webhook_dev is not None:

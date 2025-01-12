@@ -1,7 +1,8 @@
 import pytest
 import os
 import requests
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, Mock
+import requests_mock
 
 from src.notedx_sdk import NoteDxClient
 from src.notedx_sdk.exceptions import (
@@ -11,7 +12,10 @@ from src.notedx_sdk.exceptions import (
     RateLimitError,
     NotFoundError,
     BadRequestError,
-    InternalServerError
+    InternalServerError,
+    MissingFieldError,
+    ValidationError,
+    InvalidFieldError
 )
 
 TEST_BASE_URL = "https://api.notedx.com/v1"
@@ -81,8 +85,9 @@ def test_successful_login(mock_session):
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = {
-        "access_token": "test_token",
-        "refresh_token": "test_refresh_token"
+        "id_token": "test_token",
+        "refresh_token": "test_refresh_token",
+        "user_id": "test_user_id"
     }
     mock_session.post.return_value = mock_response
 
@@ -212,3 +217,133 @@ def test_endpoint_slash_handling(mock_session, endpoint, expected):
 
     called_url = mock_session.request.call_args[1]["url"]
     assert called_url == f"{TEST_BASE_URL}{expected}" 
+
+class TestClient:
+    def test_update_account_no_fields(self, mock_client):
+        with pytest.raises(InvalidFieldError, match="At least one of these fields must be provided: company_name, contact_email, phone_number, address"):
+            mock_client.account.update_account()
+
+    @patch('os.path.isfile')
+    @patch('builtins.open')
+    def test_validate_audio_file_invalid_format(self, mock_open, mock_isfile, mock_client):
+        mock_isfile.return_value = True
+        mock_open.return_value.__enter__.return_value.read.return_value = b'test'
+        with pytest.raises(ValidationError, match="Unsupported audio format"):
+            mock_client.notes._validate_audio_file("test.txt")
+
+    @patch('os.path.isfile')
+    def test_validate_audio_file_missing_path(self, mock_isfile, mock_client):
+        mock_isfile.return_value = False
+        with pytest.raises(ValidationError, match="Audio file not found"):
+            mock_client.notes._validate_audio_file("test.mp3")
+
+    @patch('os.path.isfile')
+    @patch('builtins.open')
+    def test_validate_audio_file_success(self, mock_open, mock_isfile, mock_client):
+        mock_isfile.return_value = True
+        mock_open.return_value.__enter__.return_value.read.return_value = b'test'
+        mock_client.notes._validate_audio_file("test.mp3") 
+
+def test_refresh_token_success(client):
+    """Test successful token refresh"""
+    client._refresh_token = "old_refresh_token"
+    expected_response = {
+        "id_token": "new_id_token",
+        "refresh_token": "new_refresh_token",
+        "user_id": "user123",
+        "email": "test@example.com"
+    }
+    
+    with requests_mock.Mocker() as m:
+        m.post(f"{BASE_URL}/auth/refresh", json=expected_response)
+        result = client.refresh_token()
+    
+    assert result == expected_response
+    assert client._token == "new_id_token"
+    assert client._refresh_token == "new_refresh_token"
+
+def test_refresh_token_no_refresh_token():
+    """Test refresh token failure when no refresh token is available"""
+    client = NoteDxClient(BASE_URL, api_key="test_key")
+    client._refresh_token = None
+    
+    with pytest.raises(AuthenticationError, match="No refresh token available"):
+        client.refresh_token()
+
+def test_set_token():
+    """Test manually setting tokens"""
+    client = NoteDxClient(BASE_URL, api_key="test_key")
+    client.set_token("new_token", "new_refresh_token")
+    
+    assert client._token == "new_token"
+    assert client._refresh_token == "new_refresh_token"
+
+def test_set_api_key():
+    """Test setting API key"""
+    client = NoteDxClient(BASE_URL, email="test@example.com", password="test123")
+    client.set_api_key("new_api_key")
+    
+    assert client._api_key == "new_api_key"
+
+def test_handle_auth_retry_success(client):
+    """Test successful authentication retry"""
+    endpoint = "test/endpoint"
+    client._auth_retry_counts[endpoint] = 0
+    client._token = "old_token"
+    
+    mock_login_response = {
+        "id_token": "new_token",
+        "user_id": "user123"
+    }
+    
+    with requests_mock.Mocker() as m:
+        m.post(f"{BASE_URL}/auth/login", json=mock_login_response)
+        result = client._handle_auth_retry(
+            endpoint=endpoint,
+            error_msg="Token expired",
+            error_code="TOKEN_EXPIRED",
+            response_data={"error": "Token expired"}
+        )
+    
+    assert result is True
+    assert client._token == "new_token"
+    assert client._auth_retry_counts[endpoint] == 1
+
+def test_handle_auth_retry_max_retries(client):
+    """Test auth retry when max retries exceeded"""
+    endpoint = "test/endpoint"
+    client._auth_retry_counts[endpoint] = client.MAX_AUTH_RETRIES
+    
+    result = client._handle_auth_retry(
+        endpoint=endpoint,
+        error_msg="Token expired",
+        error_code="TOKEN_EXPIRED",
+        response_data={"error": "Token expired"}
+    )
+    
+    assert result is False
+
+def test_maybe_login_with_existing_token():
+    """Test _maybe_login when token already exists"""
+    mock_login = Mock()
+    client = NoteDxClient(BASE_URL, email="test@example.com", password="test123")
+    
+    with patch.object(client, 'login', mock_login):
+        client._token = "existing_token"
+        client._maybe_login()
+        # Should not attempt to login since token exists
+        mock_login.assert_not_called()
+
+def test_maybe_login_no_credentials():
+    """Test _maybe_login with no credentials"""
+    mock_login = Mock()
+    client = NoteDxClient(BASE_URL, api_key="test_key")
+    
+    with patch.object(client, 'login', mock_login):
+        client._token = None
+        client._email = None
+        client._password = None
+        
+        client._maybe_login()
+        # Should not attempt to login since no credentials
+        mock_login.assert_not_called() 

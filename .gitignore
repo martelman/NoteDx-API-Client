@@ -166,8 +166,11 @@ client_setup.py
 
 # Coverage reports
 coverage/
-.coverage.*
+coverage_html/
 htmlcov/
+.coverage
+.coverage.*
+coverage.xml
 
 # Virtual environment
 .python-version
@@ -189,6 +192,5 @@ pytest.xml
 logs/
 *.log.*
 
-requirements-dev.txt
 nb.ipynb
 notedx_sdk_export.txt

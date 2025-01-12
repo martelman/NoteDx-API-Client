@@ -102,8 +102,9 @@ class NotFoundError(NoteDxError):
 
 class JobNotFoundError(NotFoundError):
     """Raised when job is not found (404)."""
-    def __init__(self, job_id: str, details: Optional[Dict[str, Any]] = None):
-        super().__init__(f"Job {job_id} not found", 'JOB_NOT_FOUND', {'job_id': job_id, **(details or {})})
+    def __init__(self, job_id: str, message: Optional[str] = None, details: Optional[Dict[str, Any]] = None):
+        message = "Job not found"
+        super().__init__(message, 'JOB_NOT_FOUND', {'job_id': job_id, **(details or {})})
 
 class JobError(NoteDxError):
     """Raised for job-related errors."""

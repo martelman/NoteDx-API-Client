@@ -1,6 +1,14 @@
 from typing import Optional, Dict, Any
 
-from src.notedx_sdk.exceptions import MissingFieldError
+from src.notedx_sdk.exceptions import (
+    AuthenticationError,
+    AuthorizationError,
+    BadRequestError,
+    InactiveAccountError,
+    MissingFieldError,
+    ValidationError,
+    InvalidFieldError
+)
 
 class AccountManager:
     """
@@ -8,7 +16,7 @@ class AccountManager:
     
     This class provides methods for:
     - Account information retrieval and updates
-    - Usage statistics
+    - API key management
     - Account lifecycle management
     """
     
@@ -93,7 +101,10 @@ class AccountManager:
                 update_data[field] = value
 
         if not update_data:
-            raise MissingFieldError(f"At least one of these fields must be provided: {', '.join(allowed_fields)}")
+            raise InvalidFieldError(
+                "fields",
+                "At least one of these fields must be provided: company_name, contact_email, phone_number, address"
+            )
 
         return self._client._request("POST", "user/account/update", data=update_data)
 

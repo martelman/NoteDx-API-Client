@@ -147,7 +147,7 @@ class NoteDxClient:
         self.account = AccountManager(self)
         self.keys = KeyManager(self)
         self.webhooks = WebhookManager(self)
-        self.scribe = NoteManager(self)
+        self.notes = NoteManager(self)
         self.usage = UsageManager(self)
 
         logger.debug(f"Email: {self._email}, Password: {self._password}, API Key: {self._api_key}")
