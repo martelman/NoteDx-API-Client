@@ -409,24 +409,6 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#notedx_sdk.client.NoteDxClient--client-automatically-logs-in" class="md-nav__link">
-    <span class="md-ellipsis">
-      Client automatically logs in
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#notedx_sdk.client.NoteDxClient--process-an-audio-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      Process an audio file
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#notedx_sdk.client.NoteDxClient-functions" class="md-nav__link">
     <span class="md-ellipsis">
       Functions
@@ -853,24 +835,6 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#notedx_sdk.client.NoteDxClient--client-automatically-logs-in" class="md-nav__link">
-    <span class="md-ellipsis">
-      Client automatically logs in
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#notedx_sdk.client.NoteDxClient--process-an-audio-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      Process an audio file
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#notedx_sdk.client.NoteDxClient-functions" class="md-nav__link">
     <span class="md-ellipsis">
       Functions
@@ -1136,13 +1100,20 @@
 
   
       <p>A Pythonic client for the NoteDx API that provides a robust interface for medical note generation.</p>
-<p>This client wraps the NoteDx API endpoints, providing:
-1. Authentication handling (Firebase email/password and API key)
-2. Environment configuration
-3. Type-safe interfaces
-4. Comprehensive error handling
-5. Resource management</p>
+<p>This client wraps the NoteDx API endpoints, providing comprehensive functionality for medical
+note generation and account management. It handles authentication, environment configuration,
+and resource management with robust error handling.</p>
 
+<details class="features" open>
+  <summary>Features</summary>
+  <ul>
+<li>Authentication handling (Firebase email/password and API key)</li>
+<li>Environment configuration</li>
+<li>Type-safe interfaces</li>
+<li>Comprehensive error handling</li>
+<li>Resource management</li>
+</ul>
+</details>
 
 
   <table>
@@ -1264,7 +1235,7 @@
           </td>
           <td class="doc-raises-details">
             <div class="doc-md-description">
-              <p>If the base_url is invalid.</p>
+              <p>If the base_url is invalid</p>
             </div>
           </td>
         </tr>
@@ -1276,7 +1247,7 @@
           </td>
           <td class="doc-raises-details">
             <div class="doc-md-description">
-              <p>If credentials are invalid or missing.</p>
+              <p>If credentials are invalid or missing</p>
             </div>
           </td>
         </tr>
@@ -1288,7 +1259,7 @@
           </td>
           <td class="doc-raises-details">
             <div class="doc-md-description">
-              <p>If unable to connect to the API.</p>
+              <p>If unable to connect to the API</p>
             </div>
           </td>
         </tr>
@@ -1300,7 +1271,7 @@
           </td>
           <td class="doc-raises-details">
             <div class="doc-md-description">
-              <p>If server error occurs during initialization.</p>
+              <p>If server error occurs during initialization</p>
             </div>
           </td>
         </tr>
@@ -1309,37 +1280,26 @@
 
 <details class="example" open>
   <summary>Example</summary>
-  <p>Using email/password authentication:</p>
-<blockquote>
-<blockquote>
-<blockquote>
-<p>client = NoteDxClient(
-...     email="user@example.com",
-...     password="password123"
-... )</p>
-<h3 id="notedx_sdk.client.NoteDxClient--client-automatically-logs-in">Client automatically logs in<a class="headerlink" href="#notedx_sdk.client.NoteDxClient--client-automatically-logs-in" title="Permanent link">&para;</a></h3>
-<p>print(client.account.get_account())</p>
-</blockquote>
-</blockquote>
-</blockquote>
-<p>Using API key authentication:</p>
-<blockquote>
-<blockquote>
-<blockquote>
-<p>client = NoteDxClient(api_key="your-api-key")</p>
-<h3 id="notedx_sdk.client.NoteDxClient--process-an-audio-file">Process an audio file<a class="headerlink" href="#notedx_sdk.client.NoteDxClient--process-an-audio-file" title="Permanent link">&para;</a></h3>
-<p>response = client.notes.process_audio(
-...     file_path="recording.mp3",
-...     template="primaryCare"
-... )</p>
-</blockquote>
-</blockquote>
-</blockquote>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Using email/password authentication</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">client</span> <span class="o">=</span> <span class="n">NoteDxClient</span><span class="p">(</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">email</span><span class="o">=</span><span class="s2">&quot;user@example.com&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">password</span><span class="o">=</span><span class="s2">&quot;password123&quot;</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># Client automatically logs in</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nb">print</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">get_account</span><span class="p">())</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1"># Using API key authentication</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">client</span> <span class="o">=</span> <span class="n">NoteDxClient</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="s2">&quot;your-api-key&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># Process an audio file</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">notes</span><span class="o">.</span><span class="n">process_audio</span><span class="p">(</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">file_path</span><span class="o">=</span><span class="s2">&quot;recording.mp3&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">template</span><span class="o">=</span><span class="s2">&quot;primaryCare&quot;</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="p">)</span>
+</code></pre></div>
 </details>
-<details class="note" open>
-  <summary>Note</summary>
+<details class="notes" open>
+  <summary>Notes</summary>
   <ul>
-<li>If both email/password and api_key are provided, api_key takes precedence</li>
 <li>The session parameter allows for custom SSL, proxy, and timeout configuration</li>
 <li>Auto-login can be disabled if you want to handle authentication manually</li>
 </ul>
@@ -1517,7 +1477,6 @@
 <details class="note" open>
   <summary>Note</summary>
   <ul>
-<li>If both email/password and api_key are provided, api_key takes precedence</li>
 <li>The session parameter allows for custom SSL, proxy, and timeout configuration</li>
 <li>Auto-login can be disabled if you want to handle authentication manually</li>
 </ul>
@@ -2361,12 +2320,17 @@ before making the request.</p>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">&quot;https://api.notedx.io/v1/process-audio&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">     </span>-H<span class="w"> </span><span class="s2">&quot;x-api-key: your-api-key&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">     </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">     </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;template&quot;: &quot;primaryCare&quot;}&#39;</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># Firebase Authentication</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">&quot;https://api.notedx.io/v1/user/account/info&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">     </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer your-firebase-token&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">     </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">     </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="s1">        &quot;template&quot;: &quot;primaryCare&quot;, </span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="s1">        &quot;visit_type&quot;: &quot;followUp&quot;, </span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="s1">        &quot;recording_type&quot;: &quot;dictation&quot;, </span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="s1">        &quot;lang&quot;:&quot;en&quot;</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="s1">        }&#39;</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="c1"># Firebase Authentication</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">&quot;https://api.notedx.io/v1/user/account/info&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">     </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer your-firebase-token&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">     </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span>
 </code></pre></div>
 
 
