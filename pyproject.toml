@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "notedx-sdk"
-version = "0.1.0"
+version = "0.1.2"
 description = "Official Python SDK for the NoteDx API - a powerful medical note generation service, fully compliant to healthcare regulations in the US and Canada."
 authors = ["Technologies Medicales JLA Shiftpal inc.", "Julien Martel"]
 readme = "README.md"
