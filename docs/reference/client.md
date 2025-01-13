@@ -19,7 +19,7 @@ The client supports two authentication methods:
 client = NoteDxClient(api_key="your-api-key")
 ```
 
-API keys provide limited access focused on note generation endpoints. They are ideal for production deployments.
+API keys provide access to the core features around transcription and note generation.
 
 ### Firebase Authentication
 
@@ -30,7 +30,7 @@ client = NoteDxClient(
 )
 ```
 
-Firebase authentication provides full access to all endpoints, including account management and API key operations.
+Firebase authentication provides access to account management and API key operations.
 
 ## Usage Examples
 
@@ -42,8 +42,15 @@ from notedx_sdk import NoteDxClient
 # Initialize with API key
 client = NoteDxClient(api_key="your-api-key")
 
-# Or with Firebase auth
+# Or with Firebase auth - not for production
 client = NoteDxClient(
+    email="user@example.com",
+    password="your-password"
+)
+
+# Or both
+client = NoteDxClient(
+    api_key="your-api-key",
     email="user@example.com",
     password="your-password"
 )
