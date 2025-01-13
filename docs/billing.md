@@ -38,4 +38,4 @@ Your usage is tracked automatically, and the discount applies to your usage cost
 * Use the SDK: `client.usage.get()` to retrieve usage & cost breakdown.
 * Or call the endpoint `GET /usage` with your Bearer token or API key.
 
-**Next step:** [Account Management](account-management.md)
+**Next step:** [Account Management](reference/account.md)

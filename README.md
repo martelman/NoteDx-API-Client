@@ -76,7 +76,7 @@ poetry run pytest
 
 ## Documentation
 
-For complete documentation, visit [NoteDx API Documentation](https://notedx.gitbook.io/notedx-api).
+For complete documentation, visit [NoteDx API Documentation](https://martelman.github.io/NoteDx-API-Client/).
 
 ## License
 

@@ -1,8 +1,16 @@
 from typing import Dict, Any, Optional
+import logging
 
-from ..exceptions import InvalidFieldError
+from ..exceptions import (
+    InvalidFieldError,
+    AuthenticationError,
+)
+from ..client import NoteDxClient
 
-
+# Initialize SDK logger
+logger = logging.getLogger("notedx_sdk.account")
+logger.addHandler(logging.NullHandler())  # Default to no handler
+logger.setLevel(logging.INFO)  # Default to INFO level
 
 class AccountManager:
     """
@@ -10,11 +18,35 @@ class AccountManager:
     
     This class provides methods for:
     - Account information retrieval and updates
-    - API key management
     - Account lifecycle management
+    
+    Note:
+        All methods in this class require Firebase authentication (email/password).
+        API key authentication is not supported for account management operations.
+    
+    Example:
+        ```python
+        from notedx_sdk import NoteDxClient
+        
+        # Initialize with email/password
+        client = NoteDxClient(
+            email="user@example.com",
+            password="your-password"
+        )
+        
+        # Get account info
+        account_info = client.account.get_account()
+        print(f"Company: {account_info['company_name']}")
+        
+        # Update account
+        result = client.account.update_account(
+            company_name="New Company Name",
+            contact_email="new@email.com"
+        )
+        ```
     """
     
-    def __init__(self, client):
+    def __init__(self, client: NoteDxClient) -> None:
         """
         Initialize the account manager.
         
@@ -22,6 +54,22 @@ class AccountManager:
             client: The parent NoteDxClient instance
         """
         self._client = client
+        self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+        self.logger.debug("Initialized AccountManager")
+
+    def _check_firebase_auth(self) -> None:
+        """
+        Check if Firebase authentication is available.
+        
+        Raises:
+            AuthenticationError: If no Firebase token is available
+        """
+        if not self._client._token:
+            self.logger.error("Firebase authentication required for account operations")
+            raise AuthenticationError(
+                "Firebase authentication (email/password) is required for account operations. "
+                "API key authentication is not supported."
+            )
 
     def get_account(self) -> Dict[str, Any]:
         """
@@ -37,16 +85,40 @@ class AccountManager:
             - created_at: Account creation timestamp (ISO format)
 
         Raises:
-            AuthenticationError: If authentication fails or missing user ID
+            AuthenticationError: If Firebase authentication is not available
             AuthorizationError: If not authorized to access this data
             NotFoundError: If user not found
             NetworkError: If connection issues occur
 
-        Note:
-            - Requires authentication with email/password
-            - Not available with API key authentication
+        Example:
+            ```python
+            account_info = client.account.get_account()
+            print(f"Account Status: {account_info['account_status']}")
+            ```
         """
-        return self._client._request("GET", "user/account/info")
+        self.logger.debug("Initiating account information retrieval")
+        
+        # Verify Firebase auth
+        self._check_firebase_auth()
+        
+        try:
+            response = self._client._request("GET", "user/account/info")
+            
+            # Log success with redacted info
+            log_data = {
+                'status': response.get('account_status'),
+                'company': response.get('company_name')
+            }
+            self.logger.info("Successfully retrieved account information", extra=log_data)
+            return response
+            
+        except Exception as e:
+            self.logger.error(
+                "Failed to retrieve account information",
+                extra={'error_type': type(e).__name__},
+                exc_info=True
+            )
+            raise
 
     def update_account(
         self,
@@ -70,20 +142,42 @@ class AccountManager:
             - updated_fields: List of fields that were updated
 
         Raises:
-            AuthenticationError: If authentication fails or missing user ID
+            AuthenticationError: If Firebase authentication is not available
             AuthorizationError: If not authorized to update account
             BadRequestError: If invalid JSON format in request
-            MissingFieldError: If no valid fields provided to update
-            ValidationError: If provided values are invalid
+            InvalidFieldError: If no valid fields provided to update
             NetworkError: If connection issues occur
 
-        Note:
-            - Requires authentication with email/password
-            - Not available with API key authentication
-            - At least one field must be provided
+        Example:
+            ```python
+            result = client.account.update_account(
+                company_name="New Corp",
+                contact_email="contact@newcorp.com"
+            )
+            print(f"Updated fields: {result['updated_fields']}")
+            ```
         """
+        self.logger.debug("Preparing account update")
+        
+        # Verify Firebase auth
+        self._check_firebase_auth()
+        
+        # Prepare update data
         update_data = {}
         allowed_fields = ['company_name', 'contact_email', 'phone_number', 'address']
+        
+        # Log provided fields (without values)
+        self.logger.debug(
+            "Fields provided for update",
+            extra={
+                'fields': {
+                    'company_name': company_name is not None,
+                    'contact_email': contact_email is not None,
+                    'phone_number': phone_number is not None,
+                    'address': address is not None
+                }
+            }
+        )
         
         for field, value in {
             'company_name': company_name,
@@ -95,12 +189,38 @@ class AccountManager:
                 update_data[field] = value
 
         if not update_data:
+            self.logger.warning(
+                "No valid fields provided for update",
+                extra={'allowed_fields': allowed_fields}
+            )
             raise InvalidFieldError(
                 "fields",
                 "At least one of these fields must be provided: company_name, contact_email, phone_number, address"
             )
 
-        return self._client._request("POST", "user/account/update", data=update_data)
+        try:
+            response = self._client._request(
+                "POST",
+                "user/account/update",
+                data=update_data
+            )
+            
+            self.logger.info(
+                "Successfully updated account information",
+                extra={'updated_fields': list(update_data.keys())}
+            )
+            return response
+            
+        except Exception as e:
+            self.logger.error(
+                "Failed to update account information",
+                extra={
+                    'error_type': type(e).__name__,
+                    'attempted_fields': list(update_data.keys())
+                },
+                exc_info=True
+            )
+            raise
 
     def cancel_account(self) -> Dict[str, Any]:
         """
@@ -118,19 +238,39 @@ class AccountManager:
             - user_id: Account identifier
 
         Raises:
-            AuthenticationError: If authentication fails or missing user ID
+            AuthenticationError: If Firebase authentication is not available
             AuthorizationError: If not authorized to cancel
             NotFoundError: If user not found
             PaymentRequiredError: If outstanding balance exists
             NetworkError: If connection issues occur
 
-        Note:
-            - Requires email/password authentication
-            - All live API keys will be deactivated
-            - Final billing will be processed
-            - Data retained for 30 days
+        Example:
+            ```python
+            result = client.account.cancel_account()
+            print(f"Account {result['user_id']} cancelled")
+            ```
         """
-        return self._client._request("POST", "user/cancel-account")
+        self.logger.debug("Initiating account cancellation")
+        
+        # Verify Firebase auth
+        self._check_firebase_auth()
+        
+        try:
+            response = self._client._request("POST", "user/cancel-account")
+            
+            self.logger.info(
+                "Successfully cancelled account",
+                extra={'user_id': response.get('user_id')}
+            )
+            return response
+            
+        except Exception as e:
+            self.logger.error(
+                "Failed to cancel account",
+                extra={'error_type': type(e).__name__},
+                exc_info=True
+            )
+            raise
 
     def reactivate_account(self) -> Dict[str, Any]:
         """
@@ -148,19 +288,43 @@ class AccountManager:
             - user_id: Account identifier
 
         Raises:
-            AuthenticationError: If authentication fails or missing user ID
+            AuthenticationError: If Firebase authentication is not available
             AuthorizationError: If not authorized to reactivate
             NotFoundError: If user not found
             BadRequestError: If account is not in cancelled state
             PaymentRequiredError: If unpaid bills exist
             NetworkError: If connection issues occur
 
+        Example:
+            ```python
+            result = client.account.reactivate_account()
+            print(f"Account {result['user_id']} reactivated")
+            ```
+
         Note:
             - Only cancelled accounts can be reactivated
-            - Requires email/password authentication
             - Account will be set to 'inactive' status
             - New API keys must be created after reactivation
             - Previous data remains accessible if within retention period
-            - Any unpaid bills must be settled before reactivation
         """
-        return self._client._request("POST", "user/reactivate-account") 
+        self.logger.debug("Initiating account reactivation")
+        
+        # Verify Firebase auth
+        self._check_firebase_auth()
+        
+        try:
+            response = self._client._request("POST", "user/reactivate-account")
+            
+            self.logger.info(
+                "Successfully reactivated account",
+                extra={'user_id': response.get('user_id')}
+            )
+            return response
+            
+        except Exception as e:
+            self.logger.error(
+                "Failed to reactivate account",
+                extra={'error_type': type(e).__name__},
+                exc_info=True
+            )
+            raise 

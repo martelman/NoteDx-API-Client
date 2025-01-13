@@ -1,7 +1,9 @@
-from typing import Dict, Any, Optional, Literal
+from typing import Dict, Any, Optional, Literal, Union, Callable
+from logging import Logger, Handler
 import os
 import requests
 import logging
+import time
 from ..exceptions import (
     NoteDxError,
     AuthenticationError,
@@ -21,9 +23,12 @@ from ..exceptions import (
     InternalServerError,
     ServiceUnavailableError
 )
+from ..client import NoteDxClient
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+# Initialize SDK logger with null handler by default
+logger = logging.getLogger("notedx_sdk")
+logger.addHandler(logging.NullHandler())
+logger.setLevel(logging.INFO)
 
 # Valid values for fields
 VALID_VISIT_TYPES = ['initialEncounter', 'followUp']
@@ -51,31 +56,124 @@ VALID_AUDIO_FORMATS = {
 }
 
 class NoteManager:
+    """Manages medical note generation from audio files using the NoteDx API.
+
+    This class provides a high-level interface for:
+    - Converting audio recordings to medical notes
+    - Managing note generation jobs
+    - Retrieving generated notes and transcripts
+    - Monitoring system status
+
+    The NoteManager handles all API authentication and error handling,
+    making it easy to integrate medical note generation into your application.
+
+    Example:
+        >>> from notedx_sdk import NoteDxClient
+        >>> client = NoteDxClient(api_key="your-api-key")
+        >>> note_manager = client.notes
+        >>> 
+        >>> # Generate a medical note from an audio file
+        >>> response = note_manager.process_audio(
+        ...     file_path="patient_visit.mp3",
+        ...     visit_type="initialEncounter",
+        ...     recording_type="dictation",
+        ...     template="primaryCare"
+        ... )
+        >>> job_id = response["job_id"]
+        >>> 
+        >>> # Check status and get the note when ready
+        >>> status = note_manager.fetch_status(job_id)
+        >>> if status["status"] == "completed":
+        ...     note = note_manager.fetch_note(job_id)
+        ...     print(note["note"])
     """
-    Handles core note generation operations for the NoteDx API.
     
-    This class provides methods for:
-    - Audio file processing
-    - Note generation and regeneration
-    - Job status tracking
-    - Result retrieval
-    """
+    # Default configuration
+    DEFAULT_CONFIG = {
+        'api_base_url': "https://api.notedx.io/v1",
+        'request_timeout': 60,
+        'max_retries': 3,
+        'retry_delay': 1,  # seconds
+        'retry_max_delay': 30,  # seconds
+        'retry_on_status': [408, 429, 500, 502, 503, 504]
+    }
     
-    _API_BASE_URL = "https://api.notedx.io/v1"
-    
-    def __init__(self, client):
-        """
-        Initialize the note manager.
+    def __init__(self, client: NoteDxClient, **config: Dict[str, Any]) -> None:
+        """Initialize the NoteManager.
         
         Args:
-            client: The parent NoteDxClient instance
+            client: The NoteDxClient instance.
+            **config: Additional configuration options.
         """
         self._client = client
+        self._config = config
+        self.logger = logging.getLogger("notedx_sdk.notes")
 
-    def _request(self, method: str, endpoint: str, data: Any = None, params: Dict[str, Any] = None, timeout: int = 60) -> Dict[str, Any]:
+    def set_logger(self, level: Union[int, str], handler: Optional[Handler] = None) -> None:
+        """Set the logger level and handler.
+        
+        Args:
+            level: The logging level (e.g., logging.INFO).
+            handler: Optional logging handler.
         """
-        Override parent client's _request method to ensure API key authentication for note generation.
-        All note generation endpoints use API key authentication exclusively.
+        self.logger.setLevel(level)
+        if handler:
+            self.logger.addHandler(handler)
+
+    @classmethod
+    def configure_logging(cls, level: Union[int, str] = logging.INFO, handler: Optional[Handler] = None) -> None:
+        """Configure logging for the SDK.
+
+        Args:
+            level: The logging level (e.g., logging.DEBUG, logging.INFO)
+            handler: Optional logging handler to add. If None, logs to console.
+
+        Example:
+            >>> # Enable debug logging to console
+            >>> NoteManager.configure_logging(logging.DEBUG)
+            >>> 
+            >>> # Log to a file
+            >>> file_handler = logging.FileHandler('notedx.log')
+            >>> NoteManager.configure_logging(logging.INFO, file_handler)
+        """
+        logger = logging.getLogger("notedx_sdk")
+        
+        # Remove existing handlers
+        logger.handlers.clear()
+        
+        # Add handler
+        if handler is None:
+            handler = logging.StreamHandler()
+            formatter = logging.Formatter(
+                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            )
+            handler.setFormatter(formatter)
+        
+        logger.addHandler(handler)
+        logger.setLevel(level)
+
+    def _request(self, method: str, endpoint: str, data: Any = None, params: Dict[str, Any] = None, timeout: Optional[int] = None) -> Dict[str, Any]:
+        """Make an authenticated request to the NoteDx API.
+
+        This method handles:
+        - API key authentication
+        - Request retries with exponential backoff
+        - Error response parsing and conversion to exceptions
+        - Request/response logging (at DEBUG level)
+        - Timeout configuration
+
+        Args:
+            method: HTTP method (GET, POST, etc.)
+            endpoint: API endpoint path
+            data: Request body data
+            params: URL parameters
+            timeout: Request timeout (overrides config)
+
+        Returns:
+            API response data as dictionary
+
+        Raises:
+            Various NoteDxError subclasses based on response
         """
         if not self._client._api_key:
             raise AuthenticationError("API key is required for note generation operations")
@@ -85,97 +183,217 @@ class NoteManager:
             'x-api-key': self._client._api_key
         }
 
-        try:
-            response = requests.request(
-                method,
-                f"{self._API_BASE_URL}/{endpoint}",
-                json=data if data else None,
-                params=params,
-                headers=headers,
-                timeout=timeout
-            )
-            
-            if response.status_code == 401:
-                raise AuthenticationError(f"Invalid API key: {response.text}")
-            elif response.status_code == 403:
-                raise AuthorizationError(f"API key does not have required permissions: {response.text}")
-            elif response.status_code == 402:
-                raise PaymentRequiredError(f"Payment required: {response.text}")
-            elif response.status_code == 429:
-                raise RateLimitError(f"Rate limit exceeded: {response.text}")
-            elif response.status_code == 404:
-                raise NotFoundError(f"Resource not found: {response.text}")
-            elif response.status_code == 400:
-                raise BadRequestError(response.text)
-            elif response.status_code >= 500:
-                raise InternalServerError(f"Server error: {response.text}")
-            
-            response.raise_for_status()
-            return response.json()
-            
-        except requests.exceptions.ConnectionError as e:
-            raise NetworkError(f"Connection error: {str(e)}")
-        except requests.exceptions.Timeout as e:
-            raise NetworkError(f"Request timed out: {str(e)}")
-        except requests.exceptions.RequestException as e:
-            if not isinstance(e, requests.exceptions.HTTPError):
+        url = f"{self._config['api_base_url']}/{endpoint}"
+        timeout = timeout or self._config['request_timeout']
+        retries = 0
+        delay = self._config['retry_delay']
+
+        while True:
+            try:
+                self.logger.debug(
+                    "Making %s request to %s",
+                    method,
+                    url,
+                    extra={
+                        'params': params,
+                        'headers': {k: '***' if k == 'x-api-key' else v 
+                                  for k, v in headers.items()}
+                    }
+                )
+
+                response = requests.request(
+                    method,
+                    url,
+                    json=data if data else None,
+                    params=params,
+                    headers=headers,
+                    timeout=timeout
+                )
+                
+                self.logger.debug(
+                    "Received response: %s %s",
+                    response.status_code,
+                    response.text[:1000] + '...' if len(response.text) > 1000 else response.text
+                )
+                
+                # Handle various error responses
+                if response.status_code == 401:
+                    raise AuthenticationError(f"Invalid API key: {response.text}")
+                elif response.status_code == 403:
+                    raise AuthorizationError(f"API key does not have required permissions: {response.text}")
+                elif response.status_code == 402:
+                    raise PaymentRequiredError(f"Payment required: {response.text}")
+                elif response.status_code == 429:
+                    raise RateLimitError(f"Rate limit exceeded: {response.text}")
+                elif response.status_code == 404:
+                    raise NotFoundError(f"Resource not found: {response.text}")
+                elif response.status_code == 400:
+                    raise BadRequestError(response.text)
+                elif response.status_code >= 500:
+                    # Only retry on server errors if we haven't exceeded max retries
+                    if (response.status_code in self._config['retry_on_status'] and 
+                        retries < self._config['max_retries']):
+                        self.logger.warning(
+                            "Request failed with %d, retrying in %d seconds (attempt %d/%d)",
+                            response.status_code, delay, retries + 1, self._config['max_retries']
+                        )
+                        time.sleep(delay)
+                        retries += 1
+                        delay = min(delay * 2, self._config['retry_max_delay'])
+                        continue
+                    
+                    raise InternalServerError(f"Server error: {response.text}")
+                
+                # If we get here, check for any other error status codes
+                try:
+                    response.raise_for_status()
+                except requests.exceptions.HTTPError as e:
+                    self.logger.error("HTTP error occurred: %s", str(e))
+                    raise NetworkError(f"HTTP error: {str(e)}")
+                
+                return response.json()
+                
+            except requests.exceptions.ConnectionError as e:
+                self.logger.error("Connection error: %s", str(e))
+                raise NetworkError(f"Connection error: {str(e)}")
+            except requests.exceptions.Timeout as e:
+                self.logger.error("Request timed out: %s", str(e))
+                raise NetworkError(f"Request timed out: {str(e)}")
+            except requests.exceptions.RequestException as e:
+                self.logger.error("Request failed: %s", str(e))
                 raise NetworkError(f"Request failed: {str(e)}")
-            raise
 
     def _validate_input(self, **kwargs) -> None:
-        """
-        Validate input parameters against API requirements.
+        """Validate input parameters against API requirements.
         
-        Special handling for templates:
-        - For 'wfw' (word for word) and 'smartInsert' templates:
-          * Only language ('lang') is required
-          * visit_type and recording_type are not required
-        - For all other templates:
-          * All fields (visit_type, recording_type, lang, template) are required
-          * Patient consent is required for conversation mode
+        Performs thorough validation of all input parameters:
+        - Required fields based on template type
+        - Field value validation
+        - Special case handling for templates
+        - Patient consent requirements
+        
+        Args:
+            **kwargs: Input parameters to validate
+
+        Raises:
+            MissingFieldError: If required fields are missing
+            InvalidFieldError: If field values are invalid
+            ValidationError: For other validation errors
         """
         template = kwargs.get('template')
         
-        # Special case for 'wfw' and 'smartInsert' templates
-        if template in ['wfw', 'smartInsert']:
-            # Only validate language and template
-            if template not in VALID_TEMPLATES:
-                raise InvalidFieldError(
-                    'template',
-                    f"Invalid value for template. Must be one of: {', '.join(VALID_TEMPLATES)}"
-                )
-            if 'lang' not in kwargs or kwargs['lang'] not in VALID_LANGUAGES:
-                raise InvalidFieldError(
-                    'lang',
-                    f"Invalid value for lang. Must be one of: {', '.join(VALID_LANGUAGES)}"
-                )
-            return
-
-        # Standard validation for other templates
-        required_fields = {
-            'visit_type': VALID_VISIT_TYPES,
-            'recording_type': VALID_RECORDING_TYPES,
-            'lang': VALID_LANGUAGES,
-            'template': VALID_TEMPLATES
-        }
-        
-        for field, valid_values in required_fields.items():
-            value = kwargs.get(field)
-            if value is None:
-                raise MissingFieldError(field)
-            if value not in valid_values:
-                raise InvalidFieldError(
-                    field,
-                    f"Invalid value for {field}. Must be one of: {', '.join(valid_values)}"
-                )
-        
-        # Special validation for conversation mode
-        if kwargs.get('recording_type') == 'conversation' and not kwargs.get('patient_consent'):
-            raise ValidationError(
-                "Patient consent is required for conversation mode",
-                field="patient_consent",
-                details={"recording_type": "conversation"}
+        # First validate template since it affects other validations
+        if not template:
+            self.logger.error("Missing required field: template")
+            raise MissingFieldError("template")
+            
+        if template not in VALID_TEMPLATES:
+            self.logger.error(
+                "Invalid template value: %s. Valid values: %s",
+                template, ', '.join(VALID_TEMPLATES)
             )
+            raise InvalidFieldError(
+                'template',
+                f"Invalid value for template. Must be one of: {', '.join(VALID_TEMPLATES)}"
+            )
+        
+        # Special case for 'wfw' and 'smartInsert' templates
+        is_special_template = template in ['wfw', 'smartInsert']
+        
+        # Validate language (always required)
+        lang = kwargs.get('lang')
+        if not lang:
+            self.logger.error("Missing required field: lang")
+            raise MissingFieldError("lang")
+            
+        if lang not in VALID_LANGUAGES:
+            self.logger.error(
+                "Invalid lang value: %s. Valid values: %s",
+                lang, ', '.join(VALID_LANGUAGES)
+            )
+            raise InvalidFieldError(
+                'lang',
+                f"Invalid value for lang. Must be one of: {', '.join(VALID_LANGUAGES)}"
+            )
+        
+        # Validate output_language if provided
+        if 'output_language' in kwargs and kwargs['output_language']:
+            output_lang = kwargs['output_language']
+            if output_lang not in VALID_LANGUAGES:
+                self.logger.error(
+                    "Invalid output_language: %s. Valid values: %s",
+                    output_lang, ', '.join(VALID_LANGUAGES)
+                )
+                raise InvalidFieldError(
+                    'output_language',
+                    f"Invalid value for output_language. Must be one of: {', '.join(VALID_LANGUAGES)}"
+                )
+        
+        # Skip visit_type and recording_type validation for special templates
+        if not is_special_template:
+            # Validate visit_type
+            visit_type = kwargs.get('visit_type')
+            if not visit_type:
+                self.logger.error("Missing required field: visit_type")
+                raise MissingFieldError("visit_type")
+                
+            if visit_type not in VALID_VISIT_TYPES:
+                self.logger.error(
+                    "Invalid visit_type: %s. Valid values: %s",
+                    visit_type, ', '.join(VALID_VISIT_TYPES)
+                )
+                raise InvalidFieldError(
+                    'visit_type',
+                    f"Invalid value for visit_type. Must be one of: {', '.join(VALID_VISIT_TYPES)}"
+                )
+            
+            # Validate recording_type
+            recording_type = kwargs.get('recording_type')
+            if not recording_type:
+                self.logger.error("Missing required field: recording_type")
+                raise MissingFieldError("recording_type")
+                
+            if recording_type not in VALID_RECORDING_TYPES:
+                self.logger.error(
+                    "Invalid recording_type: %s. Valid values: %s",
+                    recording_type, ', '.join(VALID_RECORDING_TYPES)
+                )
+                raise InvalidFieldError(
+                    'recording_type',
+                    f"Invalid value for recording_type. Must be one of: {', '.join(VALID_RECORDING_TYPES)}"
+                )
+            
+            # Only validate patient_consent for conversation mode
+            if recording_type == 'conversation' and not kwargs.get('patient_consent'):
+                self.logger.error(
+                    "Patient consent required for conversation mode"
+                )
+                raise ValidationError(
+                    "Patient consent is required for conversation mode",
+                    field="patient_consent",
+                    details={"recording_type": "conversation"}
+                )
+
+    def _calculate_optimal_chunk_size(self, file_size: int) -> int:
+        """Calculate optimal chunk size based on file size.
+        
+        Args:
+            file_size: Size of the file in bytes
+            
+        Returns:
+            Optimal chunk size in bytes:
+            - 5MB for files < 100MB
+            - 10MB for files 100MB-250MB
+            - 20MB for files > 250MB
+        """
+        MB = 1024 * 1024  # 1 MB in bytes
+        
+        if file_size < 100 * MB:
+            return 5 * MB
+        elif file_size < 250 * MB:
+            return 10 * MB
+        else:
+            return 20 * MB
 
     def process_audio(
         self,
@@ -188,53 +406,36 @@ class NoteManager:
         template: Optional[Literal['primaryCare', 'er', 'psychiatry', 'surgicalSpecialties', 
                                  'medicalSpecialties', 'nursing', 'radiology', 'procedures', 
                                  'letter', 'social', 'wfw', 'smartInsert']] = None,
-        custom: Optional[Dict[str, Any]] = None
+        custom: Optional[Dict[str, Any]] = None,
+        chunk_size: Optional[int] = None  # Now optional, will be calculated if not provided
     ) -> Dict[str, Any]:
-        """
-        Process an audio file to generate a medical note.
+        """Converts an audio recording into a medical note using the specified template.
 
-        This method handles the complete flow of:
-        1. Validating the audio file
-        2. Getting a presigned URL for upload
-        3. Uploading the file
-        4. Initiating note generation
-
-        Special Template Handling:
-        - For 'wfw' (word for word) and 'smartInsert' templates:
-          * Only file_path and lang are required
-          * visit_type and recording_type are optional and will be ignored
-          * patient_consent is not required
-        - For all other templates:
-          * file_path, visit_type, recording_type, and lang are required
-          * patient_consent is required for conversation mode
+        This method handles the complete flow of audio processing and note generation:
+        1. Validates the audio file format and parameters
+        2. Securely uploads the file
+        3. Initiates the note generation process
+        4. Returns a job ID for tracking progress
 
         Args:
-            file_path: Path to the audio file. Supported formats:
-                - .mp3, .mp2 (audio/mpeg)
-                - .mp4, .m4a (audio/mp4)
-                - .aac (audio/aac)
-                - .wav (audio/wav)
-                - .flac (audio/flac)
-                - .pcm (audio/x-pcm)
-                - .ogg (audio/ogg)
-                - .opus (audio/opus)
-                - .webm (audio/webm)
-            visit_type: Type of medical visit (optional for 'wfw' or 'smartInsert' templates)
+            file_path (str): Path to the audio file. Supported formats:
+                .mp3, .mp4, .m4a, .aac, .wav, .flac, .pcm, .ogg, .opus, .webm
+            visit_type (str, optional): Type of medical visit:
                 - 'initialEncounter': First visit with patient
                 - 'followUp': Subsequent visit
-            recording_type: Type of audio recording (optional for 'wfw' or 'smartInsert' templates)
+                Required for standard templates, optional for 'wfw'/'smartInsert'.
+            recording_type (str, optional): Type of audio recording:
                 - 'dictation': Single speaker dictation
-                - 'conversation': Multi-speaker conversation
-            patient_consent: Whether patient consent was obtained
-                           Required for conversation mode, optional for 'wfw' or 'smartInsert'
-            lang: Source language of the audio (required for all templates)
-                - 'en': English (default)
-                - 'fr': French
-            output_language: Target language for the note
-                - None: Same as source language
+                - 'conversation': Multi-speaker conversation (requires patient_consent)
+                Required for standard templates, optional for 'wfw'/'smartInsert'.
+            patient_consent (bool, optional): Whether patient consent was obtained.
+                Required for conversation mode, optional otherwise.
+            lang (str): Source language of the audio. Defaults to 'en'.
                 - 'en': English
                 - 'fr': French
-            template: Medical note template to use
+            output_language (str, optional): Target language for the note.
+                If not specified, uses the same language as the source.
+            template (str): Medical note template to use:
                 Standard templates (require visit_type and recording_type):
                 - 'primaryCare': Primary care visit
                 - 'er': Emergency room visit
@@ -247,107 +448,83 @@ class NoteManager:
                 - 'letter': Medical letters
                 - 'social': Social worker notes
                 Special templates (only require file_path and lang):
-                - 'wfw': Word for word dictation
-                - 'smartInsert': Smart insert mode
-            custom: Optional custom parameters for note generation
-                    the dict can contain the following keys:
-                    - template: the template to use for the note
-                    - context: additionnal context about the patient you can include (e.g. age, gender, medical history, past medical history, etc. It will be passed to the model in the prompt.)
+                - 'wfw': Word for word transcription
+                - 'smartInsert': Smart insertion mode
+            custom (dict, optional): Additional parameters for note generation:
+                - context: Additional patient context (history, demographics, medication, etc.)
+                - template: A complete custom template as a string (SOAP note, other etc...)
+            chunk_size (int, optional): Size of upload chunks in bytes.
+                Defaults to 1MB. Adjust for large files or slow connections.
 
         Returns:
-            Dict containing:
-            - job_id: Unique identifier for the job
-            - presigned_url: URL used for file upload
-            - status: Initial job status
-            - Additional fields as per API response
+            dict: A dictionary containing:
+                - job_id (str): Unique identifier for tracking the job
+                - presigned_url (str): URL for uploading the audio file
+                - status (str): Initial job status
 
         Raises:
-            ValidationError: If:
-                - File doesn't exist or isn't readable
-                - Invalid audio format
-                - Invalid parameters provided
-                - Required fields missing based on template type:
-                  * Standard templates: visit_type, recording_type, lang required
-                  * Special templates (wfw/smartInsert): only file_path and lang required
-                - Patient consent missing for conversation mode (except wfw/smartInsert)
+            ValidationError: If parameters are invalid or missing
             UploadError: If file upload fails
+            AuthenticationError: If API key is invalid
+            PaymentRequiredError: If account payment is required
             NetworkError: If connection issues occur
             BadRequestError: If API rejects the request
-            AuthenticationError: If authentication fails
-            PaymentRequiredError: If payment is required
-            InactiveAccountError: If account is inactive
             InternalServerError: If server error occurs
 
         Example:
-            >>> # Standard template usage (all fields required)
-            >>> response = client.notes.process_audio(
+            >>> # Standard template usage
+            >>> response = note_manager.process_audio(
             ...     file_path="visit.mp3",
             ...     visit_type="initialEncounter",
-            ...     recording_type="conversation",
-            ...     patient_consent=True,
-            ...     lang="en",
+            ...     recording_type="dictation",
             ...     template="primaryCare"
             ... )
+            >>> job_id = response["job_id"]
             >>> 
-            >>> # Word for word template usage (simplified)
-            >>> response = client.notes.process_audio(
+            >>> # Word-for-word transcription
+            >>> response = note_manager.process_audio(
             ...     file_path="dictation.mp3",
             ...     lang="en",
             ...     template="wfw"
             ... )
-            >>> job_id = response["job_id"]
-            >>> # Use job_id to check status and fetch results
-
-        Note:
-            - The audio file should be a clear recording for best results
-            - For conversation mode, ensure clear separation between speakers
-            - Large files (>100MB) may take longer to upload
-            - The job_id should be stored to fetch results later
-            - Template choice determines required fields:
-              * Standard templates need all fields
-              * 'wfw' and 'smartInsert' only need file_path and lang
         """
-        # Validate file
-        self._validate_audio_file(file_path)
-
         # Validate input parameters
+        self.logger.info("Starting audio processing for file: %s", file_path)
+        self._validate_audio_file(file_path)
         self._validate_input(
             visit_type=visit_type,
             recording_type=recording_type,
             lang=lang,
             template=template,
-            patient_consent=patient_consent
+            patient_consent=patient_consent,
+            output_language=output_language,
+            custom=custom
         )
 
-        # Prepare request data
-        data = {
-            'visit_type': visit_type,
-            'recording_type': recording_type,
-            'lang': lang,
-        }
-        
-        if patient_consent is not None:
-            data['patient_consent'] = patient_consent
-
-        if output_language:
-            if output_language not in VALID_LANGUAGES:
-                raise InvalidFieldError(
-                    'output_language',
-                    f"Invalid value for output_language. Must be one of: {', '.join(VALID_LANGUAGES)}"
-                )
-            data['output_language'] = output_language
-            
-        if template:
-            data['template'] = template
-            
-        if custom:
-            data['custom'] = custom
-
         try:
-            # Get presigned URL and job_id
-            response = self._request("POST", "process-audio", data=data)
+            # Prepare request data
+            data = {
+                'lang': lang,
+                'template': template,
+                'file_extension': os.path.splitext(file_path)[1].lower()
+            }
 
-            print(response)
+            # Add optional fields if provided
+            if visit_type:
+                data['visit_type'] = visit_type
+            if recording_type:
+                data['recording_type'] = recording_type
+            if patient_consent is not None:
+                data['patient_consent'] = patient_consent
+            if output_language:
+                data['output_language'] = output_language
+            if custom:
+                data['custom'] = custom
+
+            # Create job and get upload URL
+            self.logger.debug("Creating job with parameters: %s", data)
+            response = self._request("POST", "process-audio", data=data)
+            
             job_id = response.get('job_id')
             presigned_url = response.get('presigned_url')
             
@@ -358,49 +535,74 @@ class NoteManager:
                 )
 
             # Upload file using presigned URL
+            self.logger.info("Uploading file for job %s", job_id)
             try:
                 file_ext = os.path.splitext(file_path)[1].lower()
                 mime_type = VALID_AUDIO_FORMATS[file_ext]
                 
-                with open(file_path, 'rb') as f:
-                    upload_response = requests.put(
-                        presigned_url,
-                        data=f,
-                        headers={'Content-Type': mime_type},
-                        timeout=60
+                # Get file size for progress tracking
+                file_size = os.path.getsize(file_path)
+                uploaded = 0
+                
+                # Calculate optimal chunk size if not provided
+                if chunk_size is None:
+                    chunk_size = self._calculate_optimal_chunk_size(file_size)
+                    self.logger.debug(
+                        "Using adaptive chunk size of %d bytes for file size %d bytes",
+                        chunk_size, file_size
                     )
-                    if upload_response.status_code >= 400:
-                        raise UploadError(f"Upload failed: {upload_response.text}", job_id=job_id)
-                    upload_response.raise_for_status()
-                logger.info(f"Successfully uploaded file for job {job_id}")
-            except requests.exceptions.RequestException as e:
-                if hasattr(e, 'response') and e.response is not None:
-                    raise UploadError(f"Upload failed: {e.response.text}", job_id=job_id)
-                raise UploadError(f"Upload failed: {str(e)}", job_id=job_id)
+                
+                with open(file_path, 'rb') as f:
+                    # Stream upload in chunks with progress tracking
+                    while True:
+                        chunk = f.read(chunk_size)
+                        if not chunk:
+                            break
+                            
+                        uploaded += len(chunk)
+                        progress = (uploaded / file_size) * 100
+                        
+                        self.logger.debug(
+                            "Upload progress for job %s: %.1f%% (%d/%d bytes)",
+                            job_id, progress, uploaded, file_size
+                        )
+                        
+                        # Upload chunk with retries
+                        retries = 0
+                        while True:
+                            try:
+                                upload_response = requests.put(
+                                    presigned_url,
+                                    data=chunk,
+                                    headers={'Content-Type': mime_type},
+                                    timeout=self._config['request_timeout']
+                                )
+                                upload_response.raise_for_status()
+                                break
+                            except Exception as e:
+                                retries += 1
+                                if retries >= self._config['max_retries']:
+                                    self._handle_upload_error(e, job_id)
+                                delay = min(
+                                    self._config['retry_delay'] * (2 ** (retries - 1)),
+                                    self._config['retry_max_delay']
+                                )
+                                self.logger.warning(
+                                    "Upload chunk failed for job %s, retrying in %d seconds (attempt %d/%d)",
+                                    job_id, delay, retries, self._config['max_retries']
+                                )
+                                time.sleep(delay)
+                
+                self.logger.info("Successfully uploaded file for job %s", job_id)
+                
             except Exception as e:
-                raise UploadError(f"Unexpected error during upload: {str(e)}", job_id=job_id)
+                self._handle_upload_error(e, job_id)
 
             return response
 
-        except (
-            NoteDxError,  # Base exception
-            AuthenticationError,  # 401 - Invalid credentials
-            AuthorizationError,  # 403 - Permission denied
-            PaymentRequiredError,  # 402 - Payment required
-            InactiveAccountError,  # 403 - Account inactive
-            RateLimitError,  # 429 - Too many requests
-            BadRequestError,  # 400 - Bad request
-            ValidationError,  # Validation error
-            UploadError  # Upload failed
-        ):
-            # Let API-specific errors propagate as is
-            raise
         except Exception as e:
-            if hasattr(e, 'response') and e.response is not None:
-                logger.error(f"Error in process_audio: {e.response.text}")
-                raise InternalServerError(f"Unexpected error: {e.response.text}")
-            logger.error(f"Error in process_audio: {str(e)}")
-            raise InternalServerError(f"Unexpected error: {str(e)}")
+            self.logger.error("Error in process_audio: %s", str(e))
+            raise
 
     def regenerate_note(
         self,
@@ -412,119 +614,162 @@ class NoteManager:
         custom: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
-        Regenerate a medical note from an existing transcript with different parameters.
+        Generates a new medical note from an existing transcript with different parameters.
 
         This method allows you to:
-        1. Generate a new note from an existing transcript
-        2. Use a different template or output language
-        3. Modify generation parameters without re-uploading audio
+        - Generate a new note using a different template
+        - Translate the note to another language
+        - Modify generation parameters without re-uploading audio
 
         Args:
-            job_id: ID of the original job to regenerate from
-                   Must be a completed job with a transcript
-            template: Medical note template to use
-                - 'primaryCare': Primary care visit
-                - 'er': Emergency room visit
-                - 'psychiatry': Psychiatric evaluation
-                - 'surgicalSpecialties': Surgical specialties
-                - 'medicalSpecialties': Medical specialties
-                - 'nursing': Nursing notes
-                - 'radiology': Radiology reports
-                - 'procedures': Procedure notes
-                - 'letter': Medical letters
-                - 'social': Social worker notes
-                - 'wfw': Word for word dictation
-                - 'smartInsert': Smart insert mode
-            output_language: Target language for the note
-                - None: Same as source language
+            job_id (str): ID of the original job to regenerate from.
+                Must be a completed job with a transcript.
+            template (str, optional): New template to use for generation.
+                See process_audio() for available templates.
+                If not specified, uses the original template.
+            output_language (str, optional): Target language for the new note:
                 - 'en': English
                 - 'fr': French
-            custom: Optional custom parameters for note generation
-                   See API documentation for available options
+                If not specified, uses the original language.
+            custom (dict, optional): Additional parameters for note generation:
+                - context: Additional patient context (history, demographics, medication, etc.)
+                - template: A complete custom template as a string (SOAP note, other etc...)
 
         Returns:
-            Dict containing:
-            - job_id: New job ID for the regenerated note
-            - status: Initial job status
-            - Additional fields as per API response
+            dict: A dictionary containing:
+                - job_id (str): New job ID for the regenerated note
+                - status (str): Initial job status
 
         Raises:
             ValidationError: If job_id is invalid
-            NotFoundError: If source job is not found
-            JobError: If source job has no transcript
-            BadRequestError: If API rejects the request
-            AuthenticationError: If authentication fails
-            PaymentRequiredError: If payment is required
-            InactiveAccountError: If account is inactive
+            JobNotFoundError: If source job is not found
+            JobError: If source job has no transcript or had errors
+            AuthenticationError: If API key is invalid
+            PaymentRequiredError: If account payment is required
             NetworkError: If connection issues occur
 
         Example:
             >>> # First, get original job_id from process_audio
-            >>> response = client.notes.regenerate_note(
+            >>> response = note_manager.regenerate_note(
             ...     job_id="original-job-id",
             ...     template="er",  # Change template
             ...     output_language="fr"  # Translate to French
             ... )
             >>> new_job_id = response["job_id"]
             >>> # Use new_job_id to fetch regenerated note
-
-        Note:
-            - The original transcript is reused, no need to re-upload audio
-            - Processing is usually faster than the original note generation
-            - All parameters except job_id are optional
-            - If no parameters are changed, generates an identical note
         """
+        # Validate all inputs first
         if not job_id:
+            self.logger.error("Missing required field: job_id")
             raise MissingFieldError("job_id")
 
-        data = {
-            'job_id': job_id
-        }
+        if template and template not in VALID_TEMPLATES:
+            self.logger.error(
+                "Invalid template value: %s. Valid values: %s",
+                template, ', '.join(VALID_TEMPLATES)
+            )
+            raise InvalidFieldError(
+                'template',
+                f"Invalid value for template. Must be one of: {', '.join(VALID_TEMPLATES)}"
+            )
 
+        if output_language and output_language not in VALID_LANGUAGES:
+            self.logger.error(
+                "Invalid output_language: %s. Valid values: %s",
+                output_language, ', '.join(VALID_LANGUAGES)
+            )
+            raise InvalidFieldError(
+                'output_language',
+                f"Invalid value for output_language. Must be one of: {', '.join(VALID_LANGUAGES)}"
+            )
+
+        # Check original job status first
+        try:
+            self.logger.debug("Checking status of original job %s", job_id)
+            status = self.fetch_status(job_id)
+            
+            # Check if the original job had errors
+            if status['status'] == 'error':
+                error_msg = status.get('message', 'Unknown error occurred')
+                self.logger.error(
+                    "Cannot regenerate note from job %s - original job had errors: %s",
+                    job_id, error_msg
+                )
+                raise JobError(
+                    f"Cannot regenerate note from a failed job. Original error: {error_msg}",
+                    job_id=job_id,
+                    status='error',
+                    details={'original_error': error_msg}
+                )
+            
+            # Check if the job was completed
+            if status['status'] != 'completed':
+                self.logger.error(
+                    "Cannot regenerate note from job %s - job status is %s",
+                    job_id, status['status']
+                )
+                raise JobError(
+                    f"Cannot regenerate note - job is in {status['status']} state",
+                    job_id=job_id,
+                    status=status['status']
+                )
+
+        except JobNotFoundError:
+            self.logger.error("Original job not found: %s", job_id)
+            raise
+        except Exception as e:
+            if not isinstance(e, JobError):  # Don't wrap JobError
+                self.logger.error(
+                    "Error checking original job status: %s",
+                    str(e)
+                )
+                raise JobError(
+                    f"Error checking original job status: {str(e)}",
+                    job_id=job_id
+                )
+            raise
+
+        # Prepare request data after all validation passes
+        data = {'job_id': job_id}
         if template:
-            if template not in VALID_TEMPLATES:
-                raise InvalidFieldError(
-                    'template',
-                    f"Invalid template value. Must be one of: {', '.join(VALID_TEMPLATES)}"
-                )
             data['template'] = template
-            
         if output_language:
-            if output_language not in VALID_LANGUAGES:
-                raise InvalidFieldError(
-                    'output_language',
-                    f"Invalid value for output_language. Must be one of: {', '.join(VALID_LANGUAGES)}"
-                )
             data['output_language'] = output_language
-            
         if custom:
             data['custom'] = custom
 
         try:
-            return self._request("POST", "regenerate-note", data=data)
-        except NotFoundError:
-            raise JobNotFoundError(job_id)
-        except BadRequestError as e:
-            if "no transcript" in str(e).lower():
-                raise JobError(
-                    "Source job has no transcript",
-                    job_id=job_id,
-                    details=e.details
+            self.logger.info(
+                "Regenerating note from job %s with parameters: %s",
+                job_id, data
+            )
+            
+            # Make API request with retries
+            response = self._request("POST", "regenerate-note", data=data)
+            
+            new_job_id = response.get('job_id')
+            if not new_job_id:
+                raise ValidationError(
+                    "Invalid API response: missing job_id",
+                    details={"response": response}
                 )
-            raise
-        except (
-            AuthenticationError,
-            AuthorizationError,
-            PaymentRequiredError,
-            InactiveAccountError,
-            RateLimitError,
-            NoteDxError
-        ) as e:
+                
+            self.logger.info(
+                "Successfully initiated note regeneration. New job ID: %s",
+                new_job_id
+            )
+            
+            return response
+            
+        except Exception as e:
+            self.logger.error(
+                "Error regenerating note from job %s: %s",
+                job_id, str(e)
+            )
             raise
 
     def fetch_status(self, job_id: str) -> Dict[str, Any]:
-        """
-        Get the current status and progress of a note generation job.
+        """Gets the current status and progress of a note generation job.
 
         The job can be in one of these states:
         - 'pending': Job created, waiting for file upload
@@ -535,60 +780,73 @@ class NoteManager:
         - 'error': Job failed with an error
 
         Args:
-            job_id: The ID of the job to check
-                   Obtained from process_audio or regenerate_note
+            job_id (str): The ID of the job to check.
+                Obtained from process_audio() or regenerate_note().
 
         Returns:
-            Dict containing:
-            - status: Current job status (see states above)
-            - message: Optional status message or error details
-            - progress: Optional progress information
-            - Additional fields as per API response
+            dict: A dictionary containing:
+                - status (str): Current job status (see states above)
+                - message (str, optional): Status message or error details
+                - progress (dict, optional): Progress information
 
         Raises:
             ValidationError: If job_id is invalid
-            NotFoundError: If job is not found
-            AuthenticationError: If authentication fails
+            JobNotFoundError: If job is not found
+            AuthenticationError: If API key is invalid
             NetworkError: If connection issues occur
 
         Example:
-            >>> status = client.notes.fetch_status("job-id")
+            >>> status = note_manager.fetch_status("job-id")
             >>> if status["status"] == "completed":
-            ...     note = client.notes.fetch_note("job-id")
+            ...     note = note_manager.fetch_note("job-id")
             >>> elif status["status"] == "error":
             ...     print(f"Error: {status['message']}")
 
         Note:
-            - Polling interval should be at least 5 seconds
+            - Poll at least 5 seconds apart
             - Jobs typically complete within 2-3 minutes
-            - Error status includes detailed error message
             - Status history is preserved for 48 hours
         """
+        # Validate job_id
         if not job_id:
+            self.logger.error("Missing required field: job_id")
             raise MissingFieldError("job_id")
         
         try:
-            return self._request("GET", f"status/{job_id}")
+            self.logger.debug("Fetching status for job %s", job_id)
+            response = self._request("GET", f"status/{job_id}")
+            
+            # Validate response
+            if 'status' not in response:
+                raise ValidationError(
+                    "Invalid API response: missing status field",
+                    details={"response": response}
+                )
+                
+            status = response['status']
+            self.logger.info(
+                "Job %s status: %s%s",
+                job_id,
+                status,
+                f" - {response['message']}" if 'message' in response else ""
+            )
+            
+            return response
+            
         except NotFoundError:
+            self.logger.error("Job not found: %s", job_id)
             raise JobNotFoundError(job_id)
-        except (
-            NoteDxError,
-            AuthenticationError,
-            AuthorizationError,
-            PaymentRequiredError,
-            InactiveAccountError,
-            RateLimitError
-        ):
-            raise
+            
         except Exception as e:
-            logger.error(f"Error fetching status for job {job_id}: {str(e)}")
-            raise InternalServerError(f"Unexpected error: {str(e)}")
+            self.logger.error(
+                "Error fetching status for job %s: %s",
+                job_id, str(e)
+            )
+            raise
 
     def fetch_note(self, job_id: str) -> Dict[str, Any]:
-        """
-        Fetch the generated medical note for a completed job.
+        """Retrieves the generated medical note for a completed job.
 
-        This method retrieves the final note after processing is complete.
         The note includes:
         - Patient consent statement (if applicable)
         - Structured medical note based on template
@@ -596,28 +854,27 @@ class NoteManager:
         - Source/target language information
 
         Args:
-            job_id: The ID of the job to fetch the note for
-                   Job must be in 'completed' status
+            job_id (str): The ID of the job to fetch the note for.
+                Job must be in 'completed' status.
 
         Returns:
-            Dict containing:
-            - note: The generated medical note text
-            - noteTitle: Optional title for the note
-            - job_id: The job ID (for reference)
-            - Additional fields as per API response
+            dict: A dictionary containing:
+                - note (str): The generated medical note text
+                - noteTitle (str, optional): Title for the note
+                - job_id (str): The job ID (for reference)
 
         Raises:
             ValidationError: If job_id is invalid
-            NotFoundError: If job or note is not found
+            JobNotFoundError: If job or note is not found
             JobError: If note generation is not completed
-            AuthenticationError: If authentication fails
+            AuthenticationError: If API key is invalid
             NetworkError: If connection issues occur
 
         Example:
             >>> # First check status
-            >>> status = client.notes.fetch_status("job-id")
+            >>> status = note_manager.fetch_status("job-id")
             >>> if status["status"] == "completed":
-            ...     result = client.notes.fetch_note("job-id")
+            ...     result = note_manager.fetch_note("job-id")
             ...     print(f"Title: {result['noteTitle']}")
             ...     print(f"Note: {result['note']}")
 
@@ -627,15 +884,39 @@ class NoteManager:
             - Notes include patient consent if provided
             - The note format follows the selected template
         """
+        # Validate job_id
         if not job_id:
+            self.logger.error("Missing required field: job_id")
             raise MissingFieldError("job_id")
         
         try:
-            return self._request("GET", f"fetch-note/{job_id}")
+            self.logger.debug("Fetching note for job %s", job_id)
+            response = self._request("GET", f"fetch-note/{job_id}")
+            
+            # Validate response
+            if 'note' not in response:
+                raise ValidationError(
+                    "Invalid API response: missing note content",
+                    details={"response": response}
+                )
+                
+            self.logger.info(
+                "Successfully retrieved note for job %s (%d characters)",
+                job_id, len(response['note'])
+            )
+            
+            return response
+            
         except NotFoundError:
+            self.logger.error("Job not found: %s", job_id)
             raise JobNotFoundError(job_id)
+            
         except BadRequestError as e:
             if "not completed" in str(e).lower():
+                self.logger.error(
+                    "Note generation not completed for job %s",
+                    job_id
+                )
                 raise JobError(
                     "Note generation not completed",
                     job_id=job_id,
@@ -643,22 +924,16 @@ class NoteManager:
                     details=e.details
                 )
             raise
-        except (
-            NoteDxError,
-            AuthenticationError,
-            AuthorizationError,
-            PaymentRequiredError,
-            InactiveAccountError,
-            RateLimitError
-        ):
-            raise
+            
         except Exception as e:
-            logger.error(f"Error fetching note for job {job_id}: {str(e)}")
-            raise InternalServerError(f"Unexpected error: {str(e)}")
+            self.logger.error(
+                "Error fetching note for job %s: %s",
+                job_id, str(e)
+            )
+            raise
 
     def fetch_transcript(self, job_id: str) -> Dict[str, Any]:
-        """
-        Fetch the raw transcript for a job after audio processing.
+        """Retrieves the raw transcript for a job after audio processing.
 
         The transcript represents the raw text from audio processing,
         before any medical note generation. Useful for:
@@ -667,25 +942,24 @@ class NoteManager:
         - Keeping raw transcripts for records
 
         Args:
-            job_id: The ID of the job to fetch the transcript for
-                   Job must be in 'transcribed' or 'completed' status
+            job_id (str): The ID of the job to fetch the transcript for.
+                Job must be in 'transcribed' or 'completed' status.
 
         Returns:
-            Dict containing:
-            - transcript: The raw transcript text
-            - job_id: The job ID (for reference)
-            - Additional fields as per API response
+            dict: A dictionary containing:
+                - transcript (str): The raw transcript text
+                - job_id (str): The job ID (for reference)
 
         Raises:
             ValidationError: If job_id is invalid
-            NotFoundError: If job or transcript is not found
+            JobNotFoundError: If job or transcript is not found
             JobError: If transcription is not completed
-            AuthenticationError: If authentication fails
+            AuthenticationError: If API key is invalid
             NetworkError: If connection issues occur
 
         Example:
             >>> # Useful for verification
-            >>> transcript = client.notes.fetch_transcript("job-id")
+            >>> transcript = note_manager.fetch_transcript("job-id")
             >>> print(f"Raw text: {transcript['transcript']}")
 
         Note:
@@ -694,15 +968,39 @@ class NoteManager:
             - Includes all recognized speech from audio
             - May contain speaker labels in conversation mode
         """
+        # Validate job_id
         if not job_id:
+            self.logger.error("Missing required field: job_id")
             raise MissingFieldError("job_id")
         
         try:
-            return self._request("GET", f"fetch-transcript/{job_id}")
+            self.logger.debug("Fetching transcript for job %s", job_id)
+            response = self._request("GET", f"fetch-transcript/{job_id}")
+            
+            # Validate response
+            if 'transcript' not in response:
+                raise ValidationError(
+                    "Invalid API response: missing transcript content",
+                    details={"response": response}
+                )
+                
+            self.logger.info(
+                "Successfully retrieved transcript for job %s (%d characters)",
+                job_id, len(response['transcript'])
+            )
+            
+            return response
+            
         except NotFoundError:
+            self.logger.error("Job not found: %s", job_id)
             raise JobNotFoundError(job_id)
+            
         except BadRequestError as e:
             if "not transcribed" in str(e).lower():
+                self.logger.error(
+                    "Transcription not completed for job %s",
+                    job_id
+                )
                 raise JobError(
                     "Transcription not completed",
                     job_id=job_id,
@@ -710,37 +1008,35 @@ class NoteManager:
                     details=e.details
                 )
             raise
-        except (
-            NoteDxError,
-            AuthenticationError,
-            AuthorizationError,
-            PaymentRequiredError,
-            InactiveAccountError,
-            RateLimitError
-        ):
-            raise
+            
         except Exception as e:
-            logger.error(f"Error fetching transcript for job {job_id}: {str(e)}")
-            raise InternalServerError(f"Unexpected error: {str(e)}")
+            self.logger.error(
+                "Error fetching transcript for job %s: %s",
+                job_id, str(e)
+            )
+            raise
 
     def get_system_status(self) -> Dict[str, Any]:
-        """
-        Get system status and health information.
+        """Retrieves system status and health information.
+
+        Useful for:
+        - Monitoring API availability
+        - Checking processing latencies
+        - Debugging connection issues
 
         Returns:
-            Dict containing:
-            - status: Overall system status
-            - services: Status of individual services
-            - latency: Current processing latencies
-            - Additional fields as per API response
+            dict: A dictionary containing:
+                - status (str): Overall system status
+                - services (dict): Status of individual services
+                - latency (dict): Current processing latencies
 
         Raises:
-            AuthenticationError: If authentication fails
+            AuthenticationError: If API key is invalid
             NetworkError: If connection issues occur
-            InternalServerError: If server status check fails
+            ServiceUnavailableError: If status check fails
 
         Example:
-            >>> status = client.notes.get_system_status()
+            >>> status = note_manager.get_system_status()
             >>> print(f"System status: {status['status']}")
             >>> print(f"Average latency: {status['latency']['avg']}ms")
 
@@ -751,36 +1047,79 @@ class NoteManager:
             - No authentication required
         """
         try:
-            return self._request("GET", "system/status")
-        except (
-            NoteDxError,
-            AuthenticationError,
-            AuthorizationError,
-            RateLimitError
-        ):
+            self.logger.debug("Fetching system status")
+            response = self._request("GET", "system/status")
+            
+            # Validate response
+            required_fields = ['status', 'services', 'latency']
+            missing_fields = [field for field in required_fields 
+                            if field not in response]
+            
+            if missing_fields:
+                raise ValidationError(
+                    "Invalid API response: missing required fields",
+                    details={
+                        "missing_fields": missing_fields,
+                        "response": response
+                    }
+                )
+                
+            # Log status details
+            status = response['status']
+            services = response['services']
+            latency = response['latency']
+            
+            self.logger.info(
+                "System status: %s (avg latency: %dms)",
+                status, latency.get('avg', 0)
+            )
+            
+            # Log service status details at debug level
+            for service, service_status in services.items():
+                self.logger.debug(
+                    "Service %s status: %s",
+                    service, service_status
+                )
+            
+            return response
+            
+        except (NoteDxError, AuthenticationError, AuthorizationError, RateLimitError):
+            # Let API-specific errors propagate
             raise
+            
         except Exception as e:
-            logger.error(f"Error getting system status: {str(e)}")
-            raise ServiceUnavailableError("System status check failed", details={"error": str(e)})
+            self.logger.error("Error fetching system status: %s", str(e))
+            raise ServiceUnavailableError(
+                "System status check failed",
+                details={"error": str(e)}
+            )
 
     def _validate_audio_file(self, file_path: str) -> None:
-        """
-        Validate audio file existence, readability, and format.
+        """Validate audio file existence, readability, and format.
+        
+        Performs thorough validation of the audio file:
+        - Checks file existence
+        - Verifies file is readable
+        - Validates file format
+        - Checks file size limits
         
         Args:
             file_path: Path to the audio file
-            
+
         Raises:
             MissingFieldError: If file_path is empty
             ValidationError: If:
                 - File doesn't exist
                 - File isn't readable
                 - File format is not supported
+                - File size exceeds limits
         """
         if not file_path:
+            self.logger.error("Missing file_path parameter")
             raise MissingFieldError("file_path")
             
         if not os.path.isfile(file_path):
+            self.logger.error("Audio file not found: %s", file_path)
             raise ValidationError(
                 f"Audio file not found: {file_path}",
                 field="file_path",
@@ -790,6 +1129,10 @@ class NoteManager:
         # Check file extension
         file_ext = os.path.splitext(file_path)[1].lower()
         if file_ext not in VALID_AUDIO_FORMATS:
+            self.logger.error(
+                "Unsupported audio format: %s. Supported formats: %s",
+                file_ext, ', '.join(VALID_AUDIO_FORMATS.keys())
+            )
             raise ValidationError(
                 f"Unsupported audio format: {file_ext}. Supported formats: {', '.join(VALID_AUDIO_FORMATS.keys())}",
                 field="file_path",
@@ -800,11 +1143,37 @@ class NoteManager:
                 }
             )
 
+        # Check file size (100MB limit)
+        try:
+            file_size = os.path.getsize(file_path)
+            if file_size > 500 * 1024 * 1024:  # 500MB
+                self.logger.error(
+                    "File size exceeds 500MB limit: %s (%d bytes)",
+                    file_path, file_size
+                )
+                raise ValidationError(
+                    "File size exceeds 500MB limit",
+                    field="file_path",
+                    details={
+                        "path": file_path,
+                        "size": file_size,
+                        "max_size": 500 * 1024 * 1024
+                    }
+                )
+        except OSError as e:
+            self.logger.error("Cannot access file: %s", str(e))
+            raise ValidationError(
+                f"Cannot access file: {str(e)}",
+                field="file_path",
+                details={"path": file_path, "error": str(e)}
+            )
+
+        # Check if file is readable
         try:
             with open(file_path, 'rb') as f:
-                # Just test if we can read it
                 f.read(1)
         except Exception as e:
+            self.logger.error("Cannot read audio file: %s", str(e))
             raise ValidationError(
                 f"Cannot read audio file: {str(e)}",
                 field="file_path",
@@ -812,29 +1181,54 @@ class NoteManager:
             )
 
     def _handle_upload_error(self, e: Exception, job_id: str) -> None:
-        """Handle file upload errors with appropriate exception types."""
-        if isinstance(e, requests.ConnectionError):
-            raise NetworkError(
-                f"Connection error during file upload: {str(e)}",
-                details={"job_id": job_id}
-            )
-        elif isinstance(e, requests.Timeout):
-            raise NetworkError(
-                f"Timeout during file upload: {str(e)}",
-                details={"job_id": job_id}
-            )
-        elif isinstance(e, requests.RequestException):
-            if hasattr(e, 'response') and e.response is not None:
-                raise UploadError(
-                    f"Failed to upload file: {e.response.text}",
-                    job_id=job_id
+        """Handle file upload errors with appropriate exception types.
+        
+        Args:
+            e: The caught exception
+            job_id: ID of the job being processed
+            
+        Raises:
+            NetworkError: For connection issues
+            UploadError: For upload failures
+        """
+        error_msg = str(e)
+        if isinstance(e, requests.RequestException):
+            if isinstance(e, requests.ConnectionError):
+                self.logger.error(
+                    "Connection error during file upload for job %s: %s",
+                    job_id, error_msg
                 )
+                raise NetworkError(
+                    f"Connection error during file upload: {error_msg}",
+                    details={"job_id": job_id}
+                )
+            elif isinstance(e, requests.Timeout):
+                self.logger.error(
+                    "Timeout during file upload for job %s: %s",
+                    job_id, error_msg
+                )
+                raise NetworkError(
+                    f"Timeout during file upload: {error_msg}",
+                    details={"job_id": job_id}
+                )
+            
+            # Handle other request exceptions
+            error_msg = e.response.text if hasattr(e, 'response') else str(e)
+            self.logger.error(
+                "Failed to upload file for job %s: %s",
+                job_id, error_msg
+            )
             raise UploadError(
-                f"Failed to upload file: {str(e)}",
+                f"Failed to upload file: {error_msg}",
                 job_id=job_id
             )
-        else:
-            raise UploadError(
-                f"Unexpected error during upload: {str(e)}",
-                job_id=job_id
-            ) 
+        
+        # Handle any other unexpected errors
+        self.logger.error(
+            "Unexpected error during upload for job %s: %s",
+            job_id, error_msg
+        )
+        raise UploadError(
+            f"Unexpected error during upload: {error_msg}",
+            job_id=job_id
+        ) 

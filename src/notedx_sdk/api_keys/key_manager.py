@@ -1,6 +1,8 @@
 from typing import Dict, Any, Optional, List, Literal
+import logging
 
 from ..exceptions import InvalidFieldError
+from ..client import NoteDxClient
 
 class KeyManager:
     """
@@ -13,7 +15,7 @@ class KeyManager:
     - Key deletion
     """
     
-    def __init__(self, client):
+    def __init__(self, client: NoteDxClient) -> None:
         """
         Initialize the key manager.
         
@@ -21,6 +23,7 @@ class KeyManager:
             client: The parent NoteDxClient instance
         """
         self._client = client
+        self.logger = logging.getLogger("notedx_sdk.keys")
 
     def list_api_keys(self, show_full: bool = False) -> List[Dict[str, Any]]:
         """
@@ -194,4 +197,4 @@ class KeyManager:
             - Deleted keys remain visible in listings (inactive)
         """
         data = {'apiKey': api_key}
-        return self._client._request("DELETE", f"user/api-keys/{api_key}", data=data) 
+        return self._client._request("POST", "user/delete-api-key", data=data) 

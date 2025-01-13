@@ -1,0 +1,78 @@
+site_name: NoteDx SDK Documentation
+site_description: Python SDK for NoteDx API
+repo_url: https://github.com/NoteDx/NoteDx-API-Client
+repo_name: NoteDx/NoteDx-API-Client
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.instant
+    - navigation.tracking
+    - navigation.top
+    - search.highlight
+    - search.share
+    - search.suggest
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: google
+            show_source: false
+            show_root_heading: true
+            show_category_heading: true
+            show_bases: true
+            heading_level: 2
+            members_order: source
+            separate_signature: true
+            filters: ["!^_"]
+            docstring_section_style: spacy
+            merge_init_into_class: true
+            show_signature_annotations: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - API Reference:
+    - Client: reference/client.md
+    - Account Management: reference/account.md
+    - API Key Management: reference/api-keys.md
+    - Note Generation: reference/notes.md
+    - Webhook Management: reference/webhooks.md
+  - Code Examples: examples.md
+  - Billing: billing.md
+  - Changelog: changelog.md 
