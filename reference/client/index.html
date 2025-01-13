@@ -452,21 +452,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="refresh_token">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#notedx_sdk.client.NoteDxClient.refresh_token--refresh-token-when-needed" class="md-nav__link">
-    <span class="md-ellipsis">
-      Refresh token when needed
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
         
           <li class="md-nav__item">
@@ -476,30 +461,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="set_token">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#notedx_sdk.client.NoteDxClient.set_token--using-tokens-from-another-source" class="md-nav__link">
-    <span class="md-ellipsis">
-      Using tokens from another source
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#notedx_sdk.client.NoteDxClient.set_token--now-you-can-make-authenticated-requests" class="md-nav__link">
-    <span class="md-ellipsis">
-      Now you can make authenticated requests
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
         
           <li class="md-nav__item">
@@ -508,21 +469,6 @@
       set_api_key
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="set_api_key">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#notedx_sdk.client.NoteDxClient.set_api_key--now-you-can-use-note-generation-endpoints" class="md-nav__link">
-    <span class="md-ellipsis">
-      Now you can use note generation endpoints
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
         
@@ -878,21 +824,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="refresh_token">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#notedx_sdk.client.NoteDxClient.refresh_token--refresh-token-when-needed" class="md-nav__link">
-    <span class="md-ellipsis">
-      Refresh token when needed
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
         
           <li class="md-nav__item">
@@ -902,30 +833,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="set_token">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#notedx_sdk.client.NoteDxClient.set_token--using-tokens-from-another-source" class="md-nav__link">
-    <span class="md-ellipsis">
-      Using tokens from another source
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#notedx_sdk.client.NoteDxClient.set_token--now-you-can-make-authenticated-requests" class="md-nav__link">
-    <span class="md-ellipsis">
-      Now you can make authenticated requests
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
         
           <li class="md-nav__item">
@@ -934,21 +841,6 @@
       set_api_key
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="set_api_key">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#notedx_sdk.client.NoteDxClient.set_api_key--now-you-can-use-note-generation-endpoints" class="md-nav__link">
-    <span class="md-ellipsis">
-      Now you can use note generation endpoints
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
         
@@ -1103,14 +995,17 @@
 <p>This client wraps the NoteDx API endpoints, providing comprehensive functionality for medical
 note generation and account management. It handles authentication, environment configuration,
 and resource management with robust error handling.</p>
-<p>Features:</p>
-<div class="highlight"><pre><span></span><code>- Authentication handling (Firebase email/password and API key)
-- Environment configuration
-- Type-safe interfaces
-- Comprehensive error handling
-- Resource management
-</code></pre></div>
 
+<details class="features" open>
+  <summary>Features</summary>
+  <ul>
+<li>Authentication handling (Firebase email/password and API key)</li>
+<li>Environment configuration</li>
+<li>Type-safe interfaces</li>
+<li>Comprehensive error handling</li>
+<li>Resource management</li>
+</ul>
+</details>
 
 
   <table>
@@ -1293,11 +1188,14 @@ and resource management with robust error handling.</p>
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">template</span><span class="o">=</span><span class="s2">&quot;primaryCare&quot;</span>
 <a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="p">)</span>
 </code></pre></div>
-</details>      <p>Notes:</p>
-<div class="highlight"><pre><span></span><code>- The session parameter allows for custom SSL, proxy, and timeout configuration
-- Auto-login can be disabled if you want to handle authentication manually
-</code></pre></div>
-  
+</details>
+<details class="notes" open>
+  <summary>Notes</summary>
+  <ul>
+<li>The session parameter allows for custom SSL, proxy, and timeout configuration</li>
+<li>Auto-login can be disabled if you want to handle authentication manually</li>
+</ul>
+</details>  
       <p>Initialize the NoteDx API client.</p>
 <p>The client can be initialized with either:</p>
 <ol>
@@ -1469,11 +1367,14 @@ and resource management with robust error handling.</p>
         </tr>
     </tbody>
   </table>
-      <p>Note:</p>
-<div class="highlight"><pre><span></span><code>- The session parameter allows for custom SSL, proxy, and timeout configuration
-- Auto-login can be disabled if you want to handle authentication manually
-</code></pre></div>
 
+<details class="note" open>
+  <summary>Note</summary>
+  <ul>
+<li>The session parameter allows for custom SSL, proxy, and timeout configuration</li>
+<li>Auto-login can be disabled if you want to handle authentication manually</li>
+</ul>
+</details>
 
   
 
@@ -1585,27 +1486,17 @@ Defaults to '%(asctime)s - %(name)s - %(levelname)s - %(message)s'.</p>
 
 <details class="example" open>
   <summary>Example</summary>
-  <p>Enable debug logging to console:</p>
-<blockquote>
-<blockquote>
-<blockquote>
-<p>NoteDxClient.configure_logging(logging.DEBUG)</p>
-</blockquote>
-</blockquote>
-</blockquote>
-<p>Log to a file with custom format:</p>
-<blockquote>
-<blockquote>
-<blockquote>
-<p>file_handler = logging.FileHandler('notedx.log')
-NoteDxClient.configure_logging(
-...     level=logging.INFO,
-...     handler=file_handler,
-...     format_string='%(asctime)s - %(message)s'
-... )</p>
-</blockquote>
-</blockquote>
-</blockquote>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">Enable</span> <span class="n">debug</span> <span class="n">logging</span> <span class="n">to</span> <span class="n">console</span><span class="p">:</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">NoteDxClient</span><span class="o">.</span><span class="n">configure_logging</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">Log</span> <span class="n">to</span> <span class="n">a</span> <span class="n">file</span> <span class="k">with</span> <span class="n">custom</span> <span class="nb">format</span><span class="p">:</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">file_handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="s1">&#39;notedx.log&#39;</span><span class="p">)</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">NoteDxClient</span><span class="o">.</span><span class="n">configure_logging</span><span class="p">(</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="o">...</span>     <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="o">...</span>     <span class="n">handler</span><span class="o">=</span><span class="n">file_handler</span><span class="p">,</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="o">...</span>     <span class="n">format_string</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> - </span><span class="si">%(message)s</span><span class="s1">&#39;</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="o">...</span> <span class="p">)</span>
+</code></pre></div>
 </details>
   </div>
 
@@ -1663,14 +1554,9 @@ reconfiguring the entire logging setup.</p>
 
 <details class="example" open>
   <summary>Example</summary>
-  <blockquote>
-<blockquote>
-<blockquote>
-<p>NoteDxClient.set_log_level(logging.DEBUG)  # Enable debug logging
-NoteDxClient.set_log_level(logging.WARNING)  # Only log warnings and errors</p>
-</blockquote>
-</blockquote>
-</blockquote>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">NoteDxClient</span><span class="o">.</span><span class="n">set_log_level</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>  <span class="c1"># Enable debug logging</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">NoteDxClient</span><span class="o">.</span><span class="n">set_log_level</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>  <span class="c1"># Only log warnings and errors</span>
+</code></pre></div>
 </details>
   </div>
 
@@ -1783,15 +1669,10 @@ for subsequent requests.</p>
 
 <details class="example" open>
   <summary>Example</summary>
-  <blockquote>
-<blockquote>
-<blockquote>
-<p>client = NoteDxClient(email="user@example.com", password="pass", auto_login=False)
-auth_info = client.login()
-print(f"Logged in as: {auth_info['email']}")</p>
-</blockquote>
-</blockquote>
-</blockquote>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">client</span> <span class="o">=</span> <span class="n">NoteDxClient</span><span class="p">(</span><span class="n">email</span><span class="o">=</span><span class="s2">&quot;user@example.com&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s2">&quot;pass&quot;</span><span class="p">,</span> <span class="n">auto_login</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">auth_info</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">login</span><span class="p">()</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Logged in as: </span><span class="si">{</span><span class="n">auth_info</span><span class="p">[</span><span class="s1">&#39;email&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
 </details>
   </div>
 
@@ -1902,18 +1783,13 @@ It automatically updates the stored tokens on successful refresh.</p>
 
 <details class="example" open>
   <summary>Example</summary>
-  <blockquote>
-<blockquote>
-<blockquote>
-<h5 id="notedx_sdk.client.NoteDxClient.refresh_token--refresh-token-when-needed">Refresh token when needed<a class="headerlink" href="#notedx_sdk.client.NoteDxClient.refresh_token--refresh-token-when-needed" title="Permanent link">&para;</a></h5>
-<p>try:
-...     new_tokens = client.refresh_token()
-... except AuthenticationError:
-...     # Handle token refresh failure
-...     client.login()</p>
-</blockquote>
-</blockquote>
-</blockquote>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="c1"># Refresh token when needed</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="o">...</span>     <span class="n">new_tokens</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">refresh_token</span><span class="p">()</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="o">...</span> <span class="k">except</span> <span class="n">AuthenticationError</span><span class="p">:</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="o">...</span>     <span class="c1"># Handle token refresh failure</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="o">...</span>     <span class="n">client</span><span class="o">.</span><span class="n">login</span><span class="p">()</span>
+</code></pre></div>
 </details>
   </div>
 
@@ -1988,26 +1864,24 @@ another source.</p>
 
 <details class="example" open>
   <summary>Example</summary>
-  <blockquote>
-<blockquote>
-<blockquote>
-<h5 id="notedx_sdk.client.NoteDxClient.set_token--using-tokens-from-another-source">Using tokens from another source<a class="headerlink" href="#notedx_sdk.client.NoteDxClient.set_token--using-tokens-from-another-source" title="Permanent link">&para;</a></h5>
-<p>client = NoteDxClient()
-client.set_token(
-...     token="firebase_id_token",
-...     refresh_token="firebase_refresh_token"
-... )</p>
-<h5 id="notedx_sdk.client.NoteDxClient.set_token--now-you-can-make-authenticated-requests">Now you can make authenticated requests<a class="headerlink" href="#notedx_sdk.client.NoteDxClient.set_token--now-you-can-make-authenticated-requests" title="Permanent link">&para;</a></h5>
-<p>account_info = client.account.get_account()</p>
-</blockquote>
-</blockquote>
-</blockquote>
-</details>      <p>Note:</p>
-<div class="highlight"><pre><span></span><code>- The tokens must be valid Firebase tokens
-- Without a refresh_token, you won&#39;t be able to automatically refresh authentication
-- Invalid tokens will cause AuthenticationError on API requests
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="c1"># Using tokens from another source</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">client</span> <span class="o">=</span> <span class="n">NoteDxClient</span><span class="p">()</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">client</span><span class="o">.</span><span class="n">set_token</span><span class="p">(</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="o">...</span>     <span class="n">token</span><span class="o">=</span><span class="s2">&quot;firebase_id_token&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="o">...</span>     <span class="n">refresh_token</span><span class="o">=</span><span class="s2">&quot;firebase_refresh_token&quot;</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="o">...</span> <span class="p">)</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="o">&gt;&gt;&gt;</span> <span class="c1"># Now you can make authenticated requests</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">account_info</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">get_account</span><span class="p">()</span>
 </code></pre></div>
-
+</details>
+<details class="note" open>
+  <summary>Note</summary>
+  <ul>
+<li>The tokens must be valid Firebase tokens</li>
+<li>Without a refresh_token, you won't be able to automatically refresh authentication</li>
+<li>Invalid tokens will cause AuthenticationError on API requests</li>
+</ul>
+</details>
   </div>
 
 </div>
@@ -2060,25 +1934,23 @@ API keys provide limited access focused on note generation endpoints.</p>
 
 <details class="example" open>
   <summary>Example</summary>
-  <blockquote>
-<blockquote>
-<blockquote>
-<p>client = NoteDxClient()
-client.set_api_key("your_api_key")</p>
-<h5 id="notedx_sdk.client.NoteDxClient.set_api_key--now-you-can-use-note-generation-endpoints">Now you can use note generation endpoints<a class="headerlink" href="#notedx_sdk.client.NoteDxClient.set_api_key--now-you-can-use-note-generation-endpoints" title="Permanent link">&para;</a></h5>
-<p>response = client.notes.process_audio(
-...     file_path="recording.mp3",
-...     template="primaryCare"
-... )</p>
-</blockquote>
-</blockquote>
-</blockquote>
-</details>      <p>Note:</p>
-<div class="highlight"><pre><span></span><code>- API keys only provide access to note generation endpoints
-- For full account access, use email/password authentication
-- Invalid API keys will cause AuthenticationError on API requests
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">client</span> <span class="o">=</span> <span class="n">NoteDxClient</span><span class="p">()</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">client</span><span class="o">.</span><span class="n">set_api_key</span><span class="p">(</span><span class="s2">&quot;your_api_key&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="c1"># Now you can use note generation endpoints</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">notes</span><span class="o">.</span><span class="n">process_audio</span><span class="p">(</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="o">...</span>     <span class="n">file_path</span><span class="o">=</span><span class="s2">&quot;recording.mp3&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="o">...</span>     <span class="n">template</span><span class="o">=</span><span class="s2">&quot;primaryCare&quot;</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="o">...</span> <span class="p">)</span>
 </code></pre></div>
-
+</details>
+<details class="note" open>
+  <summary>Note</summary>
+  <ul>
+<li>API keys only provide access to note generation endpoints</li>
+<li>For full account access, use email/password authentication</li>
+<li>Invalid API keys will cause AuthenticationError on API requests</li>
+</ul>
+</details>
   </div>
 
 </div>
@@ -2232,19 +2104,14 @@ before making the request.</p>
 
 <details class="example" open>
   <summary>Example</summary>
-  <blockquote>
-<blockquote>
-<blockquote>
-<p>try:
-...     result = client.change_password("old_pass", "new_secure_pass")
-...     if result["requires_reauth"]:
-...         # Need to log in again with new password
-...         client.login()
-... except BadRequestError as e:
-...     print(f"Invalid password: {e}")</p>
-</blockquote>
-</blockquote>
-</blockquote>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="o">...</span>     <span class="n">result</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">change_password</span><span class="p">(</span><span class="s2">&quot;old_pass&quot;</span><span class="p">,</span> <span class="s2">&quot;new_secure_pass&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="o">...</span>     <span class="k">if</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;requires_reauth&quot;</span><span class="p">]:</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="o">...</span>         <span class="c1"># Need to log in again with new password</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="o">...</span>         <span class="n">client</span><span class="o">.</span><span class="n">login</span><span class="p">()</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="o">...</span> <span class="k">except</span> <span class="n">BadRequestError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="o">...</span>     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid password: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
 </details>
   </div>
 

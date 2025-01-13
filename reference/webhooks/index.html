@@ -905,17 +905,23 @@
 <p>This class provides methods for configuring and managing webhook endpoints
 for both development and production environments. Webhooks enable real-time
 notifications for events like note generation completion, errors, and billing updates.</p>
-<p>Features:</p>
-<div class="highlight"><pre><span></span><code>- Separate dev/prod webhook URLs
-- HTTPS enforcement for production
-- URL validation and security checks
-- Real-time event notifications
-</code></pre></div>
-<p>Notes:</p>
-<div class="highlight"><pre><span></span><code>- All methods in this class require Firebase authentication (email/password)
-- API key authentication is not supported for webhook management
-</code></pre></div>
 
+<details class="features" open>
+  <summary>Features</summary>
+  <ul>
+<li>Separate dev/prod webhook URLs</li>
+<li>HTTPS enforcement for production</li>
+<li>URL validation and security checks</li>
+<li>Real-time event notifications</li>
+</ul>
+</details>
+<details class="notes" open>
+  <summary>Notes</summary>
+  <ul>
+<li>All methods in this class require Firebase authentication (email/password)</li>
+<li>API key authentication is not supported for webhook management</li>
+</ul>
+</details>
 <details class="example" open>
   <summary>Example</summary>
   <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">notedx_sdk</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoteDxClient</span>
