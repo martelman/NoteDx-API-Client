@@ -88,7 +88,7 @@ class KeyManager:
         Returns:
             Dict containing:
 
-            - api_key: The full API key value (only shown once)
+            - api_key: The full API key value
             - key_type: Type of key created
             - metadata: Provided metadata (live keys only)
 
@@ -101,8 +101,7 @@ class KeyManager:
             NetworkError: If connection issues occur
 
         Note:
-            - Save the api_key value immediately - it cannot be retrieved later
-            - Only one sandbox key allowed per account
+            - Only one sandbox key allowed per account, unlimited requests with it. Does not use AI, for testing only.
             - Metadata only supported for live keys
             - Cannot create live keys if account is cancelled
             - First live key activates the account
