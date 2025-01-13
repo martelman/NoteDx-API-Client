@@ -1005,8 +1005,9 @@
 
   <div class="doc doc-contents ">
   
-      <p>List all API keys associated with the account.
-GET /user/list-api-keys</p>
+      <p>List all API keys associated with the account.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>GET<span class="w"> </span>/user/list-api-keys
+</code></pre></div>
 
 
 
@@ -1227,8 +1228,9 @@ GET /user/list-api-keys</p>
 
   <div class="doc doc-contents ">
   
-      <p>Create a new API key.
-POST /user/create-api-key</p>
+      <p>Create a new API key.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>POST<span class="w"> </span>/user/create-api-key
+</code></pre></div>
 
 
 
@@ -1461,14 +1463,53 @@ POST /user/create-api-key</p>
 
   <div class="doc doc-contents ">
   
-      <p>Update metadata for a live API key.
-POST /user/update-api-key-metadata
-Args:
-    api_key: The API key to update
-    metadata: New metadata dictionary
-             Must be dict of string key-value pairs
-             Keys &lt;= 50 chars, values &lt;= 200 chars
-             Cannot contain sensitive keywords</p>
+      <p>Update metadata for a live API key.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>POST<span class="w"> </span>/user/update-api-key-metadata
+</code></pre></div>
+
+
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>PARAMETER</b></th>
+        <th><b> DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>api_key</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>The API key to update</p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code>str</code>
+                </span>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td><code>metadata</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>New metadata dictionary
+     Must be dict of string key-value pairs
+     Keys &lt;= 50 chars, values &lt;= 200 chars
+     Cannot contain sensitive keywords</p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code><span title="typing.Dict">Dict</span>[str, str]</code>
+                </span>
+            </p>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
 
 
@@ -1637,11 +1678,50 @@ Args:
 
   <div class="doc doc-contents ">
   
-      <p>Update API key status.
-POST /user/api-keys/{api_key}/status
-Args:
-    api_key: The API key to update
-    status: New status ('active' or 'inactive')</p>
+      <p>Update API key status.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>POST<span class="w"> </span>/user/api-keys/<span class="o">{</span>api_key<span class="o">}</span>/status
+</code></pre></div>
+
+
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>PARAMETER</b></th>
+        <th><b> DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>api_key</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>The API key to update</p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code>str</code>
+                </span>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td><code>status</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>New status ('active' or 'inactive')</p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code><span title="typing.Literal">Literal</span>[&#39;active&#39;, &#39;inactive&#39;]</code>
+                </span>
+            </p>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
 
 
@@ -1821,8 +1901,9 @@ Args:
 
   <div class="doc doc-contents ">
   
-      <p>Delete an API key.
-POST /user/delete-api-key</p>
+      <p>Delete an API key.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>POST<span class="w"> </span>/user/delete-api-key
+</code></pre></div>
 
 
 

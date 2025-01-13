@@ -1578,6 +1578,8 @@ reconfiguring the entire logging setup.</p>
   <div class="doc doc-contents ">
   
       <p>Authenticate with the NoteDx API using Firebase email/password authentication.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>POST<span class="w"> </span>/auth/login
+</code></pre></div>
 <p>This method wraps the /auth/login endpoint, handling Firebase authentication
 and token management. On successful login, it stores the authentication tokens
 for subsequent requests.</p>
@@ -1694,6 +1696,8 @@ for subsequent requests.</p>
   <div class="doc doc-contents ">
   
       <p>Refresh the Firebase authentication token using the current refresh token.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>POST<span class="w"> </span>/auth/refresh
+</code></pre></div>
 <p>This method wraps the /auth/refresh endpoint, handling token refresh and rotation.
 It automatically updates the stored tokens on successful refresh.</p>
 
@@ -1973,6 +1977,8 @@ API keys provide limited access focused on note generation endpoints.</p>
   <div class="doc doc-contents ">
   
       <p>Change the authenticated user's password.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>POST<span class="w"> </span>/auth/change-password
+</code></pre></div>
 <p>This method wraps the /auth/change-password endpoint, handling password updates
 and subsequent re-authentication if required. It validates password requirements
 before making the request.</p>

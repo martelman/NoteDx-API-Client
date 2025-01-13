@@ -1248,8 +1248,9 @@ making it easy to integrate medical note generation into your application.</p>
 
   <div class="doc doc-contents ">
   
-      <p>Converts an audio recording into a medical note using the specified template.
-POST /process-audio</p>
+      <p>Converts an audio recording into a medical note using the specified template.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>POST<span class="w"> </span>/process-audio
+</code></pre></div>
 <p>This method handles the complete flow of audio processing and note generation:</p>
 <ol>
 <li>Validates the audio file format and parameters</li>
@@ -1689,9 +1690,10 @@ Defaults to 1MB. Adjust for large files or slow connections.</p>
 
   <div class="doc doc-contents ">
   
-      <p>Generates a new medical note from an existing transcript with different parameters.
-POST /regenerate-note
-This method allows you to:</p>
+      <p>Generates a new medical note from an existing transcript with different parameters.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>POST<span class="w"> </span>/regenerate-note
+</code></pre></div>
+<p>This method allows you to:</p>
 <ul>
 <li>Generate a new note using a different template</li>
 <li>Translate the note to another language</li>
@@ -1940,8 +1942,9 @@ If not specified, uses the original language.</li>
 
   <div class="doc doc-contents ">
   
-      <p>Gets the current status and progress of a note generation job.
-GET /status/{job_id}</p>
+      <p>Gets the current status and progress of a note generation job.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>GET<span class="w"> </span>/status/<span class="o">{</span>job_id<span class="o">}</span>
+</code></pre></div>
 <p>The job can be in one of these states:</p>
 <ul>
 <li>'pending': Job created, waiting for file upload</li>
@@ -2111,8 +2114,9 @@ Obtained from process_audio() or regenerate_note().</p>
 
   <div class="doc doc-contents ">
   
-      <p>Retrieves the generated medical note for a completed job.
-GET /fetch-note/{job_id}</p>
+      <p>Retrieves the generated medical note for a completed job.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>GET<span class="w"> </span>/fetch-note/<span class="o">{</span>job_id<span class="o">}</span>
+</code></pre></div>
 <p>The note includes:</p>
 <ul>
 <li>Patient consent statement (if applicable)</li>
@@ -2294,8 +2298,9 @@ Job must be in 'completed' status.</p>
 
   <div class="doc doc-contents ">
   
-      <p>Retrieves the raw transcript for a job after audio processing.
-GET /fetch-transcript/{job_id}</p>
+      <p>Retrieves the raw transcript for a job after audio processing.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>GET<span class="w"> </span>/fetch-transcript/<span class="o">{</span>job_id<span class="o">}</span>
+</code></pre></div>
 <p>The transcript represents the raw text from audio processing,
 before any medical note generation. Useful for:</p>
 <ul>
@@ -2473,8 +2478,9 @@ Job must be in 'transcribed' or 'completed' status.</p>
 
   <div class="doc doc-contents ">
   
-      <p>Retrieves system status and health information.
-GET /system/status</p>
+      <p>Retrieves system status and health information.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>GET<span class="w"> </span>/system/status
+</code></pre></div>
 <p>Useful for:</p>
 <ul>
 <li>Monitoring API availability</li>
