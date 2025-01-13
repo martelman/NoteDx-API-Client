@@ -1,12 +1,9 @@
 import os
 import pytest
 import requests
-from unittest.mock import Mock, patch, mock_open
-from src.notedx_sdk.core.note_manager import NoteManager
+from unittest.mock import patch, mock_open
 from src.notedx_sdk.exceptions import (
-    AuthenticationError,
     ValidationError,
-    NetworkError,
     UploadError,
     JobNotFoundError,
     JobError,
