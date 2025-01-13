@@ -991,7 +991,8 @@ API key authentication is not supported for account management operations.</p>
 
   <div class="doc doc-contents ">
   
-      <p>Get current account information and settings.</p>
+      <p>Get current account information and settings.
+GET /user/account/info</p>
 
 
 
@@ -1193,7 +1194,8 @@ API key authentication is not supported for account management operations.</p>
 
   <div class="doc doc-contents ">
   
-      <p>Update account information and settings.</p>
+      <p>Update account information and settings.
+POST /user/account/update</p>
 
 
 
@@ -1434,7 +1436,8 @@ API key authentication is not supported for account management operations.</p>
 
   <div class="doc doc-contents ">
   
-      <p>Cancel the current account.</p>
+      <p>Cancel the current account.
+POST /user/cancel-account</p>
 <p>This operation:</p>
 <ol>
 <li>Deactivates all live API keys</li>
@@ -1594,8 +1597,9 @@ API key authentication is not supported for account management operations.</p>
 
   <div class="doc doc-contents ">
   
-      <p>Reactivate a cancelled account.</p>
-<p>This operation:</p>
+      <p>Reactivate a cancelled account.
+POST /user/reactivate-account
+This operation:</p>
 <ol>
 <li>Verifies account is in 'cancelled' state</li>
 <li>Checks for unpaid bills</li>
