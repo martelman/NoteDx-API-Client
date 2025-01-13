@@ -109,6 +109,8 @@ class NoteManager:
             client: The NoteDxClient instance.
         """
         self._client = client
+        self._config = self.DEFAULT_CONFIG.copy()
+        self._config['api_base_url'] = self._client.base_url
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.logger.debug("Initialized NoteManager")
 
@@ -418,6 +420,10 @@ class NoteManager:
     ) -> Dict[str, Any]:
         """Converts an audio recording into a medical note using the specified template.
 
+        ```bash
+        POST /process-audio
+        ```
+
         This method handles the complete flow of audio processing and note generation:
 
         1. Validates the audio file format and parameters
@@ -674,6 +680,10 @@ class NoteManager:
         """
         Generates a new medical note from an existing transcript with different parameters.
 
+        ```bash
+        POST /regenerate-note
+        ```
+
         This method allows you to:
 
         - Generate a new note using a different template
@@ -835,6 +845,10 @@ class NoteManager:
     def fetch_status(self, job_id: str) -> Dict[str, Any]:
         """Gets the current status and progress of a note generation job.
 
+        ```bash
+        GET /status/{job_id}
+        ```
+
         The job can be in one of these states:
 
         - 'pending': Job created, waiting for file upload
@@ -914,6 +928,10 @@ class NoteManager:
 
     def fetch_note(self, job_id: str) -> Dict[str, Any]:
         """Retrieves the generated medical note for a completed job.
+
+        ```bash
+        GET /fetch-note/{job_id}
+        ```
 
         The note includes:
 
@@ -1007,6 +1025,10 @@ class NoteManager:
     def fetch_transcript(self, job_id: str) -> Dict[str, Any]:
         """Retrieves the raw transcript for a job after audio processing.
 
+        ```bash
+        GET /fetch-transcript/{job_id}
+        ```
+
         The transcript represents the raw text from audio processing,
         before any medical note generation. Useful for:
 
@@ -1094,6 +1116,10 @@ class NoteManager:
 
     def get_system_status(self) -> Dict[str, Any]:
         """Retrieves system status and health information.
+
+        ```bash
+        GET /system/status
+        ```
 
         Useful for:
 

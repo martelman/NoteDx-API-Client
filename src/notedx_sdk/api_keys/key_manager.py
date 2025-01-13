@@ -36,6 +36,10 @@ class KeyManager:
         """
         List all API keys associated with the account.
 
+        ```bash
+        GET /user/list-api-keys
+        ```
+
         Args:
             show_full: If True, returns unmasked API keys. Default False for security.
 
@@ -69,6 +73,10 @@ class KeyManager:
     ) -> Dict[str, Any]:
         """
         Create a new API key.
+
+        ```bash
+        POST /user/create-api-key
+        ```
 
         Args:
             key_type: Type of key to create ('sandbox' or 'live')
@@ -113,6 +121,10 @@ class KeyManager:
         """
         Update metadata for a live API key.
 
+        ```bash
+        POST /user/update-api-key-metadata
+        ```
+
         Args:
             api_key: The API key to update
             metadata: New metadata dictionary
@@ -153,6 +165,10 @@ class KeyManager:
         """
         Update API key status.
 
+        ```bash
+        POST /user/api-keys/{api_key}/status
+        ```
+
         Args:
             api_key: The API key to update
             status: New status ('active' or 'inactive')
@@ -185,6 +201,10 @@ class KeyManager:
     def delete_api_key(self, api_key: str) -> Dict[str, Any]:
         """
         Delete an API key.
+
+        ```bash
+        POST /user/delete-api-key
+        ```
 
         Args:
             api_key: The API key to delete

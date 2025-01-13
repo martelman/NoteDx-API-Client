@@ -78,6 +78,10 @@ class AccountManager:
         """
         Get current account information and settings.
 
+        ```bash
+        GET /user/account/info
+        ```
+
         Returns:
             Dict containing:
 
@@ -133,6 +137,10 @@ class AccountManager:
     ) -> Dict[str, Any]:
         """
         Update account information and settings.
+
+        ```bash
+        POST /user/account/update
+        ```
 
         Args:
             company_name: New company or organization name
@@ -231,6 +239,10 @@ class AccountManager:
         """
         Cancel the current account.
 
+        ```bash
+        POST /user/cancel-account
+        ```
+
         This operation:
 
         1. Deactivates all live API keys
@@ -282,6 +294,10 @@ class AccountManager:
     def reactivate_account(self) -> Dict[str, Any]:
         """
         Reactivate a cancelled account.
+
+        ```bash
+        POST /user/reactivate-account
+        ```
 
         This operation:
 

@@ -117,6 +117,10 @@ class WebhookManager:
         """
         Retrieve current webhook configuration settings.
 
+        ```bash
+        GET /user/webhook
+        ```
+
         Returns:
             Dict[str, Any]: Current webhook configuration containing:
 
@@ -177,6 +181,10 @@ class WebhookManager:
     ) -> Dict[str, Any]:
         """
         Update webhook configuration for development and/or production environments.
+
+        ```bash
+        POST /user/webhook
+        ```
 
         Configure URLs where NoteDx will send event notifications. Supports separate
         URLs for development and production environments with different security

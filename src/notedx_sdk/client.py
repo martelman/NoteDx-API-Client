@@ -247,6 +247,10 @@ class NoteDxClient:
         """
         Authenticate with the NoteDx API using Firebase email/password authentication.
 
+        ```bash
+        POST /auth/login
+        ```
+
         This method wraps the /auth/login endpoint, handling Firebase authentication
         and token management. On successful login, it stores the authentication tokens
         for subsequent requests.
@@ -331,6 +335,10 @@ class NoteDxClient:
     def refresh_token(self) -> Dict[str, Any]:
         """
         Refresh the Firebase authentication token using the current refresh token.
+
+        ```bash
+        POST /auth/refresh
+        ```
 
         This method wraps the /auth/refresh endpoint, handling token refresh and rotation.
         It automatically updates the stored tokens on successful refresh.
@@ -468,6 +476,10 @@ class NoteDxClient:
     def change_password(self, current_password: str, new_password: str) -> Dict[str, Any]:
         """
         Change the authenticated user's password.
+
+        ```bash
+        POST /auth/change-password
+        ```
 
         This method wraps the /auth/change-password endpoint, handling password updates
         and subsequent re-authentication if required. It validates password requirements

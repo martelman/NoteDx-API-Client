@@ -102,6 +102,10 @@ class UsageManager:
         """
         Retrieve detailed usage statistics and billing metrics for the authenticated account.
 
+        ```bash
+        GET /user/usage
+        ```
+
         Wraps the /user/usage endpoint to provide comprehensive usage data including API calls,
         note generations, token usage, and associated costs. Supports optional date range filtering
         and provides breakdowns by month and API key.
