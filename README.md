@@ -8,6 +8,8 @@
 
 Official Python SDK for the NoteDx API - a powerful medical note generation service that converts audio recordings into structured medical notes, fully compliant with data privay laws in Canada and the US.
 
+Beta release!
+
 ## Features
 
 - Audio to medical note conversion
