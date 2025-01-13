@@ -55,15 +55,15 @@ print(f"Prod webhook: {settings['webhook_prod']}")
 ### Update Webhook URLs
 
 ```python
-# Update both webhooks
+# Update both webhooks dev can be http or https
 result = client.webhooks.update_webhook_settings(
-    webhook_dev="http://localhost:3000/webhook",
+    webhook_dev="https://api-dev.example.com/webhook",
     webhook_prod="https://api.example.com/webhook"
 )
 
 # Update only development webhook
 result = client.webhooks.update_webhook_settings(
-    webhook_dev="http://dev.example.com/webhook"
+    webhook_dev="https://api-dev.example.com/webhook"
 )
 
 # Remove development webhook

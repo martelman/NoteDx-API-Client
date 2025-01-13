@@ -9,7 +9,6 @@ from ..exceptions import (
     AuthenticationError,
     AuthorizationError,
     PaymentRequiredError,
-    InactiveAccountError,
     NetworkError,
     ValidationError,
     MissingFieldError,
@@ -59,6 +58,7 @@ class NoteManager:
     """Manages medical note generation from audio files using the NoteDx API.
 
     This class provides a high-level interface for:
+
     - Converting audio recordings to medical notes
     - Managing note generation jobs
     - Retrieving generated notes and transcripts
@@ -68,6 +68,7 @@ class NoteManager:
     making it easy to integrate medical note generation into your application.
 
     Example:
+        ```python
         >>> from notedx_sdk import NoteDxClient
         >>> client = NoteDxClient(api_key="your-api-key")
         >>> note_manager = client.notes
@@ -86,6 +87,7 @@ class NoteManager:
         >>> if status["status"] == "completed":
         ...     note = note_manager.fetch_note(job_id)
         ...     print(note["note"])
+        ```
     """
     
     # Default configuration
@@ -129,12 +131,14 @@ class NoteManager:
             handler: Optional logging handler to add. If None, logs to console.
 
         Example:
+            ```python
             >>> # Enable debug logging to console
             >>> NoteManager.configure_logging(logging.DEBUG)
             >>> 
             >>> # Log to a file
             >>> file_handler = logging.FileHandler('notedx.log')
             >>> NoteManager.configure_logging(logging.INFO, file_handler)
+            ```
         """
         logger = logging.getLogger("notedx_sdk")
         
@@ -265,15 +269,16 @@ class NoteManager:
 
     def _validate_input(self, **kwargs) -> None:
         """Validate input parameters against API requirements.
-        
+
         Performs thorough validation of all input parameters:
-        - Required fields based on template type
-        - Field value validation
-        - Special case handling for templates
-        - Patient consent requirements
-        
-        Args:
-            **kwargs: Input parameters to validate
+
+            * Required fields based on template type
+            * Field value validation
+            * Special case handling for templates
+            * Patient consent requirements
+
+        Parameters:
+            **kwargs: Input parameters to validate. See process_audio() for details.
 
         Raises:
             MissingFieldError: If required fields are missing
@@ -381,6 +386,7 @@ class NoteManager:
             file_size: Size of the file in bytes
             
         Returns:
+
             Optimal chunk size in bytes:
             - 5MB for files < 100MB
             - 10MB for files 100MB-250MB
@@ -412,55 +418,72 @@ class NoteManager:
         """Converts an audio recording into a medical note using the specified template.
 
         This method handles the complete flow of audio processing and note generation:
+
         1. Validates the audio file format and parameters
         2. Securely uploads the file
         3. Initiates the note generation process
         4. Returns a job ID for tracking progress
 
-        Args:
-            file_path (str): Path to the audio file. Supported formats:
-                .mp3, .mp4, .m4a, .aac, .wav, .flac, .pcm, .ogg, .opus, .webm
-            visit_type (str, optional): Type of medical visit:
-                - 'initialEncounter': First visit with patient
-                - 'followUp': Subsequent visit
+        Parameters:
+            file_path: Path to the audio file.  
+                Supported formats: `.mp3`, `.mp4`, `.m4a`, `.aac`, `.wav`, `.flac`, `.pcm`, `.ogg`, `.opus`, `.webm`
+
+            visit_type: Type of medical visit (optional).  
+                * `initialEncounter`: First visit with patient
+                * `followUp`: Subsequent visit  
                 Required for standard templates, optional for 'wfw'/'smartInsert'.
-            recording_type (str, optional): Type of audio recording:
-                - 'dictation': Single speaker dictation
-                - 'conversation': Multi-speaker conversation (requires patient_consent)
+
+            recording_type: Type of audio recording (optional).  
+                * `dictation`: Single speaker dictation
+                * `conversation`: Multi-speaker conversation (requires patient_consent)  
                 Required for standard templates, optional for 'wfw'/'smartInsert'.
-            patient_consent (bool, optional): Whether patient consent was obtained.
+
+            patient_consent: Whether patient consent was obtained (optional).  
                 Required for conversation mode, optional otherwise.
-            lang (str): Source language of the audio. Defaults to 'en'.
-                - 'en': English
-                - 'fr': French
-            output_language (str, optional): Target language for the note.
+
+            lang: Source language of the audio. Defaults to 'en'.  
+                * `en`: English
+                * `fr`: French
+
+            output_language: Target language for the note (optional).  
                 If not specified, uses the same language as the source.
-            template (str): Medical note template to use:
-                Standard templates (require visit_type and recording_type):
-                - 'primaryCare': Primary care visit
-                - 'er': Emergency room visit
-                - 'psychiatry': Psychiatric evaluation
-                - 'surgicalSpecialties': Surgical specialties
-                - 'medicalSpecialties': Medical specialties
-                - 'nursing': Nursing notes
-                - 'radiology': Radiology reports
-                - 'procedures': Procedure notes
-                - 'letter': Medical letters
-                - 'social': Social worker notes
-                Special templates (only require file_path and lang):
-                - 'wfw': Word for word transcription
-                - 'smartInsert': Smart insertion mode
-            custom (dict, optional): Additional parameters for note generation:
-                - context: Additional patient context (history, demographics, medication, etc.)
-                - template: A complete custom template as a string (SOAP note, other etc...)
-            chunk_size (int, optional): Size of upload chunks in bytes.
+
+            template: Medical note template to use.  
+                The template determines how the audio content will be structured in the final note.
+
+                **Standard templates** (require visit_type and recording_type):
+
+                * `primaryCare` - Primary care visit for a general practitioner
+                * `er` - Emergency room visit
+                * `psychiatry` - Psychiatric evaluation
+                * `surgicalSpecialties` - Surgical specialties (Any)
+                * `medicalSpecialties` - Medical specialties (Any)
+                * `nursing` - Nursing notes
+                * `radiology` - Radiology reports
+                * `procedures` - Procedure notes (small procedures, biopsies, outpatient surgeries, etc.)
+                * `letter` - Medical letter to the referring physician
+                * `social` - Social worker notes
+
+                **Special templates** (only require file_path and lang):
+
+                * `wfw` - Word for word transcription, supports inclusion of formatting and punctuation during dictation
+                * `smartInsert` - Smart insertion mode
+
+            custom: Additional parameters for note generation (optional).  
+                Dictionary that can contain:
+
+                * `context`: Additional patient context (history, demographics, medication, etc.)
+                * `template`: A complete custom template as a string (SOAP note, other etc...)
+
+            chunk_size: Size of upload chunks in bytes (optional).  
                 Defaults to 1MB. Adjust for large files or slow connections.
 
         Returns:
             dict: A dictionary containing:
-                - job_id (str): Unique identifier for tracking the job
-                - presigned_url (str): URL for uploading the audio file
-                - status (str): Initial job status
+
+                * `job_id`: Unique identifier for tracking the job
+                * `presigned_url`: URL for uploading the audio file
+                * `status`: Initial job status
 
         Raises:
             ValidationError: If parameters are invalid or missing
@@ -471,22 +494,56 @@ class NoteManager:
             BadRequestError: If API rejects the request
             InternalServerError: If server error occurs
 
-        Example:
-            >>> # Standard template usage
-            >>> response = note_manager.process_audio(
-            ...     file_path="visit.mp3",
-            ...     visit_type="initialEncounter",
-            ...     recording_type="dictation",
-            ...     template="primaryCare"
-            ... )
-            >>> job_id = response["job_id"]
-            >>> 
-            >>> # Word-for-word transcription
-            >>> response = note_manager.process_audio(
-            ...     file_path="dictation.mp3",
-            ...     lang="en",
-            ...     template="wfw"
-            ... )
+        Examples:
+            Standard template usage:
+            ```python
+            response = note_manager.process_audio(
+                file_path="visit.mp3",
+                visit_type="initialEncounter",
+                recording_type="dictation",
+                template="primaryCare"
+            )
+            job_id = response["job_id"]
+            ```
+
+            Word-for-word transcription:
+            ```python
+            response = note_manager.process_audio(
+                file_path="dictation.mp3",
+                lang="en",
+                template="wfw"
+            )
+            ```
+
+        Notes:
+            The `custom` object provides powerful customization capabilities:
+
+            * It accepts a dictionary with `context` and `template` keys (both must be strings)
+            * The `template` value replaces the default note template
+            * Example custom object:
+            ```python
+            custom = {
+                "context": "Past medical history: ACL tear 10 years ago on the right knee.",
+                "template": '''SOAP note template.
+
+                SUBJECTIVE: 
+                - Include the patient's subjective information here. Order by system.
+
+                OBJECTIVE: 
+                - Include the patient's objective information here.
+
+                ASSESSMENT: 
+                - Include the patient's assessment here.
+
+                PLAN: 
+                - Include the patient's plan here.'''
+            }
+            ```
+
+            * You can create multiple custom templates for each template type and visit type
+            * The custom object can be used in `regenerate_note()` to generate new notes from existing transcripts
+            * The `context` key adds patient information not in the audio recording
+            * `smartInsert` mode allows adding text snippets within a note (e.g., "Include a normal right knee exam")
         """
         # Validate input parameters
         self.logger.info("Starting audio processing for file: %s", file_path)
@@ -617,6 +674,7 @@ class NoteManager:
         Generates a new medical note from an existing transcript with different parameters.
 
         This method allows you to:
+
         - Generate a new note using a different template
         - Translate the note to another language
         - Modify generation parameters without re-uploading audio
@@ -628,15 +686,18 @@ class NoteManager:
                 See process_audio() for available templates.
                 If not specified, uses the original template.
             output_language (str, optional): Target language for the new note:
+
                 - 'en': English
                 - 'fr': French
                 If not specified, uses the original language.
             custom (dict, optional): Additional parameters for note generation:
+
                 - context: Additional patient context (history, demographics, medication, etc.)
                 - template: A complete custom template as a string (SOAP note, other etc...)
 
         Returns:
             dict: A dictionary containing:
+
                 - job_id (str): New job ID for the regenerated note
                 - status (str): Initial job status
 
@@ -649,6 +710,7 @@ class NoteManager:
             NetworkError: If connection issues occur
 
         Example:
+            ```python
             >>> # First, get original job_id from process_audio
             >>> response = note_manager.regenerate_note(
             ...     job_id="original-job-id",
@@ -657,6 +719,7 @@ class NoteManager:
             ... )
             >>> new_job_id = response["job_id"]
             >>> # Use new_job_id to fetch regenerated note
+            ```
         """
         # Validate all inputs first
         if not job_id:
@@ -772,6 +835,7 @@ class NoteManager:
         """Gets the current status and progress of a note generation job.
 
         The job can be in one of these states:
+
         - 'pending': Job created, waiting for file upload
         - 'queued': File uploaded, waiting for processing
         - 'transcribing': Audio file is being transcribed
@@ -785,6 +849,7 @@ class NoteManager:
 
         Returns:
             dict: A dictionary containing:
+
                 - status (str): Current job status (see states above)
                 - message (str, optional): Status message or error details
                 - progress (dict, optional): Progress information
@@ -796,15 +861,17 @@ class NoteManager:
             NetworkError: If connection issues occur
 
         Example:
+            ```python
             >>> status = note_manager.fetch_status("job-id")
             >>> if status["status"] == "completed":
             ...     note = note_manager.fetch_note("job-id")
             >>> elif status["status"] == "error":
             ...     print(f"Error: {status['message']}")
+            ```
 
         Note:
-            - Poll at least 5 seconds apart
-            - Jobs typically complete within 2-3 minutes
+            - Poll at least 5 seconds apart if you chose this method. Webhooks are **HIGHLY** recommended.
+            - The full Job typically complete within 20-30 seconds.
             - Status history is preserved for 48 hours
         """
         # Validate job_id
@@ -848,6 +915,7 @@ class NoteManager:
         """Retrieves the generated medical note for a completed job.
 
         The note includes:
+
         - Patient consent statement (if applicable)
         - Structured medical note based on template
         - Optional note title
@@ -859,6 +927,7 @@ class NoteManager:
 
         Returns:
             dict: A dictionary containing:
+
                 - note (str): The generated medical note text
                 - noteTitle (str, optional): Title for the note
                 - job_id (str): The job ID (for reference)
@@ -871,12 +940,14 @@ class NoteManager:
             NetworkError: If connection issues occur
 
         Example:
+            ```python
             >>> # First check status
             >>> status = note_manager.fetch_status("job-id")
             >>> if status["status"] == "completed":
             ...     result = note_manager.fetch_note("job-id")
             ...     print(f"Title: {result['noteTitle']}")
             ...     print(f"Note: {result['note']}")
+            ```
 
         Note:
             - Always check job status before fetching note
@@ -937,6 +1008,7 @@ class NoteManager:
 
         The transcript represents the raw text from audio processing,
         before any medical note generation. Useful for:
+
         - Verifying audio processing accuracy
         - Debugging note generation issues
         - Keeping raw transcripts for records
@@ -947,6 +1019,7 @@ class NoteManager:
 
         Returns:
             dict: A dictionary containing:
+
                 - transcript (str): The raw transcript text
                 - job_id (str): The job ID (for reference)
 
@@ -958,9 +1031,11 @@ class NoteManager:
             NetworkError: If connection issues occur
 
         Example:
+            ```python
             >>> # Useful for verification
             >>> transcript = note_manager.fetch_transcript("job-id")
             >>> print(f"Raw text: {transcript['transcript']}")
+            ```
 
         Note:
             - Available after transcription, before note generation
@@ -1020,12 +1095,14 @@ class NoteManager:
         """Retrieves system status and health information.
 
         Useful for:
+
         - Monitoring API availability
         - Checking processing latencies
         - Debugging connection issues
 
         Returns:
             dict: A dictionary containing:
+
                 - status (str): Overall system status
                 - services (dict): Status of individual services
                 - latency (dict): Current processing latencies
@@ -1036,9 +1113,11 @@ class NoteManager:
             ServiceUnavailableError: If status check fails
 
         Example:
+            ```python
             >>> status = note_manager.get_system_status()
             >>> print(f"System status: {status['status']}")
             >>> print(f"Average latency: {status['latency']['avg']}ms")
+            ```
 
         Note:
             - Updated every minute
@@ -1098,6 +1177,7 @@ class NoteManager:
         """Validate audio file existence, readability, and format.
         
         Performs thorough validation of the audio file:
+
         - Checks file existence
         - Verifies file is readable
         - Validates file format
@@ -1109,6 +1189,7 @@ class NoteManager:
         Raises:
             MissingFieldError: If file_path is empty
             ValidationError: If:
+
                 - File doesn't exist
                 - File isn't readable
                 - File format is not supported

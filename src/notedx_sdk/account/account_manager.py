@@ -17,6 +17,7 @@ class AccountManager:
     Handles account management operations for the NoteDx API.
     
     This class provides methods for:
+
     - Account information retrieval and updates
     - Account lifecycle management
     
@@ -77,6 +78,7 @@ class AccountManager:
 
         Returns:
             Dict containing:
+
             - company_name: Company or organization name
             - contact_email: Primary contact email
             - phone_number: Contact phone number
@@ -138,6 +140,7 @@ class AccountManager:
 
         Returns:
             Dict containing:
+
             - message: "Account information updated successfully"
             - updated_fields: List of fields that were updated
 
@@ -227,6 +230,7 @@ class AccountManager:
         Cancel the current account.
 
         This operation:
+
         1. Deactivates all live API keys
         2. Updates account status to 'cancelled'
         3. Records cancellation timestamp
@@ -234,6 +238,7 @@ class AccountManager:
 
         Returns:
             Dict containing:
+
             - message: "Account cancelled successfully"
             - user_id: Account identifier
 
@@ -277,6 +282,7 @@ class AccountManager:
         Reactivate a cancelled account.
 
         This operation:
+
         1. Verifies account is in 'cancelled' state
         2. Checks for unpaid bills
         3. Sets account status to 'inactive'
@@ -284,6 +290,7 @@ class AccountManager:
 
         Returns:
             Dict containing:
+
             - message: "Account reactivated successfully"
             - user_id: Account identifier
 

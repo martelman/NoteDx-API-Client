@@ -113,10 +113,12 @@ class UsageManager:
         Returns:
             Dict[str, Any]: Comprehensive usage statistics containing:
                 period (Dict):
+
                     - start_month (str): Start of period (YYYY-MM)
                     - end_month (str): End of period (YYYY-MM)
                 
                 totals (Dict):
+
                     - jobs (int): Total number of jobs processed
                     - transcription_tokens (int): Total transcription tokens used
                     - note_tokens (int): Total note generation tokens used
@@ -127,6 +129,7 @@ class UsageManager:
                     - free_jobs_left (int): Remaining free tier jobs
                 
                 monthly_breakdown (List[Dict]): Per-month statistics:
+
                     - month (str): Month in YYYY-MM format
                     - jobs (int): Jobs processed that month
                     - transcription_tokens (int): Transcription tokens used
@@ -138,6 +141,7 @@ class UsageManager:
                     - tiers (Dict): Job counts by pricing tier
                 
                 api_keys (Dict[str, Dict]): Per-API key statistics:
+
                     - jobs (int): Total jobs for this key
                     - tokens (Dict): Token usage breakdown
                     - costs (Dict): Cost and savings details

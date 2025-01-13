@@ -34,23 +34,29 @@ The SDK supports various medical note templates:
 # Initialize client
 client = NoteDxClient(api_key="your-api-key")
 
-# Process audio file
+# Step 1: Process audio request - get job_id and upload URL
 response = client.notes.process_audio(
-    file_path="visit_recording.mp3",
     template="primaryCare",
     visit_type="initialEncounter",
     recording_type="dictation",
     lang="en"
 )
 
-# Get job ID
+# Get job ID and presigned URL
 job_id = response["job_id"]
+presigned_url = response["presigned_url"]
 
-# Check status until complete
+# Step 2: Upload the audio file using presigned URL
+client.notes.upload_audio(
+    presigned_url=presigned_url,
+    file_path="visit_recording.mp3"
+)
+
+# Step 3: Check status until complete
 while True:
     status = client.notes.fetch_status(job_id)
     if status["status"] == "completed":
-        # Get the note
+        # Step 4: Get the note
         note = client.notes.fetch_note(job_id)
         print(note["note"])
         break
@@ -63,10 +69,16 @@ while True:
 ### Word-for-Word Transcription
 
 ```python
+# Get job_id and upload URL
 response = client.notes.process_audio(
-    file_path="dictation.mp3",
     template="wfw",
     lang="en"
+)
+
+# Upload the audio file
+client.notes.upload_audio(
+    presigned_url=response["presigned_url"],
+    file_path="dictation.mp3"
 )
 ```
 
@@ -105,7 +117,7 @@ except JobError as e:
 ## REST API Equivalent
 
 ```bash
-# Upload audio for processing
+# Step 1: Initialize processing and get upload URL
 curl -X POST "https://api.notedx.io/v1/process-audio" \
      -H "x-api-key: your-api-key" \
      -H "Content-Type: application/json" \
@@ -115,12 +127,19 @@ curl -X POST "https://api.notedx.io/v1/process-audio" \
        "recording_type": "dictation",
        "lang": "en"
      }'
+     
+# Response contains job_id and presigned_url
 
-# Check status
+# Step 2: Upload audio file using presigned URL
+curl -X PUT "${presigned_url}" \
+     -H "Content-Type: audio/mpeg" \
+     --data-binary "@recording.mp3"
+
+# Step 3: Check processing status
 curl "https://api.notedx.io/v1/status/{job_id}" \
      -H "x-api-key: your-api-key"
 
-# Get note
+# Step 4: Get the generated note
 curl "https://api.notedx.io/v1/fetch-note/{job_id}" \
      -H "x-api-key: your-api-key"
 ``` 

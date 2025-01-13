@@ -16,12 +16,36 @@ logger = logging.getLogger(__name__)
 
 
 def get_env(key: str, default: str = "") -> str:
-    """Fetch an environment variable or return a default."""
+    """Get an environment variable or return a default value.
+
+    Parameters:
+        key: The environment variable name to fetch
+        default: The default value to return if not found
+
+    Returns:
+        The environment variable value or the default
+    """
     return os.environ.get(key, default)
 
 
 def parse_response(response: requests.Response) -> Dict[str, Any]:
-    """Convert a requests.Response to dict; raise typed errors."""
+    """Parse an HTTP response and handle errors appropriately.
+
+    Parameters:
+        response: The HTTP response to parse
+
+    Returns:
+        The parsed JSON response data
+
+    Raises:
+        BadRequestError: For 400 status codes
+        AuthenticationError: For 401 status codes
+        PaymentRequiredError: For 402 status codes
+        InactiveAccountError: For 403 status codes
+        NotFoundError: For 404 status codes
+        InternalServerError: For 500+ status codes
+        NoteDxError: For other unexpected errors
+    """
     try:
         data = response.json()
     except ValueError:
@@ -51,15 +75,14 @@ def parse_response(response: requests.Response) -> Dict[str, Any]:
 
 
 def build_headers(token: str = None, api_key: str = None) -> Dict[str, str]:
-    """
-    Assemble the appropriate headers for a request.
-    
-    Args:
-        token: Firebase ID token
-        api_key: API key for direct access
-        
+    """Build HTTP headers for API requests.
+
+    Parameters:
+        token: Firebase ID token for authentication
+        api_key: API key for direct access authentication
+
     Returns:
-        Dict of headers including authorization if credentials provided
+        Dictionary of headers including authorization if credentials provided
     """
     headers = {"Content-Type": "application/json"}
     

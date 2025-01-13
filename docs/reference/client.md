@@ -88,7 +88,12 @@ except NetworkError as e:
 curl -X POST "https://api.notedx.io/v1/process-audio" \
      -H "x-api-key: your-api-key" \
      -H "Content-Type: application/json" \
-     -d '{"template": "primaryCare"}'
+     -d '{
+        "template": "primaryCare", 
+        "visit_type": "followUp", 
+        "recording_type": "dictation", 
+        "lang":"en"
+        }'
 
 # Firebase Authentication
 curl -X POST "https://api.notedx.io/v1/user/account/info" \

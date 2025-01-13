@@ -1,13 +1,13 @@
-# NoteDx Python SDK
+# NoteDx Python SDK - Beta Access Available!
 
-The NoteDx Python SDK provides a simple and intuitive way to interact with the NoteDx API for medical note generation and management.
+The NoteDx Python SDK provides a simple and intuitive way to interact with the NoteDx API for medical note generation and management. Fully compliant to handling of healthcare data in the US and Canada including Quebec.
 
 ## Features
 
-- 🔒 **Secure Authentication**: Support for both API key and Firebase authentication
+- 🔒 **Secure Authentication**: API key for usage and Firebase authentication for your account management.
 - 📝 **Note Generation**: Convert audio recordings to structured medical notes
 - 🔄 **Real-time Status**: Track note generation progress
-- 🎯 **Template Support**: Multiple medical note templates
+- 🎯 **Template Support**: Multiple medical note templates and customization
 - 🌐 **Webhook Integration**: Real-time event notifications
 - 🔑 **API Key Management**: Create and manage API keys
 - 👥 **Account Management**: Handle account settings and status
@@ -57,5 +57,5 @@ The SDK is organized into several managers for different aspects of the API:
 
 - Check out our [Getting Started](getting-started.md) guide
 - See [Examples](examples.md) for common use cases
-- Visit our [API Documentation](https://notedx.gitbook.io/notedx-api)
-- Contact support at support@notedx.com 
+- Request Beta Access [here](https://www.notedxai.com/contact-8-1)
+- Contact support at team@notedxai.com 

@@ -9,6 +9,7 @@ class KeyManager:
     Handles API key management operations for the NoteDx API.
     
     This class provides methods for:
+
     - Creating and listing API keys
     - Managing key metadata
     - Updating key status
@@ -34,6 +35,7 @@ class KeyManager:
 
         Returns:
             List of dicts, each containing:
+
             - key: API key value (masked unless show_full=True)
             - type: Key type ('sandbox' or 'live')
             - status: Current status ('active' or 'inactive')
@@ -71,6 +73,7 @@ class KeyManager:
 
         Returns:
             Dict containing:
+
             - api_key: The full API key value (only shown once)
             - key_type: Type of key created
             - metadata: Provided metadata (live keys only)
@@ -113,6 +116,7 @@ class KeyManager:
 
         Returns:
             Dict containing:
+
             - message: "API key metadata updated successfully"
             - api_key: Updated key identifier
 
@@ -149,6 +153,7 @@ class KeyManager:
 
         Returns:
             Dict containing:
+
             - message: "API key status updated successfully"
             - api_key: Updated key identifier
             - status: New status value
@@ -180,6 +185,7 @@ class KeyManager:
 
         Returns:
             Dict containing:
+
             - message: "API key deleted successfully"
             - api_key: Deleted key identifier
 

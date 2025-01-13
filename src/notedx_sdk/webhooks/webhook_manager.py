@@ -5,10 +5,7 @@ import re
 from ..exceptions import (
     InvalidFieldError,
     AuthenticationError,
-    AuthorizationError,
-    NetworkError,
     ValidationError,
-    BadRequestError
 )
 from ..client import NoteDxClient
 
@@ -25,15 +22,15 @@ class WebhookManager:
     for both development and production environments. Webhooks enable real-time
     notifications for events like note generation completion, errors, and billing updates.
     
-    Note:
-        All methods in this class require Firebase authentication (email/password).
-        API key authentication is not supported for webhook management.
-    
     Features:
         - Separate dev/prod webhook URLs
         - HTTPS enforcement for production
         - URL validation and security checks
         - Real-time event notifications
+    
+    Notes:
+        - All methods in this class require Firebase authentication (email/password)
+        - API key authentication is not supported for webhook management
     
     Example:
         ```python
@@ -120,6 +117,7 @@ class WebhookManager:
 
         Returns:
             Dict[str, Any]: Current webhook configuration containing:
+
                 - webhook_dev (str): Development webhook URL or None if not set
                 - webhook_prod (str): Production webhook URL or None if not set
 
@@ -184,16 +182,20 @@ class WebhookManager:
 
         Args:
             webhook_dev (str, optional): Development environment webhook URL.
+
                 - Can use HTTP or HTTPS protocol
                 - Set to empty string to remove
                 - Must be valid URL format
+
             webhook_prod (str, optional): Production environment webhook URL.
+
                 - Must use HTTPS protocol
                 - Set to empty string to remove
                 - Must be valid URL format
 
         Returns:
             Dict[str, Any]: Update confirmation containing:
+
                 - message (str): "Webhook URLs updated successfully"
                 - webhook_dev (str): New dev URL or "unchanged"
                 - webhook_prod (str): New prod URL or "unchanged"

@@ -1,7 +1,13 @@
 from typing import Optional, Dict, Any
 
 class NoteDxError(Exception):
-    """Base exception for all NoteDx API errors."""
+    """Base exception for all NoteDx API errors.
+
+    Parameters:
+        message: The error message
+        code: The error code (optional)
+        details: Additional error details (optional)
+    """
     def __init__(self, message: str, code: Optional[str] = None, details: Optional[Dict[str, Any]] = None):
         super().__init__(message)
         self.message = message
@@ -9,63 +15,72 @@ class NoteDxError(Exception):
         self.details = details or {}
 
 class AuthenticationError(NoteDxError):
-    """
-    Raised when authentication fails (401).
-    
+    """Error raised when authentication fails (401).
+
     Common error codes:
-    - UNAUTHORIZED: Generic authentication failure
-    - USER_NOT_FOUND: Firebase user not found
-    - INVALID_CREDENTIALS: Invalid email/password
-    - INVALID_API_KEY: Invalid API key
-    - TOKEN_EXPIRED: Firebase token expired
-    - TOKEN_INVALID: Invalid Firebase token
+    * `UNAUTHORIZED` - Generic authentication failure
+    * `USER_NOT_FOUND` - Firebase user not found
+    * `INVALID_CREDENTIALS` - Invalid email/password
+    * `INVALID_API_KEY` - Invalid API key
+    * `TOKEN_EXPIRED` - Firebase token expired
+    * `TOKEN_INVALID` - Invalid Firebase token
     """
     def __init__(self, message: str, code: str = 'UNAUTHORIZED', details: Optional[Dict[str, Any]] = None):
         super().__init__(message, code, details)
 
 class AuthorizationError(NoteDxError):
-    """
-    Raised when user lacks permissions (403).
-    
+    """Error raised when user lacks permissions (403).
+
     Common error codes:
-    - FORBIDDEN: Generic authorization failure
-    - INSUFFICIENT_PERMISSIONS: User lacks required permissions
-    - TOKEN_REVOKED: Firebase token was revoked
+    * `FORBIDDEN` - Generic authorization failure
+    * `INSUFFICIENT_PERMISSIONS` - User lacks required permissions
+    * `TOKEN_REVOKED` - Firebase token was revoked
     """
     def __init__(self, message: str, code: str = 'FORBIDDEN', details: Optional[Dict[str, Any]] = None):
         super().__init__(message, code, details)
 
 class PaymentRequiredError(NoteDxError):
-    """Raised when payment is required (402)."""
+    """Error raised when payment is required (402).
+
+    Common error codes:
+    * `PAYMENT_REQUIRED` - Account payment is required
+    * `SUBSCRIPTION_EXPIRED` - Account subscription has expired
+    * `USAGE_LIMIT` - Account has exceeded usage limits
+    """
     def __init__(self, message: str, code: str = 'PAYMENT_REQUIRED', details: Optional[Dict[str, Any]] = None):
         super().__init__(message, code, details)
 
 class InactiveAccountError(NoteDxError):
-    """
-    Raised when account is inactive (403).
-    
+    """Error raised when account is inactive (403).
+
     Common error codes:
-    - ACCOUNT_INACTIVE: Account is inactive
-    - ACCOUNT_DISABLED: Firebase account is disabled
+    * `ACCOUNT_INACTIVE` - Account is inactive
+    * `ACCOUNT_DISABLED` - Firebase account is disabled
     """
     def __init__(self, message: str, code: str = 'ACCOUNT_INACTIVE', details: Optional[Dict[str, Any]] = None):
         super().__init__(message, code, details)
 
 class BadRequestError(NoteDxError):
-    """
-    Raised for general bad request errors (400) that aren't validation specific.
-    
+    """Error raised for general bad request errors (400) that aren't validation specific.
+
     Common error codes:
-    - INVALID_REQUEST: Generic invalid request
-    - INVALID_PASSWORD: Password doesn't meet requirements
-    - EMAIL_EXISTS: Email already exists
-    - WEAK_PASSWORD: Password is too weak
+    * `INVALID_REQUEST` - Generic invalid request
+    * `INVALID_PASSWORD` - Password doesn't meet requirements
+    * `EMAIL_EXISTS` - Email already exists
+    * `WEAK_PASSWORD` - Password is too weak
     """
     def __init__(self, message: str, code: str = 'INVALID_REQUEST', details: Optional[Dict[str, Any]] = None):
         super().__init__(message, code, details)
 
 class ValidationError(NoteDxError):
-    """Raised for invalid input (400)."""
+    """Error raised for invalid input (400).
+
+    Parameters:
+        message: The validation error message
+        field: The field that failed validation (optional)
+        code: The error code (defaults to 'INVALID_FIELD')
+        details: Additional error details (optional)
+    """
     def __init__(self, message: str, field: Optional[str] = None, code: str = 'INVALID_FIELD', details: Optional[Dict[str, Any]] = None):
         details = details or {}
         if field:
@@ -73,22 +88,46 @@ class ValidationError(NoteDxError):
         super().__init__(message, code, details)
 
 class MissingFieldError(ValidationError):
-    """Raised when required field is missing (400)."""
+    """Error raised when required field is missing (400).
+
+    Parameters:
+        field: The name of the missing field
+        details: Additional error details (optional)
+    """
     def __init__(self, field: str, details: Optional[Dict[str, Any]] = None):
         super().__init__(f"Missing required field: {field}", field, 'MISSING_FIELD', details)
 
 class InvalidFieldError(ValidationError):
-    """Raised when field value is invalid (400)."""
+    """Error raised when field value is invalid (400).
+
+    Parameters:
+        field: The name of the invalid field
+        message: The validation error message
+        details: Additional error details (optional)
+    """
     def __init__(self, field: str, message: str, details: Optional[Dict[str, Any]] = None):
         super().__init__(message, field, 'INVALID_FIELD', details)
 
 class NetworkError(NoteDxError):
-    """Raised for network connectivity issues."""
+    """Error raised for network connectivity issues.
+
+    Common error codes:
+    * `NETWORK_ERROR` - Generic network error
+    * `TIMEOUT` - Request timed out
+    * `CONNECTION_ERROR` - Failed to connect to server
+    """
     def __init__(self, message: str, code: str = 'NETWORK_ERROR', details: Optional[Dict[str, Any]] = None):
         super().__init__(message, code, details)
 
 class UploadError(NoteDxError):
-    """Raised when file upload fails."""
+    """Error raised when file upload fails.
+
+    Parameters:
+        message: The error message
+        job_id: The ID of the failed upload job (optional)
+        code: The error code (defaults to 'UPLOAD_ERROR')
+        details: Additional error details (optional)
+    """
     def __init__(self, message: str, job_id: Optional[str] = None, code: str = 'UPLOAD_ERROR', details: Optional[Dict[str, Any]] = None):
         details = details or {}
         if job_id:
@@ -96,18 +135,38 @@ class UploadError(NoteDxError):
         super().__init__(message, code, details)
 
 class NotFoundError(NoteDxError):
-    """Raised when resource is not found (404)."""
+    """Error raised when resource is not found (404).
+
+    Parameters:
+        message: The error message
+        code: The error code (defaults to 'NOT_FOUND')
+        details: Additional error details (optional)
+    """
     def __init__(self, message: str, code: str = 'NOT_FOUND', details: Optional[Dict[str, Any]] = None):
         super().__init__(message, code, details)
 
 class JobNotFoundError(NotFoundError):
-    """Raised when job is not found (404)."""
+    """Error raised when job is not found (404).
+
+    Parameters:
+        job_id: The ID of the job that wasn't found
+        message: Custom error message (optional)
+        details: Additional error details (optional)
+    """
     def __init__(self, job_id: str, message: Optional[str] = None, details: Optional[Dict[str, Any]] = None):
         message = "Job not found"
         super().__init__(message, 'JOB_NOT_FOUND', {'job_id': job_id, **(details or {})})
 
 class JobError(NoteDxError):
-    """Raised for job-related errors."""
+    """Error raised for job-related errors.
+
+    Parameters:
+        message: The error message
+        job_id: The ID of the failed job
+        status: The job status when error occurred (optional)
+        code: The error code (defaults to 'JOB_ERROR')
+        details: Additional error details (optional)
+    """
     def __init__(self, message: str, job_id: str, status: Optional[str] = None, code: str = 'JOB_ERROR', details: Optional[Dict[str, Any]] = None):
         details = details or {}
         details['job_id'] = job_id
@@ -116,7 +175,14 @@ class JobError(NoteDxError):
         super().__init__(message, code, details)
 
 class RateLimitError(NoteDxError):
-    """Raised when rate limit is exceeded (429)."""
+    """Error raised when rate limit is exceeded (429).
+
+    Parameters:
+        message: The error message
+        reset_time: When the rate limit will reset (optional)
+        code: The error code (defaults to 'RATE_LIMIT')
+        details: Additional error details (optional)
+    """
     def __init__(self, message: str, reset_time: Optional[str] = None, code: str = 'RATE_LIMIT', details: Optional[Dict[str, Any]] = None):
         details = details or {}
         if reset_time:
@@ -124,11 +190,23 @@ class RateLimitError(NoteDxError):
         super().__init__(message, code, details)
 
 class InternalServerError(NoteDxError):
-    """Raised for server-side errors (500)."""
+    """Error raised for server-side errors (500).
+
+    Parameters:
+        message: The error message
+        code: The error code (defaults to 'INTERNAL_ERROR')
+        details: Additional error details (optional)
+    """
     def __init__(self, message: str, code: str = 'INTERNAL_ERROR', details: Optional[Dict[str, Any]] = None):
         super().__init__(message, code, details)
 
 class ServiceUnavailableError(NoteDxError):
-    """Raised when service is unavailable (503)."""
+    """Error raised when service is unavailable (503).
+
+    Parameters:
+        message: The error message
+        code: The error code (defaults to 'SERVICE_UNAVAILABLE')
+        details: Additional error details (optional)
+    """
     def __init__(self, message: str, code: str = 'SERVICE_UNAVAILABLE', details: Optional[Dict[str, Any]] = None):
         super().__init__(message, code, details)

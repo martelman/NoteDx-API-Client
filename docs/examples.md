@@ -66,11 +66,11 @@ response = client.notes.process_audio(
     recording_type="dictation",
     lang="en",
     custom={
-        "context": {
-            "patient_history": "Previous visit on 2024-01-01",
-            "medications": ["Medication A", "Medication B"],
-            "allergies": ["Penicillin"]
-        },
+        "context": """
+            Previous visit on 2024-01-01
+            Current medications: Medication A, Medication B
+            Allergies: Penicillin
+        """,
         "template": """
         SUBJECTIVE:
         {subjective}

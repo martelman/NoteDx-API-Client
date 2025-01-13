@@ -149,5 +149,5 @@ except JobError as e:
 
 - Check out the [API Reference](reference/client.md) for detailed documentation
 - See [Examples](examples.md) for more use cases
-- Visit our [API Documentation](https://notedx.gitbook.io/notedx-api) for API details
-- Contact support at support@notedx.com for help 
+- Request Beta Access [here](https://www.notedxai.com/contact-8-1)
+- Contact support at team@notedxai.com for help 

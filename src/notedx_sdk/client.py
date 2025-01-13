@@ -33,46 +33,51 @@ logger.setLevel(logging.INFO)  # Default to INFO level
 class NoteDxClient:
     """
     A Pythonic client for the NoteDx API that provides a robust interface for medical note generation.
-
-    This client wraps the NoteDx API endpoints, providing:
-    1. Authentication handling (Firebase email/password and API key)
-    2. Environment configuration
-    3. Type-safe interfaces
-    4. Comprehensive error handling
-    5. Resource management
-
-    Args:
+    
+    This client wraps the NoteDx API endpoints, providing comprehensive functionality for medical
+    note generation and account management. It handles authentication, environment configuration,
+    and resource management with robust error handling.
+    
+    Features:
+        - Authentication handling (Firebase email/password and API key)
+        - Environment configuration
+        - Type-safe interfaces
+        - Comprehensive error handling
+        - Resource management
+    
+    Parameters:
         email (str, optional): Email for authentication. If not provided, reads from NOTEDX_EMAIL env var.
         password (str, optional): Password for authentication. If not provided, reads from NOTEDX_PASSWORD env var.
         api_key (str, optional): API key for authentication. If not provided, reads from NOTEDX_API_KEY env var.
         auto_login (bool, optional): If True, automatically logs in when credentials are provided. Defaults to True.
         session (requests.Session, optional): Custom requests.Session for advanced configuration.
-
+    
     Raises:
-        ValidationError: If the base_url is invalid.
-        AuthenticationError: If credentials are invalid or missing.
-        NetworkError: If unable to connect to the API.
-        InternalServerError: If server error occurs during initialization.
-
+        ValidationError: If the base_url is invalid
+        AuthenticationError: If credentials are invalid or missing
+        NetworkError: If unable to connect to the API
+        InternalServerError: If server error occurs during initialization
+    
     Example:
-        Using email/password authentication:
-        >>> client = NoteDxClient(
-        ...     email="user@example.com",
-        ...     password="password123"
-        ... )
-        >>> # Client automatically logs in
-        >>> print(client.account.get_account())
-
-        Using API key authentication:
-        >>> client = NoteDxClient(api_key="your-api-key")
-        >>> # Process an audio file
-        >>> response = client.notes.process_audio(
-        ...     file_path="recording.mp3",
-        ...     template="primaryCare"
-        ... )
-
-    Note:
-        - If both email/password and api_key are provided, api_key takes precedence
+        ```python
+        # Using email/password authentication
+        client = NoteDxClient(
+            email="user@example.com",
+            password="password123"
+        )
+        # Client automatically logs in
+        print(client.account.get_account())
+        
+        # Using API key authentication
+        client = NoteDxClient(api_key="your-api-key")
+        # Process an audio file
+        response = client.notes.process_audio(
+            file_path="recording.mp3",
+            template="primaryCare"
+        )
+        ```
+    
+    Notes:
         - The session parameter allows for custom SSL, proxy, and timeout configuration
         - Auto-login can be disabled if you want to handle authentication manually
     """
@@ -97,6 +102,7 @@ class NoteDxClient:
                 Defaults to '%(asctime)s - %(name)s - %(levelname)s - %(message)s'.
 
         Example:
+            ```python
             Enable debug logging to console:
             >>> NoteDxClient.configure_logging(logging.DEBUG)
 
@@ -107,6 +113,7 @@ class NoteDxClient:
             ...     handler=file_handler,
             ...     format_string='%(asctime)s - %(message)s'
             ... )
+            ```
         """
         global logger
         
@@ -143,8 +150,10 @@ class NoteDxClient:
             level (int): The logging level to set (e.g., logging.DEBUG, logging.INFO).
 
         Example:
+            ```python
             >>> NoteDxClient.set_log_level(logging.DEBUG)  # Enable debug logging
             >>> NoteDxClient.set_log_level(logging.WARNING)  # Only log warnings and errors
+            ```
         """
         logger.setLevel(level)
         logger.debug("Log level set to %s", logging.getLevelName(level))
@@ -161,6 +170,7 @@ class NoteDxClient:
         Initialize the NoteDx API client.
 
         The client can be initialized with either:
+
         1. Email and password for full account access (using Firebase Auth)
         2. API key for note generation only
         3. No credentials (will read from environment variables)
@@ -179,7 +189,6 @@ class NoteDxClient:
             InternalServerError: If server error occurs during initialization
 
         Note:
-            - If both email/password and api_key are provided, api_key takes precedence
             - The session parameter allows for custom SSL, proxy, and timeout configuration
             - Auto-login can be disabled if you want to handle authentication manually
         """
@@ -244,6 +253,7 @@ class NoteDxClient:
 
         Returns:
             dict: Authentication response containing:
+
                 - user_id (str): Firebase user ID
                 - email (str): User's email address
                 - id_token (str): Firebase ID token for API requests
@@ -256,9 +266,11 @@ class NoteDxClient:
             NoteDxError: For other API errors
 
         Example:
+            ```python
             >>> client = NoteDxClient(email="user@example.com", password="pass", auto_login=False)
             >>> auth_info = client.login()
             >>> print(f"Logged in as: {auth_info['email']}")
+            ```
         """
         if not self._email or not self._password:
             logger.error("Missing email/password for login")
@@ -325,6 +337,7 @@ class NoteDxClient:
 
         Returns:
             dict: Refresh response containing:
+
                 - id_token (str): New Firebase ID token
                 - refresh_token (str): New refresh token (if rotated)
                 - user_id (str): Firebase user ID
@@ -336,12 +349,14 @@ class NoteDxClient:
             NoteDxError: For other API errors
 
         Example:
+            ```python
             >>> # Refresh token when needed
             >>> try:
             ...     new_tokens = client.refresh_token()
             ... except AuthenticationError:
             ...     # Handle token refresh failure
             ...     client.login()
+            ```
         """
         if not self._refresh_token:
             logger.error("Cannot refresh token: no refresh token available")
@@ -399,6 +414,7 @@ class NoteDxClient:
             refresh_token (str, optional): Firebase refresh token for token renewal
 
         Example:
+            ```python
             >>> # Using tokens from another source
             >>> client = NoteDxClient()
             >>> client.set_token(
@@ -407,6 +423,7 @@ class NoteDxClient:
             ... )
             >>> # Now you can make authenticated requests
             >>> account_info = client.account.get_account()
+            ```
 
         Note:
             - The tokens must be valid Firebase tokens
@@ -429,6 +446,7 @@ class NoteDxClient:
             api_key (str): NoteDx API key for authentication
 
         Example:
+            ```python
             >>> client = NoteDxClient()
             >>> client.set_api_key("your_api_key")
             >>> # Now you can use note generation endpoints
@@ -436,6 +454,7 @@ class NoteDxClient:
             ...     file_path="recording.mp3",
             ...     template="primaryCare"
             ... )
+            ```
 
         Note:
             - API keys only provide access to note generation endpoints
@@ -460,6 +479,7 @@ class NoteDxClient:
 
         Returns:
             dict: Password change response containing:
+
                 - message (str): Success message
                 - user_id (str): Firebase user ID
                 - email (str): User's email
@@ -471,6 +491,7 @@ class NoteDxClient:
             NoteDxError: For other API errors
 
         Example:
+            ```python
             >>> try:
             ...     result = client.change_password("old_pass", "new_secure_pass")
             ...     if result["requires_reauth"]:
@@ -478,6 +499,7 @@ class NoteDxClient:
             ...         client.login()
             ... except BadRequestError as e:
             ...     print(f"Invalid password: {e}")
+            ```
         """
         if not self._user_id:
             logger.error("Cannot change password: user not logged in")
@@ -622,6 +644,7 @@ class NoteDxClient:
         Make an authenticated HTTP request to the NoteDx API.
 
         This internal method handles:
+
         - Authentication token/API key management
         - Request retries with exponential backoff
         - Error response parsing and exception mapping
@@ -860,14 +883,13 @@ class NoteDxClient:
             raise
 
     def _redact_sensitive_data(self, data: Any) -> Any:
-        """
-        Redact sensitive information from data for logging purposes.
+        """Redact sensitive information from data for logging purposes.
 
-        Args:
+        Parameters:
             data: Data to redact (dict, list, or scalar value)
 
         Returns:
-            Redacted copy of the data
+            Redacted copy of the data with sensitive information masked
         """
         if isinstance(data, dict):
             return {
