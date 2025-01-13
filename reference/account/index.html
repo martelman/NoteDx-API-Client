@@ -902,9 +902,11 @@
 
   
       <p>Handles account management operations for the NoteDx API.</p>
-<p>This class provides methods for:
-- Account information retrieval and updates
-- Account lifecycle management</p>
+<p>This class provides methods for:</p>
+<ul>
+<li>Account information retrieval and updates</li>
+<li>Account lifecycle management</li>
+</ul>
 
 <details class="note" open>
   <summary>Note</summary>
@@ -1433,11 +1435,13 @@ API key authentication is not supported for account management operations.</p>
   <div class="doc doc-contents ">
   
       <p>Cancel the current account.</p>
-<p>This operation:
-1. Deactivates all live API keys
-2. Updates account status to 'cancelled'
-3. Records cancellation timestamp
-4. Triggers final billing process</p>
+<p>This operation:</p>
+<ol>
+<li>Deactivates all live API keys</li>
+<li>Updates account status to 'cancelled'</li>
+<li>Records cancellation timestamp</li>
+<li>Triggers final billing process</li>
+</ol>
 
 
 
@@ -1591,11 +1595,13 @@ API key authentication is not supported for account management operations.</p>
   <div class="doc doc-contents ">
   
       <p>Reactivate a cancelled account.</p>
-<p>This operation:
-1. Verifies account is in 'cancelled' state
-2. Checks for unpaid bills
-3. Sets account status to 'inactive'
-4. Records reactivation timestamp</p>
+<p>This operation:</p>
+<ol>
+<li>Verifies account is in 'cancelled' state</li>
+<li>Checks for unpaid bills</li>
+<li>Sets account status to 'inactive'</li>
+<li>Records reactivation timestamp</li>
+</ol>
 
 
 

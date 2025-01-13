@@ -1103,17 +1103,14 @@
 <p>This client wraps the NoteDx API endpoints, providing comprehensive functionality for medical
 note generation and account management. It handles authentication, environment configuration,
 and resource management with robust error handling.</p>
+<p>Features:</p>
+<div class="highlight"><pre><span></span><code>- Authentication handling (Firebase email/password and API key)
+- Environment configuration
+- Type-safe interfaces
+- Comprehensive error handling
+- Resource management
+</code></pre></div>
 
-<details class="features" open>
-  <summary>Features</summary>
-  <ul>
-<li>Authentication handling (Firebase email/password and API key)</li>
-<li>Environment configuration</li>
-<li>Type-safe interfaces</li>
-<li>Comprehensive error handling</li>
-<li>Resource management</li>
-</ul>
-</details>
 
 
   <table>
@@ -1296,19 +1293,18 @@ and resource management with robust error handling.</p>
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">template</span><span class="o">=</span><span class="s2">&quot;primaryCare&quot;</span>
 <a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="p">)</span>
 </code></pre></div>
-</details>
-<details class="notes" open>
-  <summary>Notes</summary>
-  <ul>
-<li>The session parameter allows for custom SSL, proxy, and timeout configuration</li>
-<li>Auto-login can be disabled if you want to handle authentication manually</li>
-</ul>
-</details>  
+</details>      <p>Notes:</p>
+<div class="highlight"><pre><span></span><code>- The session parameter allows for custom SSL, proxy, and timeout configuration
+- Auto-login can be disabled if you want to handle authentication manually
+</code></pre></div>
+  
       <p>Initialize the NoteDx API client.</p>
-<p>The client can be initialized with either:
-1. Email and password for full account access (using Firebase Auth)
-2. API key for note generation only
-3. No credentials (will read from environment variables)</p>
+<p>The client can be initialized with either:</p>
+<ol>
+<li>Email and password for full account access (using Firebase Auth)</li>
+<li>API key for note generation only</li>
+<li>No credentials (will read from environment variables)</li>
+</ol>
 
 
 
@@ -1473,14 +1469,11 @@ and resource management with robust error handling.</p>
         </tr>
     </tbody>
   </table>
+      <p>Note:</p>
+<div class="highlight"><pre><span></span><code>- The session parameter allows for custom SSL, proxy, and timeout configuration
+- Auto-login can be disabled if you want to handle authentication manually
+</code></pre></div>
 
-<details class="note" open>
-  <summary>Note</summary>
-  <ul>
-<li>The session parameter allows for custom SSL, proxy, and timeout configuration</li>
-<li>Auto-login can be disabled if you want to handle authentication manually</li>
-</ul>
-</details>
 
   
 
@@ -1719,12 +1712,14 @@ for subsequent requests.</p>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>Authentication response containing:
-- user_id (str): Firebase user ID
-- email (str): User's email address
-- id_token (str): Firebase ID token for API requests
-- refresh_token (str): Token for refreshing authentication
-- requires_password_change (bool): Whether user needs to change password</p>
+              <p>Authentication response containing:</p>
+<ul>
+<li>user_id (str): Firebase user ID</li>
+<li>email (str): User's email address</li>
+<li>id_token (str): Firebase ID token for API requests</li>
+<li>refresh_token (str): Token for refreshing authentication</li>
+<li>requires_password_change (bool): Whether user needs to change password</li>
+</ul>
             </div>
               <p>
                 <span class="doc-returns-annotation">
@@ -1837,11 +1832,13 @@ It automatically updates the stored tokens on successful refresh.</p>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>Refresh response containing:
-- id_token (str): New Firebase ID token
-- refresh_token (str): New refresh token (if rotated)
-- user_id (str): Firebase user ID
-- email (str): User's email</p>
+              <p>Refresh response containing:</p>
+<ul>
+<li>id_token (str): New Firebase ID token</li>
+<li>refresh_token (str): New refresh token (if rotated)</li>
+<li>user_id (str): Firebase user ID</li>
+<li>email (str): User's email</li>
+</ul>
             </div>
               <p>
                 <span class="doc-returns-annotation">
@@ -2005,15 +2002,12 @@ client.set_token(
 </blockquote>
 </blockquote>
 </blockquote>
-</details>
-<details class="note" open>
-  <summary>Note</summary>
-  <ul>
-<li>The tokens must be valid Firebase tokens</li>
-<li>Without a refresh_token, you won't be able to automatically refresh authentication</li>
-<li>Invalid tokens will cause AuthenticationError on API requests</li>
-</ul>
-</details>
+</details>      <p>Note:</p>
+<div class="highlight"><pre><span></span><code>- The tokens must be valid Firebase tokens
+- Without a refresh_token, you won&#39;t be able to automatically refresh authentication
+- Invalid tokens will cause AuthenticationError on API requests
+</code></pre></div>
+
   </div>
 
 </div>
@@ -2079,15 +2073,12 @@ client.set_api_key("your_api_key")</p>
 </blockquote>
 </blockquote>
 </blockquote>
-</details>
-<details class="note" open>
-  <summary>Note</summary>
-  <ul>
-<li>API keys only provide access to note generation endpoints</li>
-<li>For full account access, use email/password authentication</li>
-<li>Invalid API keys will cause AuthenticationError on API requests</li>
-</ul>
-</details>
+</details>      <p>Note:</p>
+<div class="highlight"><pre><span></span><code>- API keys only provide access to note generation endpoints
+- For full account access, use email/password authentication
+- Invalid API keys will cause AuthenticationError on API requests
+</code></pre></div>
+
   </div>
 
 </div>
@@ -2171,11 +2162,13 @@ before making the request.</p>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>Password change response containing:
-- message (str): Success message
-- user_id (str): Firebase user ID
-- email (str): User's email
-- requires_reauth (bool): Whether re-authentication is required</p>
+              <p>Password change response containing:</p>
+<ul>
+<li>message (str): Success message</li>
+<li>user_id (str): Firebase user ID</li>
+<li>email (str): User's email</li>
+<li>requires_reauth (bool): Whether re-authentication is required</li>
+</ul>
             </div>
               <p>
                 <span class="doc-returns-annotation">

@@ -1166,11 +1166,13 @@
 
   
       <p>Manages medical note generation from audio files using the NoteDx API.</p>
-<p>This class provides a high-level interface for:
-- Converting audio recordings to medical notes
-- Managing note generation jobs
-- Retrieving generated notes and transcripts
-- Monitoring system status</p>
+<p>This class provides a high-level interface for:</p>
+<ul>
+<li>Converting audio recordings to medical notes</li>
+<li>Managing note generation jobs</li>
+<li>Retrieving generated notes and transcripts</li>
+<li>Monitoring system status</li>
+</ul>
 <p>The NoteManager handles all API authentication and error handling,
 making it easy to integrate medical note generation into your application.</p>
 
@@ -1464,11 +1466,13 @@ NoteManager.configure_logging(logging.INFO, file_handler)</p>
   <div class="doc doc-contents ">
   
       <p>Converts an audio recording into a medical note using the specified template.</p>
-<p>This method handles the complete flow of audio processing and note generation:
-1. Validates the audio file format and parameters
-2. Securely uploads the file
-3. Initiates the note generation process
-4. Returns a job ID for tracking progress</p>
+<p>This method handles the complete flow of audio processing and note generation:</p>
+<ol>
+<li>Validates the audio file format and parameters</li>
+<li>Securely uploads the file</li>
+<li>Initiates the note generation process</li>
+<li>Returns a job ID for tracking progress</li>
+</ol>
 
 
 
@@ -1637,9 +1641,11 @@ The template determines how the audio content will be structured in the final no
           <td class="doc-param-details">
             <div class="doc-md-description">
               <p>Additional parameters for note generation (optional).<br />
-Dictionary that can contain:
-* <code>context</code>: Additional patient context (history, demographics, medication, etc.)
-* <code>template</code>: A complete custom template as a string (SOAP note, other etc...)</p>
+Dictionary that can contain:</p>
+<ul>
+<li><code>context</code>: Additional patient context (history, demographics, medication, etc.)</li>
+<li><code>template</code>: A complete custom template as a string (SOAP note, other etc...)</li>
+</ul>
             </div>
             <p>
                 <span class="doc-param-annotation">
@@ -1691,10 +1697,12 @@ Defaults to 1MB. Adjust for large files or slow connections.</p>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>A dictionary containing:
-* <code>job_id</code>: Unique identifier for tracking the job
-* <code>presigned_url</code>: URL for uploading the audio file
-* <code>status</code>: Initial job status</p>
+              <p>A dictionary containing:</p>
+<ul>
+<li><code>job_id</code>: Unique identifier for tracking the job</li>
+<li><code>presigned_url</code>: URL for uploading the audio file</li>
+<li><code>status</code>: Initial job status</li>
+</ul>
             </div>
               <p>
                 <span class="doc-returns-annotation">
@@ -1898,10 +1906,12 @@ Defaults to 1MB. Adjust for large files or slow connections.</p>
   <div class="doc doc-contents ">
   
       <p>Generates a new medical note from an existing transcript with different parameters.</p>
-<p>This method allows you to:
-- Generate a new note using a different template
-- Translate the note to another language
-- Modify generation parameters without re-uploading audio</p>
+<p>This method allows you to:</p>
+<ul>
+<li>Generate a new note using a different template</li>
+<li>Translate the note to another language</li>
+<li>Modify generation parameters without re-uploading audio</li>
+</ul>
 
 
 
@@ -1952,10 +1962,12 @@ If not specified, uses the original template.</p>
           <td><code>output_language</code></td>
           <td class="doc-param-details">
             <div class="doc-md-description">
-              <p>Target language for the new note:
-- 'en': English
-- 'fr': French
-If not specified, uses the original language.</p>
+              <p>Target language for the new note:</p>
+<ul>
+<li>'en': English</li>
+<li>'fr': French
+If not specified, uses the original language.</li>
+</ul>
             </div>
             <p>
                 <span class="doc-param-annotation">
@@ -1973,9 +1985,11 @@ If not specified, uses the original language.</p>
           <td><code>custom</code></td>
           <td class="doc-param-details">
             <div class="doc-md-description">
-              <p>Additional parameters for note generation:
-- context: Additional patient context (history, demographics, medication, etc.)
-- template: A complete custom template as a string (SOAP note, other etc...)</p>
+              <p>Additional parameters for note generation:</p>
+<ul>
+<li>context: Additional patient context (history, demographics, medication, etc.)</li>
+<li>template: A complete custom template as a string (SOAP note, other etc...)</li>
+</ul>
             </div>
             <p>
                 <span class="doc-param-annotation">
@@ -2008,9 +2022,11 @@ If not specified, uses the original language.</p>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>A dictionary containing:
-- job_id (str): New job ID for the regenerated note
-- status (str): Initial job status</p>
+              <p>A dictionary containing:</p>
+<ul>
+<li>job_id (str): New job ID for the regenerated note</li>
+<li>status (str): Initial job status</li>
+</ul>
             </div>
               <p>
                 <span class="doc-returns-annotation">
@@ -2145,13 +2161,15 @@ new_job_id = response["job_id"]</p>
   <div class="doc doc-contents ">
   
       <p>Gets the current status and progress of a note generation job.</p>
-<p>The job can be in one of these states:
-- 'pending': Job created, waiting for file upload
-- 'queued': File uploaded, waiting for processing
-- 'transcribing': Audio file is being transcribed
-- 'transcribed': Transcript ready, generating note
-- 'completed': Note generation finished successfully
-- 'error': Job failed with an error</p>
+<p>The job can be in one of these states:</p>
+<ul>
+<li>'pending': Job created, waiting for file upload</li>
+<li>'queued': File uploaded, waiting for processing</li>
+<li>'transcribing': Audio file is being transcribed</li>
+<li>'transcribed': Transcript ready, generating note</li>
+<li>'completed': Note generation finished successfully</li>
+<li>'error': Job failed with an error</li>
+</ul>
 
 
 
@@ -2197,10 +2215,12 @@ Obtained from process_audio() or regenerate_note().</p>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>A dictionary containing:
-- status (str): Current job status (see states above)
-- message (str, optional): Status message or error details
-- progress (dict, optional): Progress information</p>
+              <p>A dictionary containing:</p>
+<ul>
+<li>status (str): Current job status (see states above)</li>
+<li>message (str, optional): Status message or error details</li>
+<li>progress (dict, optional): Progress information</li>
+</ul>
             </div>
               <p>
                 <span class="doc-returns-annotation">
@@ -2291,7 +2311,7 @@ elif status["status"] == "error":
 <details class="note" open>
   <summary>Note</summary>
   <ul>
-<li>Poll at least 5 seconds apart if you chose this methos. Webhooks are recommended.</li>
+<li>Poll at least 5 seconds apart if you chose this method. Webhooks are <strong>HIGHLY</strong> recommended.</li>
 <li>The full Job typically complete within 20-30 seconds.</li>
 <li>Status history is preserved for 48 hours</li>
 </ul>
@@ -2316,11 +2336,13 @@ elif status["status"] == "error":
   <div class="doc doc-contents ">
   
       <p>Retrieves the generated medical note for a completed job.</p>
-<p>The note includes:
-- Patient consent statement (if applicable)
-- Structured medical note based on template
-- Optional note title
-- Source/target language information</p>
+<p>The note includes:</p>
+<ul>
+<li>Patient consent statement (if applicable)</li>
+<li>Structured medical note based on template</li>
+<li>Optional note title</li>
+<li>Source/target language information</li>
+</ul>
 
 
 
@@ -2366,10 +2388,12 @@ Job must be in 'completed' status.</p>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>A dictionary containing:
-- note (str): The generated medical note text
-- noteTitle (str, optional): Title for the note
-- job_id (str): The job ID (for reference)</p>
+              <p>A dictionary containing:</p>
+<ul>
+<li>note (str): The generated medical note text</li>
+<li>noteTitle (str, optional): Title for the note</li>
+<li>job_id (str): The job ID (for reference)</li>
+</ul>
             </div>
               <p>
                 <span class="doc-returns-annotation">
@@ -2500,10 +2524,12 @@ if status["status"] == "completed":
   
       <p>Retrieves the raw transcript for a job after audio processing.</p>
 <p>The transcript represents the raw text from audio processing,
-before any medical note generation. Useful for:
-- Verifying audio processing accuracy
-- Debugging note generation issues
-- Keeping raw transcripts for records</p>
+before any medical note generation. Useful for:</p>
+<ul>
+<li>Verifying audio processing accuracy</li>
+<li>Debugging note generation issues</li>
+<li>Keeping raw transcripts for records</li>
+</ul>
 
 
 
@@ -2549,9 +2575,11 @@ Job must be in 'transcribed' or 'completed' status.</p>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>A dictionary containing:
-- transcript (str): The raw transcript text
-- job_id (str): The job ID (for reference)</p>
+              <p>A dictionary containing:</p>
+<ul>
+<li>transcript (str): The raw transcript text</li>
+<li>job_id (str): The job ID (for reference)</li>
+</ul>
             </div>
               <p>
                 <span class="doc-returns-annotation">
@@ -2678,10 +2706,12 @@ print(f"Raw text: {transcript['transcript']}")</p>
   <div class="doc doc-contents ">
   
       <p>Retrieves system status and health information.</p>
-<p>Useful for:
-- Monitoring API availability
-- Checking processing latencies
-- Debugging connection issues</p>
+<p>Useful for:</p>
+<ul>
+<li>Monitoring API availability</li>
+<li>Checking processing latencies</li>
+<li>Debugging connection issues</li>
+</ul>
 
 
 
@@ -2699,10 +2729,12 @@ print(f"Raw text: {transcript['transcript']}")</p>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>A dictionary containing:
-- status (str): Overall system status
-- services (dict): Status of individual services
-- latency (dict): Current processing latencies</p>
+              <p>A dictionary containing:</p>
+<ul>
+<li>status (str): Overall system status</li>
+<li>services (dict): Status of individual services</li>
+<li>latency (dict): Current processing latencies</li>
+</ul>
             </div>
               <p>
                 <span class="doc-returns-annotation">
