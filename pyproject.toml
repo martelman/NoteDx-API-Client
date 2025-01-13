@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "notedx-sdk"
-version = "0.1.1"
-description = "Official Python SDK for the NoteDx API - a powerful medical note generation service"
+version = "0.1.0"
+description = "Official Python SDK for the NoteDx API - a powerful medical note generation service, fully compliant to healthcare regulations in the US and Canada."
 authors = ["Technologies Medicales JLA Shiftpal inc.", "Julien Martel"]
 readme = "README.md"
 packages = [{include = "notedx_sdk", from = "src"}]
@@ -24,7 +24,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8.1"
+python = "^3.8.2"
 requests = "^2.31.0"
 
 [tool.poetry.group.dev.dependencies]
