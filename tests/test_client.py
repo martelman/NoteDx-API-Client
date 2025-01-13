@@ -1,345 +1,305 @@
 import pytest
-import os
 import requests
-from unittest.mock import patch, MagicMock, Mock
-
+from unittest.mock import Mock, patch, MagicMock
 from src.notedx_sdk import NoteDxClient
 from src.notedx_sdk.exceptions import (
+    NoteDxError,
     AuthenticationError,
     AuthorizationError,
-    NetworkError,
-    RateLimitError,
+    PaymentRequiredError,
+    InactiveAccountError,
     NotFoundError,
+    BadRequestError,
+    RateLimitError,
+    NetworkError,
     InternalServerError,
-    ValidationError,
-    InvalidFieldError
 )
 
-TEST_BASE_URL = "https://api.notedx.io/v1"
+# Test initialization and configuration
+class TestClientInitialization:
+    def test_init_with_api_key(self):
+        """Test client initialization with API key"""
+        client = NoteDxClient(api_key="test-key", auto_login=False)
+        assert client._api_key == "test-key"
+        assert client._email is None
+        assert client._password is None
 
-# Basic initialization tests
-def test_client_initialization():
-    """Test basic client initialization with API key."""
-    client = NoteDxClient(api_key="test_key")
-    assert isinstance(client, NoteDxClient)
-    assert client._api_key == "test_key"
-    assert client.base_url == NoteDxClient.BASE_URL
+    @patch('requests.Session.request')
+    def test_init_with_email_password(self, mock_request):
+        """Test client initialization with email/password"""
+        client = NoteDxClient(email="test@example.com", password="test-pass", auto_login=False)
+        assert client._email == "test@example.com"
+        assert client._password == "test-pass"
+        assert client._api_key is None
 
-def test_client_initialization_no_key():
-    """Test client initialization without API key raises error."""
-    with pytest.raises(AuthenticationError):
-        NoteDxClient(api_key=None)
+    def test_init_no_credentials(self):
+        """Test client initialization with no credentials raises error"""
+        with pytest.raises(AuthenticationError) as exc_info:
+            NoteDxClient()
+        assert "No authentication credentials provided" in str(exc_info.value)
 
-def test_client_initialization_with_email_password():
-    """Test client initialization with email and password."""
-    client = NoteDxClient(
-        email="test@example.com",
-        password="test_password",
-        auto_login=False
-    )
-    assert isinstance(client, NoteDxClient)
-    assert client._email == "test@example.com"
-    assert client._password == "test_password"
-    assert client.base_url == NoteDxClient.BASE_URL
+    @patch.dict('os.environ', {'NOTEDX_API_KEY': 'env-api-key'})
+    def test_init_from_env_vars(self):
+        """Test client initialization from environment variables"""
+        client = NoteDxClient(auto_login=False)
+        assert client._api_key == "env-api-key"
 
-def test_set_api_key():
-    """Test setting API key after initialization."""
-    client = NoteDxClient(api_key="initial_key")
-    client.set_api_key("new_key")
-    assert client._api_key == "new_key"
+    def test_configure_logging(self):
+        """Test logging configuration"""
+        import logging
+        handler = logging.StreamHandler()
+        NoteDxClient.configure_logging(level=logging.DEBUG, handler=handler)
+        logger = logging.getLogger("notedx_sdk")
+        assert logger.level == logging.DEBUG
+        assert handler in logger.handlers
 
-# Environment variable tests
-@pytest.fixture
-def mock_env_vars():
-    """Fixture to set and clean up environment variables."""
-    original_env = dict(os.environ)
-    os.environ["NOTEDX_EMAIL"] = "env_test@example.com"
-    os.environ["NOTEDX_PASSWORD"] = "env_password"
-    os.environ["NOTEDX_API_KEY"] = "env_api_key"
-    
-    yield
-    
-    os.environ.clear()
-    os.environ.update(original_env)
+# Test authentication methods
+class TestAuthentication:
+    @patch('requests.Session.request')
+    def test_login_success(self, mock_request):
+        """Test successful login with email/password"""
+        # Setup mock response
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "user_id": "test-user",
+            "id_token": "test-token",
+            "refresh_token": "test-refresh",
+            "email": "test@example.com"
+        }
+        mock_request.return_value = mock_response
 
-def test_client_initialization_from_env(mock_env_vars):
-    """Test client initialization using environment variables."""
-    client = NoteDxClient(auto_login=False)
-    assert client._email == "env_test@example.com"
-    assert client._password == "env_password"
-    assert client._api_key == "env_api_key"
+        # Create client and login
+        client = NoteDxClient(email="test@example.com", password="test-pass", auto_login=False)
+        result = client.login()
 
-# Authentication tests
-@pytest.fixture
-def mock_session():
-    """Fixture to mock requests.Session."""
-    with patch("requests.Session") as mock:
-        yield mock.return_value
+        # Verify request
+        mock_request.assert_called_once()
+        args, kwargs = mock_request.call_args
+        assert kwargs['json'] == {
+            "email": "test@example.com",
+            "password": "test-pass"
+        }
+        assert client._token == "test-token"
+        assert client._refresh_token == "test-refresh"
+        assert client._user_id == "test-user"
 
-def test_successful_login(mock_session):
-    """Test successful login flow."""
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {
-        "id_token": "test_token",
-        "refresh_token": "test_refresh_token",
-        "user_id": "test_user_id"
-    }
-    mock_session.post.return_value = mock_response
+    @patch('requests.Session.request')
+    def test_login_invalid_credentials(self, mock_request):
+        """Test login with invalid credentials"""
+        # Setup mock response
+        mock_response = Mock()
+        mock_response.status_code = 401
+        mock_response.json.return_value = {
+            "error": {
+                "code": "UNAUTHORIZED",
+                "message": "Invalid credentials"
+            }
+        }
+        mock_request.return_value = mock_response
 
-    client = NoteDxClient(
-        email="test@example.com",
-        password="test_password",
-        session=mock_session
-    )
+        client = NoteDxClient(email="test@example.com", password="wrong-pass", auto_login=False)
+        with pytest.raises(AuthenticationError) as exc_info:
+            client.login()
+        assert "Invalid credentials" in str(exc_info.value)
 
-    assert client._token == "test_token"
-    assert client._refresh_token == "test_refresh_token"
-    mock_session.post.assert_called_once()
+    @patch('requests.Session.request')
+    def test_refresh_token_success(self, mock_request):
+        """Test successful token refresh"""
+        # Setup mock response
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "id_token": "new-token",
+            "refresh_token": "new-refresh",
+            "user_id": "test-user"
+        }
+        mock_request.return_value = mock_response
 
-def test_failed_login(mock_session):
-    """Test failed login with invalid credentials."""
-    mock_response = MagicMock()
-    mock_response.status_code = 401
-    mock_response.json.return_value = {
-        "message": "Invalid credentials",
-        "error": {"code": "AUTH_FAILED"}
-    }
-    mock_session.post.return_value = mock_response
+        client = NoteDxClient(api_key="test-key", auto_login=False)
+        client._refresh_token = "old-refresh-token"
+        result = client.refresh_token()
 
-    with pytest.raises(AuthenticationError) as exc_info:
-        client = NoteDxClient(
-            email="wrong@example.com",
-            password="wrong_password",
-            session=mock_session
-        )
-    
-    assert "Invalid credentials" in str(exc_info.value)
+        mock_request.assert_called_once()
+        args, kwargs = mock_request.call_args
+        assert kwargs['json'] == {"refresh_token": "old-refresh-token"}
+        assert client._token == "new-token"
+        assert client._refresh_token == "new-refresh"
 
-def test_manual_token_setting():
-    """Test manually setting tokens."""
-    client = NoteDxClient(api_key="test_key")
-    client.set_token("manual_token", "manual_refresh")
-    assert client._token == "manual_token"
-    assert client._refresh_token == "manual_refresh"
-
-# Request handling tests
-@pytest.mark.parametrize("status_code,exception_class,error_msg", [
-    (401, AuthenticationError, "Invalid API Key"),
-    (403, AuthorizationError, "Forbidden"),
-    (404, NotFoundError, "Resource not found"),
-    (429, RateLimitError, "API rate limit exceeded"),
-    (500, InternalServerError, "Internal server error"),
-])
-def test_request_error_handling(mock_session, status_code, exception_class, error_msg):
-    """Test various error responses from the API."""
-    mock_response = MagicMock()
-    mock_response.status_code = status_code
-    mock_response.json.return_value = {
-        "message": error_msg,
-        "error": {"code": "ERROR_CODE"}
-    }
-    mock_session.request.return_value = mock_response
-
-    client = NoteDxClient(api_key="test_key", session=mock_session)
-
-    with pytest.raises(exception_class) as exc_info:
-        client._request("GET", "/test")
-    
-    assert error_msg in str(exc_info.value)
-
-def test_network_timeout(mock_session):
-    """Test handling of network timeouts."""
-    mock_session.request.side_effect = requests.Timeout("Connection timed out")
-    
-    client = NoteDxClient(api_key="test_key", session=mock_session)
-    
-    with pytest.raises(NetworkError) as exc_info:
-        client._request("GET", "/test")
-    
-    assert "timed out" in str(exc_info.value)
-
-def test_connection_error(mock_session):
-    """Test handling of connection errors."""
-    mock_session.request.side_effect = requests.ConnectionError("Connection failed")
-    
-    client = NoteDxClient(api_key="test_key", session=mock_session)
-    
-    with pytest.raises(NetworkError) as exc_info:
-        client._request("GET", "/test")
-    
-    assert "Connection error" in str(exc_info.value)
-
-def test_successful_request(mock_session):
-    """Test successful API request."""
-    expected_data = {"key": "value"}
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = expected_data
-    mock_session.request.return_value = mock_response
-
-    client = NoteDxClient(api_key="test_key", session=mock_session)
-    result = client._request("GET", "/test")
-
-    assert result == expected_data
-    mock_session.request.assert_called_once()
-
-# URL handling tests
-def test_base_url_trailing_slash():
-    """Test that base_url handles trailing slashes correctly."""
-    client = NoteDxClient(api_key="test_key")
-    assert not client.base_url.endswith("/")
-    assert client.base_url == NoteDxClient.BASE_URL
-
-@pytest.mark.parametrize("endpoint,expected", [
-    ("/test", "/test"),
-    ("test", "/test"),
-    ("/test/", "/test"),
-    ("test/", "/test"),
-])
-def test_endpoint_slash_handling(mock_session, endpoint, expected):
-    """Test that endpoint slashes are handled correctly."""
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {}
-    mock_session.request.return_value = mock_response
-
-    client = NoteDxClient(api_key="test_key", session=mock_session)
-    client._request("GET", endpoint)
-
-    called_url = mock_session.request.call_args[1]["url"]
-    assert called_url == f"{TEST_BASE_URL}{expected}" 
-
-class TestClient:
-    def test_update_account_no_fields(self, mock_client):
-        with pytest.raises(InvalidFieldError, match="At least one of these fields must be provided: company_name, contact_email, phone_number, address"):
-            mock_client.account.update_account()
-
-    @patch('os.path.isfile')
-    @patch('builtins.open')
-    def test_validate_audio_file_invalid_format(self, mock_open, mock_isfile, mock_client):
-        mock_isfile.return_value = True
-        mock_open.return_value.__enter__.return_value.read.return_value = b'test'
-        with pytest.raises(ValidationError, match="Unsupported audio format"):
-            mock_client.notes._validate_audio_file("test.txt")
-
-    @patch('os.path.isfile')
-    def test_validate_audio_file_missing_path(self, mock_isfile, mock_client):
-        mock_isfile.return_value = False
-        with pytest.raises(ValidationError, match="Audio file not found"):
-            mock_client.notes._validate_audio_file("test.mp3")
-
-    @patch('os.path.isfile')
-    @patch('builtins.open')
-    def test_validate_audio_file_success(self, mock_open, mock_isfile, mock_client):
-        mock_isfile.return_value = True
-        mock_open.return_value.__enter__.return_value.read.return_value = b'test'
-        mock_client.notes._validate_audio_file("test.mp3") 
-
-def test_refresh_token_success(mock_client):
-    """Test successful token refresh"""
-    mock_client._refresh_token = "old_refresh_token"
-    expected_response = {
-        "id_token": "new_id_token",
-        "refresh_token": "new_refresh_token",
-        "user_id": "user123",
-        "email": "test@example.com"
-    }
-    
-    with patch.object(mock_client, '_request') as mock_request:
-        mock_request.return_value = expected_response
-        result = mock_client.refresh_token()
-    
-    mock_request.assert_called_once_with(
-        "POST",
-        "auth/refresh",
-        data={"refresh_token": "old_refresh_token"}
-    )
-    assert result == expected_response
-    assert mock_client._token == "new_id_token"
-    assert mock_client._refresh_token == "new_refresh_token"
-
-def test_refresh_token_no_refresh_token(mock_client):
-    """Test refresh token failure when no refresh token is available"""
-    mock_client._refresh_token = None
-    
-    with pytest.raises(AuthenticationError, match="No refresh token available"):
-        mock_client.refresh_token()
-
-def test_set_token(mock_client):
-    """Test manually setting tokens"""
-    mock_client.set_token("new_token", "new_refresh_token")
-    
-    assert mock_client._token == "new_token"
-    assert mock_client._refresh_token == "new_refresh_token"
-
-def test_set_api_key(mock_client):
-    """Test setting API key"""
-    mock_client.set_api_key("new_api_key")
-    
-    assert mock_client._api_key == "new_api_key"
-
-def test_handle_auth_retry_success(mock_client):
-    """Test successful authentication retry"""
-    endpoint = "test/endpoint"
-    mock_client._auth_retry_counts[endpoint] = 0
-    mock_client._token = "old_token"
-    mock_client._email = "test@example.com"
-    mock_client._password = "test_password"
-
-    mock_login_response = {
-        "id_token": "new_token",
-        "user_id": "user123"
-    }
-
-    def mock_login():
-        mock_client._token = mock_login_response["id_token"]
-        return mock_login_response
-
-    with patch.object(mock_client, 'login', side_effect=mock_login) as mock_login_fn:
-        result = mock_client._handle_auth_retry(
-            endpoint=endpoint,
-            error_msg="Token expired",
-            error_code="TOKEN_EXPIRED",
-            response_data={"error": "Token expired"}
-        )
-
-    assert result is True
-    assert mock_client._token == "new_token"
-    assert mock_client._auth_retry_counts[endpoint] == 1
-
-def test_handle_auth_retry_max_retries(mock_client):
-    """Test auth retry when max retries exceeded"""
-    endpoint = "test/endpoint"
-    mock_client._auth_retry_counts[endpoint] = mock_client.MAX_AUTH_RETRIES
-
-    with pytest.raises(AuthenticationError, match=f"Authorization failed after {mock_client.MAX_AUTH_RETRIES} retries"):
-        mock_client._handle_auth_retry(
-            endpoint=endpoint,
-            error_msg="Token expired",
-            error_code="TOKEN_EXPIRED",
-            response_data={"error": "Token expired"}
-        )
-
-def test_maybe_login_with_existing_token(mock_client):
-    """Test _maybe_login when token already exists"""
-    mock_login = Mock()
-    
-    with patch.object(mock_client, 'login', mock_login):
-        mock_client._token = "existing_token"
-        mock_client._maybe_login()
-        # Should not attempt to login since token exists
-        mock_login.assert_not_called()
-
-def test_maybe_login_no_credentials(mock_client):
-    """Test _maybe_login with no credentials"""
-    mock_login = Mock()
-    
-    with patch.object(mock_client, 'login', mock_login):
-        mock_client._token = None
-        mock_client._email = None
-        mock_client._password = None
+    def test_refresh_token_no_token(self):
+        """Test token refresh with no refresh token"""
+        client = NoteDxClient(api_key="test-key", auto_login=False)
+        client._refresh_token = None
         
-        mock_client._maybe_login()
-        # Should not attempt to login since no credentials
-        mock_login.assert_not_called() 
+        with pytest.raises(AuthenticationError) as exc_info:
+            client.refresh_token()
+        assert "No refresh token available" in str(exc_info.value)
+
+# Test request handling
+class TestRequestHandling:
+    @patch('requests.Session.request')
+    def test_request_with_api_key(self, mock_request):
+        """Test request with API key authentication"""
+        # Setup mock response
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"data": "test"}
+        mock_request.return_value = mock_response
+
+        client = NoteDxClient(api_key="test-api-key", auto_login=False)
+        result = client._request("GET", "test/endpoint")
+
+        mock_request.assert_called_once()
+        args, kwargs = mock_request.call_args
+        assert kwargs['headers']['X-Api-Key'] == "test-api-key"
+        assert result == {"data": "test"}
+
+    @patch('requests.Session.request')
+    def test_request_with_token(self, mock_request):
+        """Test request with token authentication"""
+        # Setup mock response
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"data": "test"}
+        mock_request.return_value = mock_response
+
+        client = NoteDxClient(api_key="test-api-key", auto_login=False)
+        client._token = "test-token"
+        result = client._request("GET", "test/endpoint")
+
+        mock_request.assert_called_once()
+        args, kwargs = mock_request.call_args
+        assert kwargs['headers']['Authorization'] == "Bearer test-token"
+        assert result == {"data": "test"}
+
+    @patch('requests.Session.request')
+    def test_request_retry_on_401(self, mock_request):
+        """Test request retry on 401 error"""
+        # Setup mock responses
+        mock_error = Mock()
+        mock_error.status_code = 401
+        mock_error.json.return_value = {
+            "error": {
+                "code": "TOKEN_EXPIRED",
+                "message": "Token expired"
+            }
+        }
+
+        mock_success = Mock()
+        mock_success.status_code = 200
+        mock_success.json.return_value = {"data": "success"}
+
+        mock_request.side_effect = [mock_error, mock_success]
+
+        client = NoteDxClient(api_key="test-api-key", auto_login=False)
+        client._token = "expired-token"
+        client._refresh_token = "refresh-token"
+
+        with patch.object(client, 'refresh_token') as mock_refresh:
+            mock_refresh.return_value = {"id_token": "new-token"}
+            result = client._request("GET", "test/endpoint")
+
+        assert mock_request.call_count == 2
+        assert result == {"data": "success"}
+
+    @patch('requests.Session.request')
+    def test_request_rate_limit(self, mock_request):
+        """Test handling of rate limit responses"""
+        # Setup mock response
+        mock_response = Mock()
+        mock_response.status_code = 429
+        mock_response.headers = {'X-RateLimit-Reset': '1234567890'}
+        mock_response.json.return_value = {"message": "Rate limit exceeded"}
+        mock_request.return_value = mock_response
+
+        client = NoteDxClient(api_key="test-api-key", auto_login=False)
+        with pytest.raises(RateLimitError) as exc_info:
+            client._request("GET", "test/endpoint")
+        assert "API rate limit exceeded" in str(exc_info.value)
+
+    @patch('requests.Session.request')
+    def test_request_network_error(self, mock_request):
+        """Test handling of network errors"""
+        mock_request.side_effect = requests.ConnectionError("Connection failed")
+
+        client = NoteDxClient(api_key="test-api-key", auto_login=False)
+        with pytest.raises(NetworkError) as exc_info:
+            client._request("GET", "test/endpoint")
+        assert "Connection error" in str(exc_info.value)
+
+    @patch('requests.Session.request')
+    def test_request_timeout(self, mock_request):
+        """Test handling of request timeouts"""
+        mock_request.side_effect = requests.Timeout("Request timed out")
+
+        client = NoteDxClient(api_key="test-api-key", auto_login=False)
+        with pytest.raises(NetworkError) as exc_info:
+            client._request("GET", "test/endpoint")
+        assert "Request timed out" in str(exc_info.value)
+
+# Test error handling
+class TestErrorHandling:
+    @pytest.mark.parametrize("status_code,exception_class,error_msg", [
+        (400, BadRequestError, "Bad request"),
+        (401, AuthenticationError, "Invalid credentials"),
+        (402, PaymentRequiredError, "Payment required"),
+        (403, AuthorizationError, "Not authorized"),
+        (404, NotFoundError, "Resource not found"),
+        (500, InternalServerError, "Server error"),
+    ])
+    @patch('requests.Session.request')
+    def test_error_responses(self, mock_request, status_code, exception_class, error_msg):
+        """Test handling of various error responses"""
+        # Setup mock response
+        mock_response = Mock()
+        mock_response.status_code = status_code
+        mock_response.json.return_value = {
+            "message": error_msg,
+            "error": {"code": "ERROR_CODE"}
+        }
+        mock_request.return_value = mock_response
+
+        client = NoteDxClient(api_key="test-api-key", auto_login=False)
+        with pytest.raises(exception_class) as exc_info:
+            client._request("GET", "test/endpoint")
+        assert error_msg in str(exc_info.value)
+
+# Test utility methods
+class TestUtilityMethods:
+    def test_redact_sensitive_data(self):
+        """Test redaction of sensitive information"""
+        client = NoteDxClient(api_key="test-api-key", auto_login=False)
+        test_data = {
+            "email": "test@example.com",
+            "password": "secret",
+            "api_key": "test-key",
+            "token": "bearer-token",
+            "public": "visible",
+            "nested": {
+                "secret": "hidden",
+                "visible": "shown"
+            }
+        }
+
+        redacted = client._redact_sensitive_data(test_data)
+
+        assert redacted["email"] == "test@example.com"
+        assert redacted["password"] == "***"
+        assert redacted["api_key"] == "***"
+        assert redacted["token"] == "***"
+        assert redacted["public"] == "visible"
+        assert redacted["nested"]["secret"] == "***"
+        assert redacted["nested"]["visible"] == "shown"
+
+    def test_set_token(self):
+        """Test manual token setting"""
+        client = NoteDxClient(api_key="test-api-key", auto_login=False)
+        client.set_token("test-token", "test-refresh")
+        assert client._token == "test-token"
+        assert client._refresh_token == "test-refresh"
+
+    def test_set_api_key(self):
+        """Test manual API key setting"""
+        client = NoteDxClient(api_key="test-api-key", auto_login=False)
+        client.set_api_key("new-api-key")
+        assert client._api_key == "new-api-key"

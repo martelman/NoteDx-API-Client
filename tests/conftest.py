@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 from src.notedx_sdk import NoteDxClient
 
 TEST_BASE_URL = "https://api.notedx.io/v1"
@@ -10,9 +10,12 @@ def api_key():
 
 @pytest.fixture
 def mock_client(api_key):
-    client = NoteDxClient(api_key=api_key)
-    client._request = Mock()  # Mock the _request method
-    return client
+    """Create a mock client with request mocking"""
+    with patch('requests.Session.request') as mock_request:
+        client = NoteDxClient(api_key=api_key, auto_login=False)
+        # Mock the _request method to avoid real HTTP calls
+        client._request = Mock()
+        return client
 
 @pytest.fixture
 def mock_response():

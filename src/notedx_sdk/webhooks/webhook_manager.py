@@ -1,4 +1,4 @@
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List, TYPE_CHECKING
 import logging
 import re
 
@@ -7,7 +7,9 @@ from ..exceptions import (
     AuthenticationError,
     ValidationError,
 )
-from ..client import NoteDxClient
+
+if TYPE_CHECKING:
+    from ..client import NoteDxClient
 
 # Initialize SDK logger
 logger = logging.getLogger("notedx_sdk.webhooks")
@@ -64,7 +66,7 @@ class WebhookManager:
         r'(?::\d+)?'  # optional port
         r'(?:/?|[/?]\S+)$', re.IGNORECASE)
     
-    def __init__(self, client: NoteDxClient) -> None:
+    def __init__(self, client: "NoteDxClient") -> None:
         """
         Initialize the webhook manager.
         

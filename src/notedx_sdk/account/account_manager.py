@@ -1,11 +1,13 @@
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, TYPE_CHECKING
 import logging
 
 from ..exceptions import (
     InvalidFieldError,
     AuthenticationError,
 )
-from ..client import NoteDxClient
+
+if TYPE_CHECKING:
+    from ..client import NoteDxClient
 
 # Initialize SDK logger
 logger = logging.getLogger("notedx_sdk.account")
@@ -47,7 +49,7 @@ class AccountManager:
         ```
     """
     
-    def __init__(self, client: NoteDxClient) -> None:
+    def __init__(self, client: "NoteDxClient") -> None:
         """
         Initialize the account manager.
         

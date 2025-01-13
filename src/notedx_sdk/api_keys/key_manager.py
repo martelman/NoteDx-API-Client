@@ -1,8 +1,13 @@
-from typing import Dict, Any, Optional, List, Literal
+from typing import Dict, Any, Literal, Optional, List, TYPE_CHECKING
 import logging
 
-from ..exceptions import InvalidFieldError
-from ..client import NoteDxClient
+from ..exceptions import (
+    AuthenticationError,
+    InvalidFieldError
+)
+
+if TYPE_CHECKING:
+    from ..client import NoteDxClient
 
 class KeyManager:
     """
@@ -16,7 +21,7 @@ class KeyManager:
     - Key deletion
     """
     
-    def __init__(self, client: NoteDxClient) -> None:
+    def __init__(self, client: "NoteDxClient") -> None:
         """
         Initialize the key manager.
         
@@ -24,7 +29,8 @@ class KeyManager:
             client: The parent NoteDxClient instance
         """
         self._client = client
-        self.logger = logging.getLogger("notedx_sdk.keys")
+        self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+        self.logger.debug("Initialized KeyManager")
 
     def list_api_keys(self, show_full: bool = False) -> List[Dict[str, Any]]:
         """

@@ -1,13 +1,13 @@
-from typing import Dict, Any, Optional, Literal, Union, Callable
-from logging import Logger, Handler
+from typing import Dict, Any, Literal, Optional, List, TYPE_CHECKING, Union
+from logging import Handler
 import os
 import requests
 import logging
 import time
 from ..exceptions import (
-    NoteDxError,
     AuthenticationError,
     AuthorizationError,
+    NoteDxError,
     PaymentRequiredError,
     NetworkError,
     ValidationError,
@@ -22,7 +22,9 @@ from ..exceptions import (
     InternalServerError,
     ServiceUnavailableError
 )
-from ..client import NoteDxClient
+
+if TYPE_CHECKING:
+    from ..client import NoteDxClient
 
 # Initialize SDK logger with null handler by default
 logger = logging.getLogger("notedx_sdk")
@@ -100,16 +102,15 @@ class NoteManager:
         'retry_on_status': [408, 429, 500, 502, 503, 504]
     }
     
-    def __init__(self, client: NoteDxClient, **config: Dict[str, Any]) -> None:
+    def __init__(self, client: "NoteDxClient") -> None:
         """Initialize the NoteManager.
         
         Args:
             client: The NoteDxClient instance.
-            **config: Additional configuration options.
         """
         self._client = client
-        self._config = config
-        self.logger = logging.getLogger("notedx_sdk.notes")
+        self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+        self.logger.debug("Initialized NoteManager")
 
     def set_logger(self, level: Union[int, str], handler: Optional[Handler] = None) -> None:
         """Set the logger level and handler.

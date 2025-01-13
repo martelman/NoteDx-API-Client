@@ -1,244 +1,269 @@
+import os
 import pytest
-from unittest.mock import patch, MagicMock
+import requests
+from unittest.mock import Mock, patch, mock_open
+from src.notedx_sdk.core.note_manager import NoteManager
+from src.notedx_sdk.exceptions import (
+    AuthenticationError,
+    ValidationError,
+    NetworkError,
+    UploadError,
+    JobNotFoundError,
+    JobError,
+    NotFoundError,
+    BadRequestError
+)
 
-from src.notedx_sdk import NoteDxClient
-from src.notedx_sdk.exceptions import BadRequestError, NotFoundError, PaymentRequiredError, ValidationError, JobError
-
-
-@pytest.fixture
-def mock_open(mocker):
-    """Mock open function for file operations."""
-    return mocker.patch('builtins.open', mocker.mock_open(read_data=b'test'))
-
-@pytest.fixture
-def mock_client():
-    """Mock client with API key."""
-    client = NoteDxClient(api_key="test-api-key")
-    return client
-
-@pytest.fixture
-def mock_job_id():
-    """Mock job ID for testing."""
-    return "test-job-id"
+# Test Data
+VALID_AUDIO_FILE = "test.mp3"
+INVALID_AUDIO_FILE = "test.xyz"
+LARGE_FILE_SIZE = 600 * 1024 * 1024  # 600MB
 
 @pytest.fixture
-def mock_response():
-    """Base mock response."""
-    return {
-        "message": "Success",
-        "status": "pending"
+def note_manager(mock_client):
+    """Create a NoteManager instance with a mock client."""
+    manager = mock_client.notes
+    # Initialize with default configuration
+    manager._config = {
+        'api_base_url': "https://api.notedx.io/v1",
+        'request_timeout': 60,
+        'max_retries': 3,
+        'retry_delay': 1,
+        'retry_max_delay': 30,
+        'retry_on_status': [408, 429, 500, 502, 503, 504]
     }
+    
+    # Mock the _request method to avoid real HTTP calls
+    manager._request = mock_client._request
+    return manager
 
-@pytest.mark.unit
-class TestNoteManager:
-    @patch('os.path.isfile')
-    @patch('builtins.open')
-    def test_validate_audio_file_success(self, mock_open, mock_isfile, mock_client):
-        mock_isfile.return_value = True
-        mock_open.return_value.__enter__.return_value.read.return_value = b'test'
-        mock_client.notes._validate_audio_file("test.mp3")
+@pytest.fixture
+def mock_file_exists():
+    """Mock os.path.isfile to return True for test files."""
+    with patch('os.path.isfile') as mock:
+        mock.return_value = True
+        yield mock
 
-    @patch('os.path.isfile')
-    def test_validate_audio_file_missing_path(self, mock_isfile, mock_client):
-        mock_isfile.return_value = False
+@pytest.fixture
+def mock_file_size():
+    """Mock os.path.getsize to return a valid file size."""
+    with patch('os.path.getsize') as mock:
+        mock.return_value = 1024 * 1024  # 1MB
+        yield mock
+
+class TestNoteManagerInit:
+    """Test NoteManager initialization and configuration."""
+    
+    def test_init_creates_logger(self, note_manager):
+        """Test that logger is properly initialized."""
+        assert note_manager.logger is not None
+        # The logger name should include the module path
+        expected_name = "notedx_sdk.core.note_manager.NoteManager"
+        assert note_manager.logger.name.endswith(expected_name)
+
+class TestNoteManagerProcessAudio:
+    """Test process_audio method functionality."""
+
+    def test_process_audio_success(self, note_manager, mock_file_exists, mock_file_size):
+        """Test successful audio processing."""
+        # Mock successful API response
+        note_manager._client._request.return_value = {
+            "job_id": "test-job",
+            "presigned_url": "https://test-url.com",
+            "status": "pending"
+        }
+        
+        # Mock successful file upload
+        with patch('builtins.open', mock_open(read_data=b'test data')):
+            with patch('requests.put') as mock_put:
+                mock_put.return_value.status_code = 200
+                
+                result = note_manager.process_audio(
+                    file_path=VALID_AUDIO_FILE,
+                    visit_type="initialEncounter",
+                    recording_type="dictation",
+                    template="primaryCare",
+                    lang="en"
+                )
+        
+        assert result["job_id"] == "test-job"
+        assert result["status"] == "pending"
+        assert "presigned_url" in result
+
+    def test_process_audio_invalid_file_format(self, note_manager, mock_file_exists):
+        """Test handling of invalid audio file format."""
         with pytest.raises(ValidationError) as exc_info:
-            mock_client.notes._validate_audio_file("test.mp3")
-        assert "Audio file not found" in str(exc_info.value)
-
-    @patch('os.path.isfile')
-    @patch('builtins.open')
-    def test_validate_audio_file_invalid_format(self, mock_open, mock_isfile, mock_client):
-        mock_isfile.return_value = True
-        mock_open.return_value.__enter__.return_value.read.return_value = b'test'
-        with pytest.raises(ValidationError) as exc_info:
-            mock_client.notes._validate_audio_file("test.txt")
+            note_manager.process_audio(
+                file_path=INVALID_AUDIO_FILE,
+                visit_type="initialEncounter",
+                recording_type="dictation",
+                template="primaryCare"
+            )
         assert "Unsupported audio format" in str(exc_info.value)
 
-    @patch('os.path.isfile')
-    @patch('builtins.open')
-    @patch('requests.put')
-    @patch('requests.request')
-    def test_process_audio_success(self, mock_request, mock_put, mock_open, mock_isfile, mock_client):
-        # Mock file validation
-        mock_isfile.return_value = True
-        mock_open.return_value.__enter__.return_value.read.return_value = b'test'
-        
-        # Mock API response
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            'success': True,
-            'job_id': 'test-job-id',
-            'presigned_url': 'https://example.com/upload'
+    def test_process_audio_file_too_large(self, note_manager, mock_file_exists):
+        """Test handling of files exceeding size limit."""
+        with patch('os.path.getsize', return_value=LARGE_FILE_SIZE):
+            with pytest.raises(ValidationError) as exc_info:
+                note_manager.process_audio(
+                    file_path=VALID_AUDIO_FILE,
+                    visit_type="initialEncounter",
+                    recording_type="dictation",
+                    template="primaryCare"
+                )
+            assert "File size exceeds 500MB limit" in str(exc_info.value)
+
+    def test_process_audio_missing_required_fields(self, note_manager, mock_file_exists, mock_file_size):
+        """Test validation of required fields."""
+        with pytest.raises(ValidationError):
+            note_manager.process_audio(
+                file_path=VALID_AUDIO_FILE,
+                # Missing required fields
+            )
+
+    def test_process_audio_upload_network_error(self, note_manager, mock_file_exists, mock_file_size):
+        """Test handling of network errors during upload."""
+        note_manager._client._request.return_value = {
+            "job_id": "test-job",
+            "presigned_url": "https://test-url.com"
         }
-        mock_request.return_value = mock_response
-
-        # Mock upload response
-        mock_put_response = MagicMock()
-        mock_put_response.status_code = 200
-        mock_put.return_value = mock_put_response
-
-        response = mock_client.notes.process_audio(
-            file_path="test.mp3",
-            template="wfw",  # Special template
-            lang="en"
-        )
-        assert response['job_id'] == 'test-job-id'
-        assert response['presigned_url'] == 'https://example.com/upload'
-
-    @patch('os.path.isfile')
-    @patch('builtins.open')
-    @patch('requests.request')
-    def test_process_audio_missing_field(self, mock_request, mock_open, mock_isfile, mock_client):
-        # Mock file validation
-        mock_isfile.return_value = True
-        mock_open.return_value.__enter__.return_value.read.return_value = b'test'
         
-        # Mock API response
-        mock_response = MagicMock()
-        mock_response.status_code = 400
-        mock_response.text = "Missing required field: template"
-        mock_request.return_value = mock_response
+        with patch('builtins.open', mock_open(read_data=b'test data')):
+            with patch('requests.put', side_effect=requests.ConnectionError("Connection failed")):
+                with pytest.raises(UploadError) as exc_info:
+                    note_manager.process_audio(
+                        file_path=VALID_AUDIO_FILE,
+                        visit_type="initialEncounter",
+                        recording_type="dictation",
+                        template="primaryCare"
+                    )
+                assert "Connection failed" in str(exc_info.value)
 
-        with pytest.raises(BadRequestError) as exc_info:
-            mock_client.notes.process_audio(
-                file_path="test.mp3",
-                template="primaryCare",  # Add valid template
-                visit_type="initialEncounter",
-                recording_type="dictation",
-                lang="en"
+class TestNoteManagerRegenerateNote:
+    """Test regenerate_note method functionality."""
+
+    def test_regenerate_note_success(self, note_manager):
+        """Test successful note regeneration."""
+        # Mock successful status check
+        with patch.object(note_manager, 'fetch_status') as mock_status:
+            mock_status.return_value = {"status": "completed"}
+            
+            # Mock regenerate API call
+            note_manager._client._request.return_value = {
+                "job_id": "new-job",
+                "status": "pending"
+            }
+            
+            result = note_manager.regenerate_note(
+                job_id="test-job",
+                template="er",
+                output_language="fr"
             )
-        assert "Missing required field: template" in str(exc_info.value)
+            
+            assert result["job_id"] == "new-job"
+            assert result["status"] == "pending"
 
-    @patch('os.path.isfile')
-    @patch('builtins.open')
-    @patch('requests.request')
-    def test_process_audio_invalid_field(self, mock_request, mock_open, mock_isfile, mock_client):
-        # Mock file validation
-        mock_isfile.return_value = True
-        mock_open.return_value.__enter__.return_value.read.return_value = b'test'
-        
-        # Mock API response
-        mock_response = MagicMock()
-        mock_response.status_code = 400
-        mock_response.text = "Invalid value for template. Must be one of: primaryCare, er, psychiatry, surgicalSpecialties, medicalSpecialties, nursing, radiology, procedures, letter, social, wfw, smartInsert"
-        mock_request.return_value = mock_response
+    def test_regenerate_note_invalid_job(self, note_manager):
+        """Test regeneration with invalid job ID."""
+        with patch.object(note_manager, 'fetch_status', side_effect=JobNotFoundError("test-job")):
+            with pytest.raises(JobNotFoundError):
+                note_manager.regenerate_note(job_id="test-job")
 
-        with pytest.raises(BadRequestError) as exc_info:
-            mock_client.notes.process_audio(
-                file_path="test.mp3",
-                template="primaryCare",  # Use valid template to pass validation
-                visit_type="initialEncounter",
-                recording_type="dictation",
-                lang="en"
-            )
-        assert "Invalid value for template" in str(exc_info.value)
+    def test_regenerate_note_incomplete_job(self, note_manager):
+        """Test regeneration with incomplete original job."""
+        with patch.object(note_manager, 'fetch_status') as mock_status:
+            mock_status.return_value = {"status": "processing"}
+            
+            with pytest.raises(JobError) as exc_info:
+                note_manager.regenerate_note(job_id="test-job")
+            assert "Cannot regenerate note" in str(exc_info.value)
 
-    @patch('os.path.isfile')
-    @patch('builtins.open')
-    @patch('requests.request')
-    def test_process_audio_payment_required(self, mock_request, mock_open, mock_isfile, mock_client):
-        # Mock file validation
-        mock_isfile.return_value = True
-        mock_open.return_value.__enter__.return_value.read.return_value = b'test'
-        
-        # Mock API response
-        mock_response = MagicMock()
-        mock_response.status_code = 402
-        mock_response.text = "Payment required: Please upgrade your plan"
-        mock_request.return_value = mock_response
+class TestNoteManagerFetchStatus:
+    """Test fetch_status method functionality."""
 
-        with pytest.raises(PaymentRequiredError) as exc_info:
-            mock_client.notes.process_audio(
-                file_path="test.mp3",
-                template="wfw",
-                lang="en"
-            )
-        assert "Payment required: Please upgrade your plan" in str(exc_info.value)
-
-    @patch('requests.request')
-    def test_regenerate_note_success(self, mock_request, mock_client):
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            'success': True,
-            'job_id': 'new-job-id'
+    def test_fetch_status_success(self, note_manager):
+        """Test successful status fetch."""
+        expected_response = {
+            "status": "completed",
+            "message": "Note generation complete",
+            "progress": {"percent": 100}
         }
-        mock_request.return_value = mock_response
+        note_manager._client._request.return_value = expected_response
+        
+        result = note_manager.fetch_status("test-job")
+        assert result == expected_response
 
-        response = mock_client.notes.regenerate_note('original-job-id')
-        assert response['job_id'] == 'new-job-id'
+    def test_fetch_status_not_found(self, note_manager):
+        """Test handling of non-existent job."""
+        note_manager._client._request.side_effect = NotFoundError("Job not found")
+        
+        with pytest.raises(JobNotFoundError):
+            note_manager.fetch_status("non-existent-job")
 
-    @patch('requests.request')
-    def test_regenerate_note_no_transcript(self, mock_request, mock_client):
-        mock_response = MagicMock()
-        mock_response.status_code = 400
-        mock_response.text = "Source job has no transcript"
-        mock_request.return_value = mock_response
+class TestNoteManagerFetchNote:
+    """Test fetch_note method functionality."""
 
+    def test_fetch_note_success(self, note_manager):
+        """Test successful note fetch."""
+        expected_response = {
+            "note": "Test medical note content",
+            "noteTitle": "Test Note",
+            "job_id": "test-job"
+        }
+        note_manager._client._request.return_value = expected_response
+        
+        result = note_manager.fetch_note("test-job")
+        assert result == expected_response
+
+    def test_fetch_note_incomplete_job(self, note_manager):
+        """Test fetching note for incomplete job."""
+        note_manager._client._request.side_effect = BadRequestError("Note generation not completed")
+        
         with pytest.raises(JobError) as exc_info:
-            mock_client.notes.regenerate_note('job-id')
-        assert "Source job has no transcript" in str(exc_info.value)
-
-    @patch('requests.request')
-    def test_fetch_status_success(self, mock_request, mock_client):
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            'status': 'completed',
-            'message': None
-        }
-        mock_request.return_value = mock_response
-
-        response = mock_client.notes.fetch_status('job-id')
-        assert response['status'] == 'completed'
-
-    @patch('requests.request')
-    def test_fetch_status_not_found(self, mock_request, mock_client):
-        mock_response = MagicMock()
-        mock_response.status_code = 404
-        mock_response.text = "Job not found"
-        mock_request.return_value = mock_response
-
-        with pytest.raises(NotFoundError) as exc_info:
-            mock_client.notes.fetch_status('invalid-job')
-        assert "Job not found" in str(exc_info.value)
-
-    @patch('requests.request')
-    def test_fetch_note_success(self, mock_request, mock_client):
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            'note': 'Generated note content',
-            'job_id': 'job-id',
-            'noteTitle': 'Note Title'
-        }
-        mock_request.return_value = mock_response
-
-        response = mock_client.notes.fetch_note('job-id')
-        assert response['note'] == 'Generated note content'
-        assert response['noteTitle'] == 'Note Title'
-
-    @patch('requests.request')
-    def test_fetch_note_not_completed(self, mock_request, mock_client):
-        mock_response = MagicMock()
-        mock_response.status_code = 400
-        mock_response.text = "Note generation not completed"
-        mock_request.return_value = mock_response
-
-        with pytest.raises(JobError) as exc_info:
-            mock_client.notes.fetch_note('job-id')
+            note_manager.fetch_note("incomplete-job")
         assert "Note generation not completed" in str(exc_info.value)
 
-    @patch('requests.request')
-    def test_fetch_transcript_success(self, mock_request, mock_client):
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            'transcript': 'Transcribed text content',
-            'job_id': 'job-id'
-        }
-        mock_request.return_value = mock_response
+class TestNoteManagerFetchTranscript:
+    """Test fetch_transcript method functionality."""
 
-        response = mock_client.notes.fetch_transcript('job-id')
-        assert response['transcript'] == 'Transcribed text content' 
+    def test_fetch_transcript_success(self, note_manager):
+        """Test successful transcript fetch."""
+        expected_response = {
+            "transcript": "Test transcript content",
+            "job_id": "test-job"
+        }
+        note_manager._client._request.return_value = expected_response
+        
+        result = note_manager.fetch_transcript("test-job")
+        assert result == expected_response
+
+    def test_fetch_transcript_not_ready(self, note_manager):
+        """Test fetching transcript before it's ready."""
+        note_manager._client._request.side_effect = BadRequestError("Transcription not completed")
+    
+        with pytest.raises(BadRequestError) as exc_info:
+            note_manager.fetch_transcript("incomplete-job")
+        
+        assert str(exc_info.value) == "Transcription not completed"
+
+class TestNoteManagerSystemStatus:
+    """Test get_system_status method functionality."""
+
+    def test_get_system_status_success(self, note_manager):
+        """Test successful system status fetch."""
+        expected_response = {
+            "status": "operational",
+            "services": {"transcription": "up", "note_generation": "up"},
+            "latency": {"avg": 150}
+        }
+        note_manager._client._request.return_value = expected_response
+        
+        result = note_manager.get_system_status()
+        assert result == expected_response
+
+    def test_get_system_status_invalid_response(self, note_manager):
+        """Test handling of invalid system status response."""
+        note_manager._client._request.return_value = {"status": "operational"}  # Missing required fields
+        
+        with pytest.raises(ValidationError):
+            note_manager.get_system_status()

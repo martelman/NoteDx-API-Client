@@ -1,11 +1,16 @@
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List, TYPE_CHECKING
 import logging
 import re
 from datetime import datetime, timezone
 
 from ..exceptions import (
-    ValidationError
+    ValidationError,
+    AuthenticationError,
+    InvalidFieldError
 )
+
+if TYPE_CHECKING:
+    from ..client import NoteDxClient
 
 # Initialize SDK logger
 logger = logging.getLogger("notedx_sdk.usage")
@@ -66,7 +71,7 @@ class UsageManager:
     # Date format regex for YYYY-MM validation
     _DATE_FORMAT_REGEX = re.compile(r'^\d{4}-(0[1-9]|1[0-2])$')
     
-    def __init__(self, client):
+    def __init__(self, client: "NoteDxClient") -> None:
         """
         Initialize the usage manager.
         

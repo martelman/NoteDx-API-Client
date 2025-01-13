@@ -196,9 +196,9 @@ class NoteDxClient:
         self.session = session or requests.Session()
 
         # Environment fallback
-        self._email = email or get_env("NOTEDX_EMAIL")
-        self._password = password or get_env("NOTEDX_PASSWORD")
-        self._api_key = api_key or get_env("NOTEDX_API_KEY")
+        self._email = email or get_env("NOTEDX_EMAIL") or None
+        self._password = password or get_env("NOTEDX_PASSWORD") or None
+        self._api_key = api_key or get_env("NOTEDX_API_KEY") or None
 
         # Validate that we have some form of authentication
         if not any([self._email and self._password, self._api_key]):
