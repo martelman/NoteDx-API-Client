@@ -1,5 +1,7 @@
 [![Tests](https://github.com/martelman/NoteDx-API-Client/actions/workflows/test.yml/badge.svg)](https://github.com/martelman/NoteDx-API-Client/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/martelman/NoteDx-API-Client/graph/badge.svg?token=O64HJ8B0BF)](https://codecov.io/gh/martelman/NoteDx-API-Client)
+![PyPI](https://img.shields.io/pypi/v/notedx-sdk)
+![Last Commit](https://img.shields.io/github/last-commit/martelman/NoteDx-API-Client)
 
 
 # NoteDx API Python Client

@@ -1,19 +1,39 @@
 import pytest
 import requests
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from src.notedx_sdk import NoteDxClient
 from src.notedx_sdk.exceptions import (
-    NoteDxError,
     AuthenticationError,
     AuthorizationError,
     PaymentRequiredError,
-    InactiveAccountError,
     NotFoundError,
     BadRequestError,
     RateLimitError,
     NetworkError,
     InternalServerError,
 )
+
+@pytest.fixture
+def mock_response():
+    """Create a mock response object."""
+    response = Mock(spec=requests.Response)
+    response.status_code = 200
+    response.json.return_value = {"message": "success"}
+    response.text = "success"
+    return response
+
+@pytest.fixture
+def mock_session():
+    """Create a mock session with default successful response."""
+    with patch('requests.Session') as mock_session:
+        session = Mock()
+        response = Mock(spec=requests.Response)
+        response.status_code = 200
+        response.json.return_value = {"message": "success"}
+        response.text = "success"
+        session.request.return_value = response
+        mock_session.return_value = session
+        yield session
 
 # Test initialization and configuration
 class TestClientInitialization:
@@ -59,7 +79,7 @@ class TestAuthentication:
     def test_login_success(self, mock_request):
         """Test successful login with email/password"""
         # Setup mock response
-        mock_response = Mock()
+        mock_response = Mock(spec=requests.Response)
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "user_id": "test-user",
@@ -88,7 +108,7 @@ class TestAuthentication:
     def test_login_invalid_credentials(self, mock_request):
         """Test login with invalid credentials"""
         # Setup mock response
-        mock_response = Mock()
+        mock_response = Mock(spec=requests.Response)
         mock_response.status_code = 401
         mock_response.json.return_value = {
             "error": {
@@ -107,7 +127,7 @@ class TestAuthentication:
     def test_refresh_token_success(self, mock_request):
         """Test successful token refresh"""
         # Setup mock response
-        mock_response = Mock()
+        mock_response = Mock(spec=requests.Response)
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "id_token": "new-token",
@@ -141,7 +161,7 @@ class TestRequestHandling:
     def test_request_with_api_key(self, mock_request):
         """Test request with API key authentication"""
         # Setup mock response
-        mock_response = Mock()
+        mock_response = Mock(spec=requests.Response)
         mock_response.status_code = 200
         mock_response.json.return_value = {"data": "test"}
         mock_request.return_value = mock_response
@@ -158,7 +178,7 @@ class TestRequestHandling:
     def test_request_with_token(self, mock_request):
         """Test request with token authentication"""
         # Setup mock response
-        mock_response = Mock()
+        mock_response = Mock(spec=requests.Response)
         mock_response.status_code = 200
         mock_response.json.return_value = {"data": "test"}
         mock_request.return_value = mock_response
@@ -176,7 +196,7 @@ class TestRequestHandling:
     def test_request_retry_on_401(self, mock_request):
         """Test request retry on 401 error"""
         # Setup mock responses
-        mock_error = Mock()
+        mock_error = Mock(spec=requests.Response)
         mock_error.status_code = 401
         mock_error.json.return_value = {
             "error": {
@@ -185,7 +205,7 @@ class TestRequestHandling:
             }
         }
 
-        mock_success = Mock()
+        mock_success = Mock(spec=requests.Response)
         mock_success.status_code = 200
         mock_success.json.return_value = {"data": "success"}
 
@@ -206,7 +226,7 @@ class TestRequestHandling:
     def test_request_rate_limit(self, mock_request):
         """Test handling of rate limit responses"""
         # Setup mock response
-        mock_response = Mock()
+        mock_response = Mock(spec=requests.Response)
         mock_response.status_code = 429
         mock_response.headers = {'X-RateLimit-Reset': '1234567890'}
         mock_response.json.return_value = {"message": "Rate limit exceeded"}
@@ -237,6 +257,78 @@ class TestRequestHandling:
             client._request("GET", "test/endpoint")
         assert "Request timed out" in str(exc_info.value)
 
+    @patch('requests.Session.request')
+    def test_request_json_decode_error(self, mock_request):
+        """Test handling of JSON decode errors in _request method."""
+        mock_response = Mock(spec=requests.Response)
+        mock_response.status_code = 200
+        mock_response.json.side_effect = ValueError("Invalid JSON")
+        mock_response.text = "Invalid response"
+        mock_request.return_value = mock_response
+
+        client = NoteDxClient(api_key="test-key", auto_login=False)
+
+        # The client returns the text as data instead of raising NetworkError
+        result = client._request("GET", "test/endpoint")
+        assert result == {"message": "Invalid response"}
+
+    @patch('requests.Session.request')
+    def test_login_success(self, mock_request):
+        """Test successful login."""
+        mock_response = Mock(spec=requests.Response)
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "id_token": "test-token",
+            "refresh_token": "test-refresh",
+            "expires_in": "3600",
+            "user_id": "test-user-id"
+        }
+        mock_response.text = "success"
+        mock_request.return_value = mock_response
+
+        client = NoteDxClient(email="test@example.com", password="password", auto_login=False)
+        result = client.login()
+
+        assert client._token == "test-token"
+        assert client._refresh_token == "test-refresh"
+        assert client._user_id == "test-user-id"
+        mock_request.assert_called_once()
+
+    @patch('requests.Session.request')
+    def test_login_failure(self, mock_request):
+        """Test failed login."""
+        mock_response = Mock(spec=requests.Response)
+        mock_response.status_code = 401  # Changed to 401 for AuthenticationError
+        mock_response.json.return_value = {
+            "error": {"message": "Invalid password"}
+        }
+        mock_response.text = "Invalid password"
+        mock_request.return_value = mock_response
+
+        client = NoteDxClient(email="test@example.com", password="wrong", auto_login=False)
+
+        with pytest.raises(AuthenticationError) as exc_info:
+            client.login()
+        assert "Invalid password" in str(exc_info.value)
+
+    @patch('requests.Session.request')
+    def test_refresh_token_failure(self, mock_request):
+        """Test failed token refresh."""
+        mock_response = Mock(spec=requests.Response)
+        mock_response.status_code = 401  # Changed to 401 for AuthenticationError
+        mock_response.json.return_value = {
+            "error": {"message": "Invalid refresh token"}
+        }
+        mock_response.text = "Invalid refresh token"
+        mock_request.return_value = mock_response
+
+        client = NoteDxClient(api_key="test-key", auto_login=False)
+        client._refresh_token = "invalid-refresh-token"
+
+        with pytest.raises(AuthenticationError) as exc_info:
+            client.refresh_token()
+        assert "Invalid refresh token" in str(exc_info.value)
+
 # Test error handling
 class TestErrorHandling:
     @pytest.mark.parametrize("status_code,exception_class,error_msg", [
@@ -251,7 +343,7 @@ class TestErrorHandling:
     def test_error_responses(self, mock_request, status_code, exception_class, error_msg):
         """Test handling of various error responses"""
         # Setup mock response
-        mock_response = Mock()
+        mock_response = Mock(spec=requests.Response)
         mock_response.status_code = status_code
         mock_response.json.return_value = {
             "message": error_msg,
@@ -303,3 +395,4 @@ class TestUtilityMethods:
         client = NoteDxClient(api_key="test-api-key", auto_login=False)
         client.set_api_key("new-api-key")
         assert client._api_key == "new-api-key"
+
