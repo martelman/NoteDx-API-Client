@@ -80,7 +80,8 @@ class TestNoteManagerProcessAudio:
                     visit_type="initialEncounter",
                     recording_type="dictation",
                     template="primaryCare",
-                    lang="en"
+                    lang="en",
+                    documentation_style="soap"
                 )
         
         assert result["job_id"] == "test-job"
@@ -136,6 +137,30 @@ class TestNoteManagerProcessAudio:
                     )
                 assert "Connection failed" in str(exc_info.value)
 
+    def test_process_audio_with_problem_based_style(self, note_manager, mock_file_exists, mock_file_size):
+        """Test audio processing with problem-based documentation style."""
+        note_manager._client._request.return_value = {
+            "job_id": "test-job",
+            "presigned_url": "https://test-url.com",
+            "status": "pending"
+        }
+        
+        with patch('builtins.open', mock_open(read_data=b'test data')):
+            with patch('requests.put') as mock_put:
+                mock_put.return_value.status_code = 200
+                
+                result = note_manager.process_audio(
+                    file_path=VALID_AUDIO_FILE,
+                    visit_type="initialEncounter",
+                    recording_type="dictation",
+                    template="primaryCare",
+                    lang="en",
+                    documentation_style="problemBased"
+                )
+        
+        assert result["job_id"] == "test-job"
+        assert result["status"] == "pending"
+
 class TestNoteManagerRegenerateNote:
     """Test regenerate_note method functionality."""
 
@@ -154,7 +179,8 @@ class TestNoteManagerRegenerateNote:
             result = note_manager.regenerate_note(
                 job_id="test-job",
                 template="er",
-                output_language="fr"
+                output_language="fr",
+                documentation_style="soap"
             )
             
             assert result["job_id"] == "new-job"
@@ -174,6 +200,25 @@ class TestNoteManagerRegenerateNote:
             with pytest.raises(JobError) as exc_info:
                 note_manager.regenerate_note(job_id="test-job")
             assert "Cannot regenerate note" in str(exc_info.value)
+
+    def test_regenerate_note_with_problem_based_style(self, note_manager):
+        """Test note regeneration with problem-based documentation style."""
+        with patch.object(note_manager, 'fetch_status') as mock_status:
+            mock_status.return_value = {"status": "completed"}
+            
+            note_manager._client._request.return_value = {
+                "job_id": "new-job",
+                "status": "pending"
+            }
+            
+            result = note_manager.regenerate_note(
+                job_id="test-job",
+                template="er",
+                documentation_style="problemBased"
+            )
+            
+            assert result["job_id"] == "new-job"
+            assert result["status"] == "pending"
 
 class TestNoteManagerFetchStatus:
     """Test fetch_status method functionality."""
