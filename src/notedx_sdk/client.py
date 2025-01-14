@@ -309,6 +309,11 @@ class NoteDxClient:
             # Store Firebase tokens if available
             self._token = data.get("id_token")  # Firebase ID token
             self._refresh_token = data.get("refresh_token")  # Firebase refresh token
+
+            # Validate required tokens
+            if not self._token or not self._refresh_token:
+                logger.error("Login failed: Missing required tokens in response")
+                raise AuthenticationError("Missing required tokens in response")
             
             # Check if password change is required
             if data.get("requires_password_change"):
@@ -319,7 +324,7 @@ class NoteDxClient:
             
             logger.info("Successfully logged in as: %s", self._email)
             return data
-            
+
         except requests.Timeout:
             logger.error("Login request timed out after 30 seconds")
             raise NetworkError("Login request timed out")
@@ -475,42 +480,37 @@ class NoteDxClient:
 
     def change_password(self, current_password: str, new_password: str) -> Dict[str, Any]:
         """
-        Change the authenticated user's password.
+        Change the password for the currently logged in user.
 
         ```bash
         POST /auth/change-password
         ```
 
         This method wraps the /auth/change-password endpoint, handling password updates
-        and subsequent re-authentication if required. It validates password requirements
-        before making the request.
+        and token management. On successful password change, it may require re-authentication.
 
         Args:
-            current_password (str): The user's current password
-            new_password (str): The desired new password (must be at least 8 characters)
+            current_password (str): Current password for verification
+            new_password (str): New password to set
 
         Returns:
-            dict: Password change response containing:
-
-                - message (str): Success message
-                - user_id (str): Firebase user ID
-                - email (str): User's email
+            dict: Response data containing:
+            
+                - success (bool): Whether password was changed
                 - requires_reauth (bool): Whether re-authentication is required
 
         Raises:
-            AuthenticationError: If current password is invalid or user not logged in
+            AuthenticationError: If not logged in or current password is incorrect
             BadRequestError: If new password doesn't meet requirements
+            NetworkError: If connection fails or request times out
             NoteDxError: For other API errors
 
         Example:
             ```python
-            >>> try:
-            ...     result = client.change_password("old_pass", "new_secure_pass")
-            ...     if result["requires_reauth"]:
-            ...         # Need to log in again with new password
-            ...         client.login()
-            ... except BadRequestError as e:
-            ...     print(f"Invalid password: {e}")
+            >>> client = NoteDxClient(email="user@example.com", password="old-pass")
+            >>> result = client.change_password("old-pass", "new-pass")
+            >>> if result["requires_reauth"]:
+            ...     client.login()  # Re-authenticate with new password
             ```
         """
         if not self._user_id:
@@ -554,8 +554,10 @@ class NoteDxClient:
 
             return data
 
-        except AuthenticationError:
-            logger.error("Password change failed: invalid current password")
+        except AuthenticationError as e:
+            if "Current password is incorrect" in str(e):
+                logger.error("Password change failed: invalid current password")
+                raise AuthenticationError("Current password is incorrect")
             raise
 
         except Exception as e:
@@ -800,6 +802,10 @@ class NoteDxClient:
             error_code = response_data.get("error", {}).get("code")
             
             if response.status_code == 401:
+                # Handle invalid password error for password change
+                if endpoint == "auth/change-password" and error_code == "INVALID_PASSWORD":
+                    logger.error("Invalid current password for password change")
+                    raise AuthenticationError(error_msg, error_code, response_data)
                 # Handle Firebase auth errors
                 if "Invalid API Key" in error_msg:
                     logger.error("Invalid API key used for %s", endpoint)
@@ -841,7 +847,7 @@ class NoteDxClient:
                 if self._handle_auth_retry(endpoint, error_msg, error_code, response_data):
                     return self._request(method, endpoint, data, params, timeout)
                 raise AuthorizationError(error_msg, error_code, response_data)
-            
+
             elif response.status_code == 404:
                 logger.error("Resource not found at %s", endpoint)
                 raise NotFoundError(error_msg, error_code, response_data)
@@ -876,7 +882,7 @@ class NoteDxClient:
                 "CONNECTION_ERROR",
                 {"url": url, "method": method}
             )
-        
+
         except requests.RequestException as e:
             if isinstance(e, requests.HTTPError) and e.response is not None:
                 # Handle any missed HTTP errors
