@@ -2,6 +2,7 @@
 [![codecov](https://codecov.io/gh/martelman/NoteDx-API-Client/graph/badge.svg?token=O64HJ8B0BF)](https://codecov.io/gh/martelman/NoteDx-API-Client)
 ![PyPI](https://img.shields.io/pypi/v/notedx-sdk)
 ![Last Commit](https://img.shields.io/github/last-commit/martelman/NoteDx-API-Client)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/notedx-sdk)
 
 
 # NoteDx API Python Client
