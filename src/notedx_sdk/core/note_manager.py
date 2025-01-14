@@ -37,7 +37,7 @@ VALID_RECORDING_TYPES = ['dictation', 'conversation']
 VALID_LANGUAGES = ['en', 'fr']
 VALID_TEMPLATES = [
     'primaryCare', 'er', 'psychiatry', 'surgicalSpecialties',
-    'medicalSpecialties', 'nursing', 'radiology', 'procedures',
+    'medicalSpecialties', 'nursing', 'radiology', 'pharmacy', 'procedures',
     'letter', 'social', 'wfw','smartInsert'
 ]
 
@@ -414,7 +414,8 @@ class NoteManager:
         output_language: Optional[Literal['en', 'fr']] = None,
         template: Optional[Literal['primaryCare', 'er', 'psychiatry', 'surgicalSpecialties', 
                                  'medicalSpecialties', 'nursing', 'radiology', 'procedures', 
-                                 'letter', 'social', 'wfw', 'smartInsert']] = None,
+                                 'letter', 'pharmacy', 'social', 'wfw', 'smartInsert']] = None,
+        documentation_style: Optional[Literal['soap', 'problemBased']] = None,
         custom: Optional[Dict[str, Any]] = None,
         chunk_size: Optional[int] = None  # Now optional, will be calculated if not provided
     ) -> Dict[str, Any]:
@@ -457,6 +458,14 @@ class NoteManager:
 
             template: Medical note template to use.  
                 The template determines how the audio content will be structured in the final note.
+            
+            documentation_style: Style of the documentation (optional).
+                * `soap`: The classic SOAP note style
+                * `problemBased`: Problem based documentation style, where each problem is a section of the note
+            
+            Note:
+                - If left empty, the default documentation style of the template is used, i.e. `structured` 
+                - Common sections are: Identification, Chief complaint, Past medical and surgical history, Past investigations, Medication and allergies, Lifestyle habits, Family history, Social history, HPI, Physical exam, Assessment, Plan.
 
                 **Standard templates** (require visit_type and recording_type):
 
@@ -465,7 +474,8 @@ class NoteManager:
                 * `psychiatry` - Psychiatric evaluation
                 * `surgicalSpecialties` - Surgical specialties (Any)
                 * `medicalSpecialties` - Medical specialties (Any)
-                * `nursing` - Nursing notes
+                * `nursing` - Nursing notes 
+                * `pharmacy` - Pharmacy notes
                 * `radiology` - Radiology reports
                 * `procedures` - Procedure notes (small procedures, biopsies, outpatient surgeries, etc.)
                 * `letter` - Medical letter to the referring physician
@@ -531,10 +541,16 @@ class NoteManager:
             ```python
             custom = {
                 "context": "Past medical history: ACL tear 10 years ago on the right knee.",
-                "template": '''SOAP note template.
+                "template": '''A new custom SOAP note template.
+
+                IDENTIFICATION AND CHIEF COMPLAINT:
+                - Include the patient's identification and chief complaint here.
+
+                PAST MEDICAL HISTORY:
+                - Include the patient's past medical history here and past investigations.
 
                 SUBJECTIVE: 
-                - Include the patient's subjective information here. Order by system.
+                - Include the patient's subjective information here. Order by system. (Do not repeat the same information in the Identification and Chief complaint, Past medical history and Past investigations sections)
 
                 OBJECTIVE: 
                 - Include the patient's objective information here.
@@ -547,10 +563,15 @@ class NoteManager:
             }
             ```
 
-            * You can create multiple custom templates for each template type and visit type
+            * You can create multiple custom templates and pass them in the `custom` object.
             * The custom object can be used in `regenerate_note()` to generate new notes from existing transcripts
             * The `context` key adds patient information not in the audio recording
             * `smartInsert` mode allows adding text snippets within a note (e.g., "Include a normal right knee exam")
+
+        Note:
+            - Each language need its own custom template if you want the note to be generated accurately.
+            - For example, if you pass a custom template in english, but use `lang` and `output_language` as french, the note will be generated in french but the custom template but the sections might be in english.
+
         """
         # Validate input parameters
         self.logger.info("Starting audio processing for file: %s", file_path)
@@ -584,6 +605,8 @@ class NoteManager:
                 data['output_language'] = output_language
             if custom:
                 data['custom'] = custom
+            if documentation_style:
+                data['documentation_style'] = documentation_style
 
             # Create job and get upload URL
             self.logger.debug("Creating job with parameters: %s", data)
@@ -675,6 +698,7 @@ class NoteManager:
                                  'medicalSpecialties', 'nursing', 'radiology', 'procedures', 
                                  'letter', 'social', 'wfw', 'smartInsert']] = None,
         output_language: Optional[Literal['en', 'fr']] = None,
+        documentation_style: Optional[Literal['soap', 'problemBased']] = None,
         custom: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
@@ -705,6 +729,8 @@ class NoteManager:
 
                 - context: Additional patient context (history, demographics, medication, etc.)
                 - template: A complete custom template as a string (SOAP note, other etc...)
+            
+            documentation_style: Style of the documentation (optional, see process_audio() for details).
 
         Returns:
             dict: A dictionary containing:
@@ -811,6 +837,8 @@ class NoteManager:
             data['output_language'] = output_language
         if custom:
             data['custom'] = custom
+        if documentation_style:
+            data['documentation_style'] = documentation_style
 
         try:
             self.logger.info(

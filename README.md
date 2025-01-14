@@ -18,6 +18,7 @@ Beta release!
 - Real-time job status tracking
 - Webhook integration
 - Usage monitoring
+- HIPAA and PIPEDA compliant
 
 ## Installation
 
@@ -38,8 +39,13 @@ response = client.notes.process_audio(
     file_path="visit.mp3",
     visit_type="initialEncounter",
     recording_type="dictation",
-    patient_consent=True,
-    template="primaryCare"
+    template="primaryCare",
+    lang="en",
+    documentation_style="problemBased",
+    output_language="fr",
+    custom={
+        "context": "Patient is 30 years old, male, with a history of hypertension and diabetes."
+    }
 )
 
 # Get job ID
