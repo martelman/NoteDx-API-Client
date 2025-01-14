@@ -2,6 +2,11 @@
 
 This guide will help you get started with the NoteDx Python SDK.
 
+Base URL if using HTTP requests:
+```bash
+https://api.notedx.io/v1
+```
+
 ## Installation
 
 Install the SDK using pip:
