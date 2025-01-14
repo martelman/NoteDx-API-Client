@@ -1,15 +1,15 @@
 [tool.poetry]
 name = "notedx-sdk"
-version = "0.1.3"
+version = "0.1.4"
 description = "Official Python SDK for the NoteDx API - a powerful medical note generation service, fully compliant to healthcare regulations in the US and Canada."
-authors = ["Technologies Medicales JLA Shiftpal inc.", "Julien Martel"]
+authors = ["Julien Martel"]
 readme = "README.md"
 packages = [{include = "notedx_sdk", from = "src"}]
 license = "Proprietary"
-homepage = "https://notedx.gitbook.io/notedx-api"
+homepage = "https://www.notedxai.com/contact-8-1"
 repository = "https://github.com/martelman/NoteDx-API-Client"
-documentation = "https://notedx.gitbook.io/notedx-api"
-keywords = ["medical", "notes", "transcription", "healthcare", "api"]
+documentation = "https://martelman.github.io/NoteDx-API-Client/"
+keywords = ["medical", "notes", "transcription", "healthcare", "api", "AI", "scribe", "AI-scribe", "pharmacy", "nursing", "radiology", "procedures", "medicalSpecialties", "HIPAA", "PIPEDA", "Canada", "USA", "Quebec"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Healthcare Industry",
