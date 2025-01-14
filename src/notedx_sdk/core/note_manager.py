@@ -249,6 +249,8 @@ class NoteManager:
                         delay = min(delay * 2, self._config['retry_max_delay'])
                         continue
                     
+                    # After retries are exhausted, raise InternalServerError
+                    self.logger.error("Server error after %d retries: %s", retries, response.text)
                     raise InternalServerError(f"Server error: {response.text}")
                 
                 # If we get here, check for any other error status codes
@@ -258,7 +260,11 @@ class NoteManager:
                     self.logger.error("HTTP error occurred: %s", str(e))
                     raise NetworkError(f"HTTP error: {str(e)}")
                 
-                return response.json()
+                try:
+                    return response.json()
+                except ValueError as e:
+                    self.logger.error("Invalid JSON response: %s", str(e))
+                    raise BadRequestError("Invalid response format")
                 
             except requests.exceptions.ConnectionError as e:
                 self.logger.error("Connection error: %s", str(e))
@@ -611,7 +617,14 @@ class NoteManager:
 
             # Create job and get upload URL
             self.logger.debug("Creating job with parameters: %s", data)
-            response = self._request("POST", "process-audio", data=data)
+            try:
+                response = self._request("POST", "process-audio", data=data)
+            except BadRequestError as e:
+                self.logger.error("Bad request error: %s", str(e))
+                raise  # Re-raise BadRequestError without wrapping
+            except Exception as e:
+                self.logger.error("Error creating job: %s", str(e))
+                raise
             
             job_id = response.get('job_id')
             presigned_url = response.get('presigned_url')
@@ -819,16 +832,16 @@ class NoteManager:
             self.logger.error("Original job not found: %s", job_id)
             raise
         except Exception as e:
-            if not isinstance(e, JobError):  # Don't wrap JobError
-                self.logger.error(
-                    "Error checking original job status: %s",
-                    str(e)
-                )
-                raise JobError(
-                    f"Error checking original job status: {str(e)}",
-                    job_id=job_id
-                )
-            raise
+            if isinstance(e, (JobError, InternalServerError)):  # Don't wrap JobError or InternalServerError
+                raise
+            self.logger.error(
+                "Error checking original job status: %s",
+                str(e)
+            )
+            raise JobError(
+                f"Error checking original job status: {str(e)}",
+                job_id=job_id
+            )
 
         # Prepare request data after all validation passes
         data = {'job_id': job_id}
@@ -899,8 +912,7 @@ class NoteManager:
                 - progress (dict, optional): Progress information
 
         Raises:
-            ValidationError: If job_id is invalid
-            JobNotFoundError: If job is not found
+            JobNotFoundError: If job_id is not found
             AuthenticationError: If API key is invalid
             NetworkError: If connection issues occur
 
@@ -918,42 +930,42 @@ class NoteManager:
             - The full Job typically complete within 20-30 seconds.
             - Status history is preserved for 48 hours
         """
-        # Validate job_id
         if not job_id:
             self.logger.error("Missing required field: job_id")
             raise MissingFieldError("job_id")
-        
+
         try:
             self.logger.debug("Fetching status for job %s", job_id)
             response = self._request("GET", f"status/{job_id}")
-            
+
             # Validate response
             if 'status' not in response:
+                self.logger.error(
+                    "Invalid API response: missing status field for job %s",
+                    job_id
+                )
                 raise ValidationError(
                     "Invalid API response: missing status field",
                     details={"response": response}
                 )
-                
-            status = response['status']
-            self.logger.info(
-                "Job %s status: %s%s",
-                job_id,
-                status,
-                f" - {response['message']}" if 'message' in response else ""
+
+            self.logger.debug(
+                "Status for job %s: %s",
+                job_id, response['status']
             )
-            
             return response
-            
+
         except NotFoundError:
             self.logger.error("Job not found: %s", job_id)
             raise JobNotFoundError(job_id)
-            
         except Exception as e:
-            self.logger.error(
-                "Error fetching status for job %s: %s",
-                job_id, str(e)
+            self.logger.error("Error fetching status for job %s: %s", job_id, str(e))
+            if isinstance(e, (JobError, InternalServerError, BadRequestError)):
+                raise
+            raise JobError(
+                f"Error fetching status for job {job_id}: {str(e)}",
+                job_id=job_id
             )
-            raise
 
     def fetch_note(self, job_id: str) -> Dict[str, Any]:
         """Retrieves the generated medical note for a completed job.
@@ -1280,9 +1292,16 @@ class NoteManager:
                 }
             )
 
-        # Check file size (100MB limit)
+        # Check file size (500MB limit)
         try:
             file_size = os.path.getsize(file_path)
+            if file_size == 0:
+                self.logger.error("Audio file is empty: %s", file_path)
+                raise ValidationError(
+                    "Cannot read audio file: file is empty",
+                    field="file_path",
+                    details={"path": file_path}
+                )
             if file_size > 500 * 1024 * 1024:  # 500MB
                 self.logger.error(
                     "File size exceeds 500MB limit: %s (%d bytes)",
@@ -1300,7 +1319,7 @@ class NoteManager:
         except OSError as e:
             self.logger.error("Cannot access file: %s", str(e))
             raise ValidationError(
-                f"Cannot access file: {str(e)}",
+                f"Cannot read audio file: {str(e)}",
                 field="file_path",
                 details={"path": file_path, "error": str(e)}
             )
@@ -1308,7 +1327,14 @@ class NoteManager:
         # Check if file is readable
         try:
             with open(file_path, 'rb') as f:
-                f.read(1)
+                data = f.read(1)
+                if not data:
+                    self.logger.error("Audio file is empty: %s", file_path)
+                    raise ValidationError(
+                        "Cannot read audio file: file is empty",
+                        field="file_path",
+                        details={"path": file_path}
+                    )
         except Exception as e:
             self.logger.error("Cannot read audio file: %s", str(e))
             raise ValidationError(

@@ -3,6 +3,7 @@ import pytest
 import logging
 import requests
 from unittest.mock import patch, mock_open, Mock, MagicMock
+from io import BytesIO
 from src.notedx_sdk.core.note_manager import NoteManager
 from src.notedx_sdk.exceptions import (
     ValidationError,
@@ -18,7 +19,8 @@ from src.notedx_sdk.exceptions import (
     InternalServerError,
     NetworkError,
     MissingFieldError,
-    InvalidFieldError
+    InvalidFieldError,
+    ServiceUnavailableError
 )
 
 @pytest.fixture
@@ -416,3 +418,166 @@ def test_regenerate_note_with_custom_template(note_manager):
             custom=custom_data
         )
         assert result == {"job_id": "new-job", "status": "processing"}
+
+def test_process_audio_invalid_file_type(note_manager):
+    """Test handling of invalid audio file type."""
+    with patch('os.path.isfile', return_value=True), \
+         patch('os.path.getsize', return_value=1024 * 1024):
+        with pytest.raises(ValidationError) as exc_info:
+            note_manager.process_audio(
+                "test.txt",
+                visit_type="initialEncounter",
+                recording_type="dictation",
+                template="primaryCare"
+            )
+        assert "Unsupported audio format" in str(exc_info.value)
+
+def test_process_audio_file_too_large(note_manager):
+    """Test handling of file exceeding size limit."""
+    with patch('os.path.isfile', return_value=True), \
+         patch('os.path.getsize', return_value=600 * 1024 * 1024):  # 600MB
+        with pytest.raises(ValidationError) as exc_info:
+            note_manager.process_audio(
+                "test.mp3",
+                visit_type="initialEncounter",
+                recording_type="dictation",
+                template="primaryCare"
+            )
+        assert "File size exceeds 500MB limit" in str(exc_info.value)
+
+def test_process_audio_missing_required_fields(note_manager):
+    """Test handling of missing required fields."""
+    mock_file = mock_open(read_data=b'test audio data')
+    with patch('os.path.isfile', return_value=True), \
+         patch('os.path.getsize', return_value=1024 * 1024), \
+         patch('builtins.open', mock_file):
+        with pytest.raises(MissingFieldError) as exc_info:
+            note_manager.process_audio(
+                "test.mp3",
+                visit_type="initialEncounter",
+                recording_type="dictation"
+                # Missing required template field
+            )
+        assert "Missing required field: template" in str(exc_info.value)
+
+def test_process_audio_invalid_field_values(note_manager):
+    """Test handling of invalid field values."""
+    mock_file = mock_open(read_data=b'test audio data')
+    with patch('os.path.isfile', return_value=True), \
+         patch('os.path.getsize', return_value=1024 * 1024), \
+         patch('builtins.open', mock_file):
+        with pytest.raises(InvalidFieldError) as exc_info:
+            note_manager.process_audio(
+                "test.mp3",
+                visit_type="invalid",
+                recording_type="dictation",
+                template="primaryCare"
+            )
+        assert "Invalid value for visit_type" in str(exc_info.value)
+
+def test_validate_audio_file_zero_size(note_manager):
+    """Test validation of zero-size audio file."""
+    mock_file = mock_open()
+    mock_file.return_value.read.side_effect = [b'']  # Empty file
+    with patch('os.path.isfile', return_value=True), \
+         patch('os.path.getsize', return_value=0), \
+         patch('builtins.open', mock_file):
+        with pytest.raises(ValidationError, match="Cannot read audio file"):
+            note_manager._validate_audio_file("test.mp3")
+
+def test_validate_audio_file_directory(note_manager):
+    """Test validation when path points to a directory."""
+    with patch('os.path.isfile', return_value=False), \
+         patch('os.path.isdir', return_value=True):
+        with pytest.raises(ValidationError) as exc_info:
+            note_manager._validate_audio_file("test_dir")
+        assert "Audio file not found" in str(exc_info.value)
+
+def test_regenerate_note_server_error(note_manager):
+    """Test handling of server error during note regeneration."""
+    mock_response = Mock()
+    mock_response.status_code = 500
+    mock_response.text = '{"error": "Internal server error"}'
+    mock_response.json.return_value = {
+        "error": "Internal server error"
+    }
+
+    with patch('requests.request') as mock_request:
+        mock_request.return_value = mock_response
+        with pytest.raises(InternalServerError, match="Server error"):
+            note_manager.regenerate_note("test-job", template="primaryCare")
+
+def test_fetch_status_invalid_response(note_manager):
+    """Test handling of invalid JSON response during status fetch."""
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.text = 'Invalid JSON'
+    mock_response.json.side_effect = ValueError("Invalid JSON")
+
+    with patch('requests.request', return_value=mock_response):
+        with pytest.raises(BadRequestError, match="Invalid response format"):
+            note_manager.fetch_status("test-job")
+
+def test_fetch_transcript_invalid_response(note_manager):
+    """Test handling of invalid JSON response during transcript fetch."""
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.text = 'Invalid JSON'
+    mock_response.json.side_effect = ValueError("Invalid JSON")
+
+    with patch('requests.request', return_value=mock_response):
+        with pytest.raises(BadRequestError, match="Invalid response format"):
+            note_manager.fetch_transcript("test-job")
+
+def test_process_audio_job_error(note_manager):
+    """Test handling of job error after successful upload."""
+    mock_file = mock_open(read_data=b'test audio data')
+
+    # Mock job error response
+    mock_response = Mock()
+    mock_response.status_code = 400
+    mock_response.text = '{"error": "Job processing failed", "job_id": "test-job"}'
+    mock_response.json.return_value = {
+        "error": "Job processing failed",
+        "job_id": "test-job"
+    }
+
+    with patch('os.path.isfile', return_value=True), \
+         patch('os.path.exists', return_value=True), \
+         patch('os.path.getsize', return_value=1024 * 1024), \
+         patch('builtins.open', mock_file), \
+         patch('requests.request') as mock_request:
+        mock_request.return_value = mock_response
+        with pytest.raises(BadRequestError, match="Job processing failed"):
+            note_manager.process_audio(
+                "test.mp3",
+                visit_type="initialEncounter",
+                recording_type="dictation",
+                template="primaryCare"
+            )
+
+def test_process_audio_service_unavailable(note_manager):
+    """Test handling of service unavailable error."""
+    mock_file = mock_open(read_data=b'test audio data')
+    
+    mock_response = Mock()
+    mock_response.status_code = 503
+    mock_response.text = '{"error": "Service temporarily unavailable"}'
+    mock_response.json.return_value = {
+        "error": "Service temporarily unavailable"
+    }
+
+    with patch('os.path.isfile', return_value=True), \
+         patch('os.path.exists', return_value=True), \
+         patch('os.path.getsize', return_value=1024 * 1024), \
+         patch('builtins.open', mock_file), \
+         patch('requests.request') as mock_request:
+        mock_request.return_value = mock_response
+        with pytest.raises(InternalServerError) as exc_info:
+            note_manager.process_audio(
+                "test.mp3",
+                visit_type="initialEncounter",
+                recording_type="dictation",
+                template="primaryCare"
+            )
+        assert "Service temporarily unavailable" in str(exc_info.value)
