@@ -460,6 +460,7 @@ class NoteManager:
                 The template determines how the audio content will be structured in the final note.
             
             documentation_style: Style of the documentation (optional).
+            
                 * `soap`: The classic SOAP note style
                 * `problemBased`: Problem based documentation style, where each problem is a section of the note
             
