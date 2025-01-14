@@ -1236,14 +1236,18 @@ making it easy to integrate medical note generation into your application.</p>
 <a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>            <span class="s2">&quot;radiology&quot;</span><span class="p">,</span>
 <a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>            <span class="s2">&quot;procedures&quot;</span><span class="p">,</span>
 <a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>            <span class="s2">&quot;letter&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>            <span class="s2">&quot;social&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>            <span class="s2">&quot;wfw&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>            <span class="s2">&quot;smartInsert&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>        <span class="p">]</span>
-<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>    <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>    <span class="n">custom</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>    <span class="n">chunk_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>            <span class="s2">&quot;pharmacy&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>            <span class="s2">&quot;social&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>            <span class="s2">&quot;wfw&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>            <span class="s2">&quot;smartInsert&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>        <span class="p">]</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>    <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>    <span class="n">documentation_style</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>        <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;soap&quot;</span><span class="p">,</span> <span class="s2">&quot;problemBased&quot;</span><span class="p">]</span>
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>    <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>    <span class="n">custom</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>    <span class="n">chunk_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1390,6 +1394,49 @@ If not specified, uses the same language as the source.</p>
             <div class="doc-md-description">
               <p>Medical note template to use.<br />
 The template determines how the audio content will be structured in the final note.</p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code><span title="typing.Optional">Optional</span>[<span title="typing.Literal">Literal</span>[&#39;primaryCare&#39;, &#39;er&#39;, &#39;psychiatry&#39;, &#39;surgicalSpecialties&#39;, &#39;medicalSpecialties&#39;, &#39;nursing&#39;, &#39;radiology&#39;, &#39;procedures&#39;, &#39;letter&#39;, &#39;pharmacy&#39;, &#39;social&#39;, &#39;wfw&#39;, &#39;smartInsert&#39;]]</code>
+                </span>
+                <span class="doc-param-default">
+                  <b>DEFAULT:</b> 
+                    <code>None</code>
+                </span>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td><code>documentation_style</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>Style of the documentation (optional).</p>
+<ul>
+<li><code>soap</code>: The classic SOAP note style</li>
+<li><code>problemBased</code>: Problem based documentation style, where each problem is a section of the note</li>
+</ul>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code><span title="typing.Optional">Optional</span>[<span title="typing.Literal">Literal</span>[&#39;soap&#39;, &#39;problemBased&#39;]]</code>
+                </span>
+                <span class="doc-param-default">
+                  <b>DEFAULT:</b> 
+                    <code>None</code>
+                </span>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td><code>Note</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <ul>
+<li>If left empty, the default documentation style of the template is used, i.e. <code>structured</code> </li>
+<li>Common sections are: Identification, Chief complaint, Past medical and surgical history, Past investigations, Medication and allergies, Lifestyle habits, Family history, Social history, HPI, Physical exam, Assessment, Plan.</li>
+</ul>
 <p><strong>Standard templates</strong> (require visit_type and recording_type):</p>
 <ul>
 <li><code>primaryCare</code> - Primary care visit for a general practitioner</li>
@@ -1397,7 +1444,8 @@ The template determines how the audio content will be structured in the final no
 <li><code>psychiatry</code> - Psychiatric evaluation</li>
 <li><code>surgicalSpecialties</code> - Surgical specialties (Any)</li>
 <li><code>medicalSpecialties</code> - Medical specialties (Any)</li>
-<li><code>nursing</code> - Nursing notes</li>
+<li><code>nursing</code> - Nursing notes </li>
+<li><code>pharmacy</code> - Pharmacy notes</li>
 <li><code>radiology</code> - Radiology reports</li>
 <li><code>procedures</code> - Procedure notes (small procedures, biopsies, outpatient surgeries, etc.)</li>
 <li><code>letter</code> - Medical letter to the referring physician</li>
@@ -1410,14 +1458,6 @@ The template determines how the audio content will be structured in the final no
 </ul>
             </div>
             <p>
-                <span class="doc-param-annotation">
-                  <b>TYPE:</b>
-                    <code><span title="typing.Optional">Optional</span>[<span title="typing.Literal">Literal</span>[&#39;primaryCare&#39;, &#39;er&#39;, &#39;psychiatry&#39;, &#39;surgicalSpecialties&#39;, &#39;medicalSpecialties&#39;, &#39;nursing&#39;, &#39;radiology&#39;, &#39;procedures&#39;, &#39;letter&#39;, &#39;social&#39;, &#39;wfw&#39;, &#39;smartInsert&#39;]]</code>
-                </span>
-                <span class="doc-param-default">
-                  <b>DEFAULT:</b> 
-                    <code>None</code>
-                </span>
             </p>
           </td>
         </tr>
@@ -1627,28 +1667,41 @@ Defaults to 1MB. Adjust for large files or slow connections.</p>
 <p>Example custom object:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">custom</span> <span class="o">=</span> <span class="p">{</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="s2">&quot;context&quot;</span><span class="p">:</span> <span class="s2">&quot;Past medical history: ACL tear 10 years ago on the right knee.&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="s2">&quot;template&quot;</span><span class="p">:</span> <span class="s1">&#39;&#39;&#39;SOAP note template.</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="s2">&quot;template&quot;</span><span class="p">:</span> <span class="s1">&#39;&#39;&#39;A new custom SOAP note template.</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">    SUBJECTIVE: </span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">    - Include the patient&#39;s subjective information here. Order by system.</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">    IDENTIFICATION AND CHIEF COMPLAINT:</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">    - Include the patient&#39;s identification and chief complaint here.</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">    OBJECTIVE: </span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">    - Include the patient&#39;s objective information here.</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">    PAST MEDICAL HISTORY:</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">    - Include the patient&#39;s past medical history here and past investigations.</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">    ASSESSMENT: </span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="s1">    - Include the patient&#39;s assessment here.</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">    SUBJECTIVE: </span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="s1">    - Include the patient&#39;s subjective information here. Order by system. (Do not repeat the same information in the Identification and Chief complaint, Past medical history and Past investigations sections)</span>
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="s1">    PLAN: </span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="s1">    - Include the patient&#39;s plan here.&#39;&#39;&#39;</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="p">}</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="s1">    OBJECTIVE: </span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="s1">    - Include the patient&#39;s objective information here.</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="s1">    ASSESSMENT: </span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="s1">    - Include the patient&#39;s assessment here.</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="s1">    PLAN: </span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="s1">    - Include the patient&#39;s plan here.&#39;&#39;&#39;</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="p">}</span>
 </code></pre></div></p>
 </li>
 <li>
-<p>You can create multiple custom templates for each template type and visit type</p>
+<p>You can create multiple custom templates and pass them in the <code>custom</code> object.</p>
 </li>
 <li>The custom object can be used in <code>regenerate_note()</code> to generate new notes from existing transcripts</li>
 <li>The <code>context</code> key adds patient information not in the audio recording</li>
 <li><code>smartInsert</code> mode allows adding text snippets within a note (e.g., "Include a normal right knee exam")</li>
+</ul>
+</details>
+<details class="note" open>
+  <summary>Note</summary>
+  <ul>
+<li>Each language need its own custom template if you want the note to be generated accurately.</li>
+<li>For example, if you pass a custom template in english, but use <code>lang</code> and <code>output_language</code> as french, the note will be generated in french but the custom template but the sections might be in english.</li>
 </ul>
 </details>
   </div>
@@ -1684,8 +1737,11 @@ Defaults to 1MB. Adjust for large files or slow connections.</p>
 <a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>        <span class="p">]</span>
 <a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    <span class="n">output_language</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;en&quot;</span><span class="p">,</span> <span class="s2">&quot;fr&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    <span class="n">custom</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    <span class="n">documentation_style</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>        <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;soap&quot;</span><span class="p">,</span> <span class="s2">&quot;problemBased&quot;</span><span class="p">]</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    <span class="n">custom</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -1782,6 +1838,24 @@ If not specified, uses the original language.</li>
                 <span class="doc-param-annotation">
                   <b>TYPE:</b>
                     <code>dict</code>
+                </span>
+                <span class="doc-param-default">
+                  <b>DEFAULT:</b> 
+                    <code>None</code>
+                </span>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td><code>documentation_style</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>Style of the documentation (optional, see process_audio() for details).</p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code><span title="typing.Optional">Optional</span>[<span title="typing.Literal">Literal</span>[&#39;soap&#39;, &#39;problemBased&#39;]]</code>
                 </span>
                 <span class="doc-param-default">
                   <b>DEFAULT:</b> 
