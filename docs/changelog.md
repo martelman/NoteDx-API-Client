@@ -2,6 +2,24 @@
 
 All notable changes to the NoteDx SDK will be documented in this file.
 
+## [0.1.5] - 2025-01-17
+
+### Added
+- Self-service account creation via `NoteDxClient.create_account()`
+- Automatic API key setup during account creation
+- Support for combined authentication (email/password + API key)
+
+### Changed
+- Simplified authentication flow
+- Improved error handling for authentication
+- Updated documentation to reflect self-service account creation
+- Removed beta access request requirement
+
+### Fixed
+- Authentication retry logic for expired tokens
+- Token refresh handling during method changes
+- API key validation in request headers
+
 ## [0.1.4] - 2025-01-14
 
 ### Added

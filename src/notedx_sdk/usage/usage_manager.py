@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 from ..exceptions import (
     ValidationError,
     AuthenticationError,
+    PaymentRequiredError,
+    InactiveAccountError,
     InvalidFieldError
 )
 
@@ -22,14 +24,13 @@ class UsageManager:
     Handles usage data operations for the NoteDx API.
     
     This class provides methods for retrieving and analyzing usage statistics,
-    including API calls, note generations, and billing metrics. It supports
+    including API calls, note generations, and token usage. It supports
     filtering by date ranges and provides detailed breakdowns by API key and month.
     
     Features:
-        - Detailed usage metrics (jobs, tokens, costs)
+        - Detailed usage metrics (jobs, tokens)
         - Monthly usage breakdown
         - Per-API key statistics
-        - Tier-based pricing analysis
         - Free tier tracking
     
     Example:
@@ -57,14 +58,15 @@ class UsageManager:
         for month in q1_usage['monthly_breakdown']:
             print(f"Month: {month['month']}")
             print(f"Jobs: {month['jobs']}")
-            print(f"Cost: ${month['final_cost']:.2f}")
-            print(f"Savings: ${month['savings']:.2f}")
+            print(f"Total tokens: {month['total_tokens']}")
             
         # Check API key performance
         for key, stats in q1_usage['api_keys'].items():
-            print(f"API Key: {key}")
-            print(f"Total jobs: {stats['jobs']}")
-            print(f"Cost savings: ${stats['costs']['savings']:.2f}")
+            print(f"\nAPI Key: {key}")
+            print(f"Jobs: {stats['jobs']}")
+            print(f"Transcription tokens: {stats['tokens']['transcription']}")
+            print(f"Note tokens: {stats['tokens']['note_generation']}")
+            print(f"Usage percentage: {stats['usage_percentage']}%")
         ```
     """
     
@@ -100,14 +102,14 @@ class UsageManager:
 
     def get(self, start_month: Optional[str] = None, end_month: Optional[str] = None) -> Dict[str, Any]:
         """
-        Retrieve detailed usage statistics and billing metrics for the authenticated account.
+        Retrieve detailed usage statistics for the authenticated account.
 
         ```bash
         GET /user/usage
         ```
 
         Wraps the /user/usage endpoint to provide comprehensive usage data including API calls,
-        note generations, token usage, and associated costs. Supports optional date range filtering
+        note generations, and token usage. Supports optional date range filtering
         and provides breakdowns by month and API key.
 
         If no date range is specified, returns data for the current month.
@@ -131,10 +133,7 @@ class UsageManager:
                     - jobs (int): Total number of jobs processed
                     - transcription_tokens (int): Total transcription tokens used
                     - note_tokens (int): Total note generation tokens used
-                    - base_cost (float): Original cost before discounts
-                    - final_cost (float): Final cost after discounts
-                    - savings (float): Total cost savings
-                    - effective_discount_percentage (float): Overall discount rate
+                    - total_tokens (int): Total tokens used
                     - free_jobs_left (int): Remaining free tier jobs
                 
                 monthly_breakdown (List[Dict]): Per-month statistics:
@@ -143,22 +142,27 @@ class UsageManager:
                     - jobs (int): Jobs processed that month
                     - transcription_tokens (int): Transcription tokens used
                     - note_tokens (int): Note generation tokens used
-                    - base_cost (float): Original cost
-                    - final_cost (float): Cost after discounts
-                    - savings (float): Cost savings
-                    - current_tier_discount (float): Current tier discount rate
-                    - tiers (Dict): Job counts by pricing tier
+                    - total_tokens (int): Total tokens used
                 
                 api_keys (Dict[str, Dict]): Per-API key statistics:
 
                     - jobs (int): Total jobs for this key
                     - tokens (Dict): Token usage breakdown
-                    - costs (Dict): Cost and savings details
-                    - tiers (Dict): Job counts by pricing tier
+                        - transcription (int): Transcription tokens used
+                        - note_generation (int): Note generation tokens used
+                        - total (int): Total tokens used
+                    - usage_percentage (float): Percentage of total token usage
+                
+                billing (Dict): Current billing period information:
+
+                    - current_usage_amount (float): Current usage amount in USD
+                    - billing_period_start (str): Start of billing period (ISO format)
+                    - billing_period_end (str): End of billing period (ISO format)
+                    - subscription_status (str): Current subscription status
 
         Raises:
             ValidationError: If date format is invalid (must be YYYY-MM)
-            AuthenticationError: If not authenticated
+            AuthenticationError: If not authenticated or API key is invalid
             PaymentRequiredError: If payment is required
             InactiveAccountError: If account is inactive
             NetworkError: If connection fails
@@ -171,9 +175,7 @@ class UsageManager:
             
             # Check overall metrics
             print(f"Total jobs: {current['totals']['jobs']}")
-            print(f"Total cost: ${current['totals']['final_cost']:.2f}")
-            print(f"Savings: ${current['totals']['savings']:.2f}")
-            print(f"Effective discount: {current['totals']['effective_discount_percentage']:.1f}%")
+            print(f"Total tokens: {current['totals']['total_tokens']}")
             print(f"Free jobs remaining: {current['totals']['free_jobs_left']}")
             
             # Analyze API key performance
@@ -182,15 +184,12 @@ class UsageManager:
                 print(f"Jobs: {stats['jobs']}")
                 print(f"Transcription tokens: {stats['tokens']['transcription']}")
                 print(f"Note tokens: {stats['tokens']['note_generation']}")
-                print(f"Cost savings: ${stats['costs']['savings']:.2f}")
+                print(f"Usage percentage: {stats['usage_percentage']}%")
                 
-                # Check tier distribution
-                tiers = stats['tiers']
-                print("\nJob distribution by tier:")
-                print(f"Tier 1 (Free): {tiers['tier1']}")
-                print(f"Tier 2 (Basic): {tiers['tier2']}")
-                print(f"Tier 3 (Pro): {tiers['tier3']}")
-                print(f"Tier 4 (Enterprise): {tiers['tier4']}")
+            # Check billing status
+            billing = current['billing']
+            print(f"\nCurrent usage: ${billing['current_usage_amount']:.2f}")
+            print(f"Subscription status: {billing['subscription_status']}")
             ```
         """
         # Set default time period to current month if not specified
@@ -239,7 +238,7 @@ class UsageManager:
                 extra={
                     'period': response.get('period', {}),
                     'total_jobs': response.get('totals', {}).get('jobs', 0),
-                    'total_cost': response.get('totals', {}).get('final_cost', 0),
+                    'total_tokens': response.get('totals', {}).get('total_tokens', 0),
                     'months_retrieved': len(response.get('monthly_breakdown', [])),
                     'api_keys_count': len(response.get('api_keys', {}))
                 }
@@ -252,15 +251,57 @@ class UsageManager:
                 extra={
                     'error_type': 'ValidationError',
                     'start_month': start_month,
-                    'end_month': end_month
+                    'end_month': end_month,
+                    'details': getattr(e, 'details', {})
                 },
                 exc_info=True
             )
-            raise
+            raise InvalidFieldError(str(e), getattr(e, 'code', None), getattr(e, 'details', {}))
+
+        except AuthenticationError as e:
+            self.logger.error(
+                "Authentication failed while retrieving usage statistics",
+                extra={
+                    'error_type': 'AuthenticationError',
+                    'code': getattr(e, 'code', None),
+                    'details': getattr(e, 'details', {})
+                },
+                exc_info=True
+            )
+            raise  # Re-raise with original error details
+
+        except PaymentRequiredError as e:
+            self.logger.error(
+                "Payment required to access usage statistics",
+                extra={
+                    'error_type': 'PaymentRequiredError',
+                    'code': getattr(e, 'code', None),
+                    'details': getattr(e, 'details', {})
+                },
+                exc_info=True
+            )
+            raise  # Re-raise with original error details
+
+        except InactiveAccountError as e:
+            self.logger.error(
+                "Account is inactive, cannot retrieve usage statistics",
+                extra={
+                    'error_type': 'InactiveAccountError',
+                    'code': getattr(e, 'code', None),
+                    'details': getattr(e, 'details', {})
+                },
+                exc_info=True
+            )
+            raise  # Re-raise with original error details
+            
         except Exception as e:
             self.logger.error(
                 "Failed to retrieve usage statistics",
-                extra={'error_type': type(e).__name__},
+                extra={
+                    'error_type': type(e).__name__,
+                    'code': getattr(e, 'code', None),
+                    'details': getattr(e, 'details', {})
+                },
                 exc_info=True
             )
             raise 

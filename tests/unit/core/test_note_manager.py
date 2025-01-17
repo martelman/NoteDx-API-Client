@@ -175,10 +175,10 @@ def test_fetch_note_success(note_manager):
     """Test successful note fetch."""
     mock_response = Mock()
     mock_response.status_code = 200
-    mock_response.text = '{"note": "Test medical note content", "noteTitle": "Test Note", "job_id": "test-job"}'
+    mock_response.text = '{"note": "Test medical note content", "note_title": "Test Note", "job_id": "test-job"}'
     mock_response.json.return_value = {
         "note": "Test medical note content",
-        "noteTitle": "Test Note",
+        "note_title": "Test Note",
         "job_id": "test-job"
     }
 

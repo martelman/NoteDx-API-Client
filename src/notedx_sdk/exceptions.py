@@ -210,3 +210,14 @@ class ServiceUnavailableError(NoteDxError):
     """
     def __init__(self, message: str, code: str = 'SERVICE_UNAVAILABLE', details: Optional[Dict[str, Any]] = None):
         super().__init__(message, code, details)
+
+class ConflictError(NoteDxError):
+    """
+    Raised when a resource conflict occurs (HTTP 409).
+    
+    Common cases:
+    - Email already registered
+    - Duplicate resource creation
+    - Version conflicts
+    """
+    pass

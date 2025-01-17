@@ -24,8 +24,10 @@ class AccountManager:
     - Account lifecycle management
     
     Note:
-        All methods in this class require Firebase authentication (email/password).
+        Most methods in this class require Firebase authentication (email/password).
         API key authentication is not supported for account management operations.
+        Account creation is handled by NoteDxClient.create_account().
+
     
     Example:
         ```python
@@ -48,7 +50,7 @@ class AccountManager:
         )
         ```
     """
-    
+
     def __init__(self, client: "NoteDxClient") -> None:
         """
         Initialize the account manager.
@@ -71,7 +73,9 @@ class AccountManager:
             self.logger.error("Firebase authentication required for account operations")
             raise AuthenticationError(
                 "Firebase authentication (email/password) is required for account operations. "
-                "API key authentication is not supported."
+                "API key authentication is not supported.",
+                "FIREBASE_AUTH_REQUIRED",
+                {"auth_type": "firebase"}
             )
 
     def get_account(self) -> Dict[str, Any]:
@@ -123,7 +127,11 @@ class AccountManager:
         except Exception as e:
             self.logger.error(
                 "Failed to retrieve account information",
-                extra={'error_type': type(e).__name__},
+                extra={
+                    'error_type': type(e).__name__,
+                    'code': getattr(e, 'code', None),
+                    'details': getattr(e, 'details', {})
+                },
                 exc_info=True
             )
             raise
@@ -208,7 +216,11 @@ class AccountManager:
             )
             raise InvalidFieldError(
                 "fields",
-                "At least one of these fields must be provided: company_name, contact_email, phone_number, address"
+                "MISSING_UPDATE_FIELDS",
+                {
+                    "message": "At least one of these fields must be provided: company_name, contact_email, phone_number, address",
+                    "allowed_fields": allowed_fields
+                }
             )
 
         try:
@@ -229,6 +241,8 @@ class AccountManager:
                 "Failed to update account information",
                 extra={
                     'error_type': type(e).__name__,
+                    'code': getattr(e, 'code', None),
+                    'details': getattr(e, 'details', {}),
                     'attempted_fields': list(update_data.keys())
                 },
                 exc_info=True

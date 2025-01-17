@@ -24,7 +24,7 @@ response = client.notes.process_audio(
 # Get job ID
 job_id = response["job_id"]
 
-# Check status until complete
+# Check status until complete - Highly recommended to use the webhook to get status updates!
 while True:
     status = client.notes.fetch_status(job_id)
     if status["status"] == "completed":
@@ -73,16 +73,16 @@ response = client.notes.process_audio(
         """,
         "template": """
         SUBJECTIVE:
-        {subjective}
+        Some custom intruction for the LLM to follow here about what to include, exclude, how to format, etc.
 
         OBJECTIVE:
-        {objective}
+        Some custom intruction for the LLM to follow here about what to include, exclude, how to format, etc.
 
         ASSESSMENT:
-        {assessment}
+        Some custom intruction for the LLM to follow here about what to include, exclude, how to format, etc.
 
         PLAN:
-        {plan}
+        Some custom intruction for the LLM to follow here about what to include, exclude, how to format, etc.
         """
     }
 )
@@ -100,7 +100,7 @@ response = client.notes.process_audio(
     lang="en"
 )
 
-# Later, translate to French
+# Later, translate to French ( or change the template, pass new context of template with the custom parameter, etc...)
 translated = client.notes.regenerate_note(
     job_id=response["job_id"],
     output_language="fr"
@@ -114,7 +114,7 @@ translated = client.notes.regenerate_note(
 ```python
 from notedx_sdk import NoteDxClient
 
-# Initialize with Firebase auth
+# Initialize with Firebase auth for account management.
 client = NoteDxClient(
     email="user@example.com",
     password="your-password"
@@ -139,7 +139,8 @@ key = client.keys.create_api_key(
 
 # Set up webhooks
 client.webhooks.update_webhook_settings(
-    webhook_prod="https://api.medical.com/notedx/webhook"
+    webhook_prod="https://api.medical.com/notedx/webhook",
+    webhook_dev="https://dev-api.medical.com/notedx/webhook"
 )
 ```
 
@@ -215,9 +216,9 @@ prod_key = client.keys.create_api_key(
 ### Development Setup
 
 ```python
-# Set up development webhook
+# Set up development webhook (can be HTTP or HTTPS)
 client.webhooks.update_webhook_settings(
-    webhook_dev="http://localhost:3000/webhook"
+    webhook_dev="https://dev-api.medical.com/notedx/webhook" 
 )
 
 # Test with sandbox key
@@ -228,7 +229,9 @@ test_client = NoteDxClient(api_key=sandbox_key["api_key"])
 test_client.notes.process_audio(
     file_path="test.mp3",
     template="wfw",
-    lang="en"
+    lang="en",
+    visit_type="initialEncounter",
+    recording_type="dictation"
 )
 ```
 
