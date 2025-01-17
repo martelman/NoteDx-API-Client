@@ -18,7 +18,6 @@ All notable changes to the NoteDx SDK will be documented in this file.
 ### Fixed
 - Authentication retry logic for expired tokens
 - Token refresh handling during method changes
-- API key validation in request headers
 
 ## [0.1.4] - 2025-01-14
 

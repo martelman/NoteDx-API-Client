@@ -2,7 +2,6 @@ import pytest
 from unittest.mock import patch
 from src.notedx_sdk.client import NoteDxClient
 from src.notedx_sdk.exceptions import (
-
     NetworkError
 )
 

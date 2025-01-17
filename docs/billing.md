@@ -95,6 +95,5 @@ Typical usage of power users (15 consultations/day, 5 days/week):
 
 * Use the SDK: `client.usage.get()` to retrieve usage & cost breakdown
 * Or call the endpoint `GET /usage` with your Bearer token or API key
-* View billing portal: `client.account.get_billing_portal()`
 
 **Next step:** [Account Management](reference/account.md)
