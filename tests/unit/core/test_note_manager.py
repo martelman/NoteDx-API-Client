@@ -175,10 +175,10 @@ def test_fetch_note_success(note_manager):
     """Test successful note fetch."""
     mock_response = Mock()
     mock_response.status_code = 200
-    mock_response.text = '{"note": "Test medical note content", "noteTitle": "Test Note", "job_id": "test-job"}'
+    mock_response.text = '{"note": "Test medical note content", "note_title": "Test Note", "job_id": "test-job"}'
     mock_response.json.return_value = {
         "note": "Test medical note content",
-        "noteTitle": "Test Note",
+        "note_title": "Test Note",
         "job_id": "test-job"
     }
 
@@ -359,20 +359,15 @@ def test_regenerate_note_invalid_documentation_style(note_manager):
     status_response.text = '{"status": "completed", "job_id": "test-job"}'
     status_response.json.return_value = {"status": "completed", "job_id": "test-job"}
 
-    # Mock the regenerate call to return a 400 error
-    error_response = Mock()
-    error_response.status_code = 400
-    error_response.text = "Invalid documentation_style value"
-
     with patch('requests.request') as mock_request:
-        mock_request.side_effect = [status_response, error_response]
-        with pytest.raises(BadRequestError) as exc_info:
+        mock_request.side_effect = [status_response]
+        with pytest.raises(InvalidFieldError) as exc_info:
             note_manager.regenerate_note(
                 "test-job",
                 template="primaryCare",
                 documentation_style="invalid-style"
             )
-        assert "Invalid documentation_style value" in str(exc_info.value)
+        assert str(exc_info.value) == "Invalid value for documentation_style. Must be one of: soap, problemBased"
 
 def test_regenerate_note_invalid_output_language(note_manager):
     """Test regeneration with invalid output language."""

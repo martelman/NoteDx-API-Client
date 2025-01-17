@@ -21,28 +21,60 @@ Or using Poetry:
 poetry add notedx-sdk
 ```
 
-## Authentication
+## Create an Account
 
-The SDK supports two authentication methods:
-
-### API Key Authentication
-
-For production use, authenticate with an API key:
+First, create your NoteDx account:
 
 ```python
 from notedx_sdk import NoteDxClient
 
-client = NoteDxClient(api_key="your-api-key")
+# Create a new account
+result = NoteDxClient.create_account(
+    email="user@example.com",
+    password="secure-password",  # Must be at least 8 characters
+    company_name="Your Company Name"
+)
+
+# Save your API keys
+sandbox_key = result['sandbox_api_key']  # For testing (unlimited usage)
+live_key = result['live_api_key']    # For production (includes 100 free jobs)
 ```
 
-### Firebase Authentication
+After creating your account:
 
-For account management and API key operations, use Firebase authentication:
+1. Check your email for the verification link
+2. Click the verification link to activate your account
+3. You can now use either your API keys or email/password to authenticate
+
+
+
+## Authentication
+
+The SDK supports two authentication methods.
+(But you can always use `client.set_api_key(api_key)` to set the api key for any operation)
+
+### API Key Authentication (For note related operations)
+
+```python
+from notedx_sdk import NoteDxClient
+
+# Use your live API key for production
+client = NoteDxClient(api_key=live_key)
+
+# Or use sandbox key for testing
+client = NoteDxClient(api_key=sandbox_key)
+```
+
+### Email/Password Authentication
+
+For account management and API key operations:
+You can add the api key to the client as well.
 
 ```python
 client = NoteDxClient(
     email="user@example.com",
-    password="your-password"
+    password="your-password",
+    api_key="lk-xxxxxxxxxxxx" 
 )
 ```
 
@@ -51,8 +83,8 @@ client = NoteDxClient(
 ### Generate a Medical Note
 
 ```python
-# Initialize client
-client = NoteDxClient(api_key="your-api-key")
+# Initialize client with your API key
+client = NoteDxClient(api_key=live_key)
 
 # Process audio file
 response = client.notes.process_audio(
@@ -66,7 +98,7 @@ response = client.notes.process_audio(
 # Get job ID
 job_id = response["job_id"]
 
-# Check status until complete
+# Polling for job completion, but it is way better to use the webhooks!
 while True:
     status = client.notes.fetch_status(job_id)
     if status["status"] == "completed":
@@ -83,7 +115,7 @@ while True:
 ### Manage Account Settings
 
 ```python
-# Initialize with Firebase auth
+# Initialize with email/password
 client = NoteDxClient(
     email="user@example.com",
     password="your-password"
@@ -103,7 +135,7 @@ client.account.update_account(
 ### Manage API Keys
 
 ```python
-# Create a live API key
+# Create a new live API key
 key = client.keys.create_api_key(
     key_type="live",
     metadata={"environment": "production"}
@@ -133,6 +165,9 @@ The SDK provides detailed error classes for better error handling:
 ```python
 from notedx_sdk.exceptions import (
     AuthenticationError,
+    AuthorizationError,
+    PaymentRequiredError,
+    InactiveAccountError,
     ValidationError,
     NetworkError,
     JobError
@@ -141,7 +176,14 @@ from notedx_sdk.exceptions import (
 try:
     response = client.notes.process_audio(...)
 except AuthenticationError:
-    print("Invalid API key")
+    print("Invalid API key or missing user")
+except PaymentRequiredError as e:
+    if "Free trial jobs depleted" in str(e):
+        print("Free trial (100 jobs) depleted. Please subscribe.")
+    else:
+        print(f"Payment required: {e}")
+except InactiveAccountError:
+    print("Account is inactive. Please complete setup.")
 except ValidationError as e:
     print(f"Invalid parameters: {e}")
 except NetworkError as e:
@@ -150,9 +192,25 @@ except JobError as e:
     print(f"Job failed: {e}")
 ```
 
+### Free Trial Limits
+
+- Each account starts with 100 free jobs with a live API key
+- After 100 jobs, payment is required to continue
+- Sandbox API keys have unlimited usage for testing
+
+### Account Status
+
+Your account can be in one of these states:
+
+- `active`: Full access to all features
+- `trial`: Access to 100 free jobs
+- `pending_subscription`: Payment required to activate
+- `inactive`: Account setup incomplete
+
+For billing details, see [Billing & Pricing](billing.md).
+
 ## Next Steps
 
 - Check out the [API Reference](reference/client.md) for detailed documentation
 - See [Examples](examples.md) for more use cases
-- Request Beta Access [here](https://www.notedxai.com/contact-8-1)
 - Contact support at team@notedxai.com for help 

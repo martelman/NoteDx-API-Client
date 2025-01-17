@@ -7,6 +7,7 @@ import time
 from ..exceptions import (
     AuthenticationError,
     AuthorizationError,
+    InactiveAccountError,
     NoteDxError,
     PaymentRequiredError,
     NetworkError,
@@ -470,28 +471,28 @@ class NoteManager:
                 * `soap`: The classic SOAP note style
                 * `problemBased`: Problem based documentation style, where each problem is a section of the note
             
-            Note:
-                - If left empty, the default documentation style of the template is used, i.e. `structured` 
-                - Common sections are: Identification, Chief complaint, Past medical and surgical history, Past investigations, Medication and allergies, Lifestyle habits, Family history, Social history, HPI, Physical exam, Assessment, Plan.
+        Note:
+            - If left empty, the default documentation style of the template is used, i.e. `structured` 
+            - Common sections are: Identification, Chief complaint, Past medical and surgical history, Past investigations, Medication and allergies, Lifestyle habits, Family history, Social history, HPI, Physical exam, Assessment, Plan.
 
-                **Standard templates** (require visit_type and recording_type):
+            **Standard templates** (require visit_type and recording_type):
 
-                * `primaryCare` - Primary care visit for a general practitioner
-                * `er` - Emergency room visit
-                * `psychiatry` - Psychiatric evaluation
-                * `surgicalSpecialties` - Surgical specialties (Any)
-                * `medicalSpecialties` - Medical specialties (Any)
-                * `nursing` - Nursing notes 
-                * `pharmacy` - Pharmacy notes
-                * `radiology` - Radiology reports
-                * `procedures` - Procedure notes (small procedures, biopsies, outpatient surgeries, etc.)
-                * `letter` - Medical letter to the referring physician
-                * `social` - Social worker notes
+            * `primaryCare` - Primary care visit for a general practitioner
+            * `er` - Emergency room visit
+            * `psychiatry` - Psychiatric evaluation
+            * `surgicalSpecialties` - Surgical specialties (Any)
+            * `medicalSpecialties` - Medical specialties (Any)
+            * `nursing` - Nursing notes 
+            * `pharmacy` - Pharmacy notes
+            * `radiology` - Radiology reports
+            * `procedures` - Procedure notes (small procedures, biopsies, outpatient surgeries, etc.)
+            * `letter` - Medical letter to the referring physician
+            * `social` - Social worker notes
 
-                **Special templates** (only require file_path and lang):
+            **Special templates** (only require file_path and lang):
 
-                * `wfw` - Word for word transcription, supports inclusion of formatting and punctuation during dictation
-                * `smartInsert` - Smart insertion mode
+            * `wfw` - Word for word transcription, supports inclusion of formatting and punctuation during dictation
+            * `smartInsert` - Smart insertion mode
 
             custom: Additional parameters for note generation (optional).  
                 Dictionary that can contain:
@@ -513,7 +514,14 @@ class NoteManager:
             ValidationError: If parameters are invalid or missing
             UploadError: If file upload fails
             AuthenticationError: If API key is invalid
-            PaymentRequiredError: If account payment is required
+            PaymentRequiredError: If:
+
+                * Free trial jobs are depleted (100 jobs limit)
+                * Payment is required for subscription
+                * Account has exceeded usage limits
+                
+            AuthorizationError: If API key lacks permissions
+            InactiveAccountError: If account is inactive or pending setup
             NetworkError: If connection issues occur
             BadRequestError: If API rejects the request
             InternalServerError: If server error occurs
@@ -578,7 +586,9 @@ class NoteManager:
         Note:
             - Each language need its own custom template if you want the note to be generated accurately.
             - For example, if you pass a custom template in english, but use `lang` and `output_language` as french, the note will be generated in french but the custom template but the sections might be in english.
-
+            - Free trial users get 100 jobs before requiring payment
+            - Job processing typically takes 20-30 seconds
+            - Maximum file size is 500MB
         """
         # Validate input parameters
         self.logger.info("Starting audio processing for file: %s", file_path)
@@ -619,13 +629,49 @@ class NoteManager:
             self.logger.debug("Creating job with parameters: %s", data)
             try:
                 response = self._request("POST", "process-audio", data=data)
+            except AuthenticationError as e:
+                if "Invalid API key" in str(e):
+                    self.logger.error("Invalid API key provided")
+                    raise AuthenticationError("Invalid API key provided")
+                elif "Missing user ID" in str(e):
+                    self.logger.error("API key has no associated user")
+                    raise AuthenticationError("API key has no associated user")
+                raise
+            except PaymentRequiredError as e:
+                if "Free trial jobs depleted" in str(e):
+                    self.logger.error("Free trial jobs (100) depleted")
+                    raise PaymentRequiredError(
+                        "Free trial jobs (100) depleted. Please subscribe to continue.",
+                        details=e.details
+                    )
+                elif "Payment required" in str(e):
+                    self.logger.error("Payment required for subscription")
+                    raise PaymentRequiredError(
+                        "Payment required to activate subscription",
+                        details=e.details
+                    )
+                raise
+            except AuthorizationError as e:
+                if "Account is inactive" in str(e):
+                    self.logger.error("Account is inactive")
+                    raise InactiveAccountError(
+                        "Account is inactive. Please complete subscription setup or contact support.",
+                        details=e.details
+                    )
+                raise
             except BadRequestError as e:
-                self.logger.error("Bad request error: %s", str(e))
-                raise  # Re-raise BadRequestError without wrapping
+                if "Missing required field" in str(e):
+                    self.logger.error("Missing required field: %s", str(e))
+                    raise MissingFieldError(str(e).split(": ")[1])
+                elif "Invalid field" in str(e):
+                    self.logger.error("Invalid field value: %s", str(e))
+                    field = str(e).split(": ")[1].split(" ")[0]
+                    raise InvalidFieldError(field, str(e))
+                raise
             except Exception as e:
                 self.logger.error("Error creating job: %s", str(e))
                 raise
-            
+
             job_id = response.get('job_id')
             presigned_url = response.get('presigned_url')
             
@@ -744,7 +790,10 @@ class NoteManager:
                 - context: Additional patient context (history, demographics, medication, etc.)
                 - template: A complete custom template as a string (SOAP note, other etc...)
             
-            documentation_style: Style of the documentation (optional, see process_audio() for details).
+            documentation_style: Style of the documentation (optional):
+            
+                - 'soap': The classic SOAP note style
+                - 'problemBased': Problem based documentation style
 
         Returns:
             dict: A dictionary containing:
@@ -796,6 +845,19 @@ class NoteManager:
                 'output_language',
                 f"Invalid value for output_language. Must be one of: {', '.join(VALID_LANGUAGES)}"
             )
+
+        # Validate documentation_style
+        if documentation_style:
+            valid_styles = ['soap', 'problemBased']
+            if documentation_style not in valid_styles:
+                self.logger.error(
+                    "Invalid documentation_style: %s. Valid values: %s",
+                    documentation_style, ', '.join(valid_styles)
+                )
+                raise InvalidFieldError(
+                    'documentation_style',
+                    f"Invalid value for documentation_style. Must be one of: {', '.join(valid_styles)}"
+                )
 
         # Check original job status first
         try:
@@ -989,8 +1051,17 @@ class NoteManager:
             dict: A dictionary containing:
 
                 - note (str): The generated medical note text
-                - noteTitle (str, optional): Title for the note
+                - note_title (str, optional): Title for the note
                 - job_id (str): The job ID (for reference)
+                - status (str): Job status (should be 'completed')
+                - lang (str): Source language of the transcript
+                - output_language (str): Target language for the note
+                - recording_type (str): Type of recording (dictation/conversation)
+                - visit_type (str): Type of visit (initialEncounter/followUp)
+                - template (str): Template used for generation
+                - is_sandbox (bool): Whether this is a sandbox job
+                - timestamp (str): Job creation timestamp
+                - ttl (int): Time-to-live in seconds for the job data
 
         Raises:
             ValidationError: If job_id is invalid
@@ -1005,7 +1076,7 @@ class NoteManager:
             >>> status = note_manager.fetch_status("job-id")
             >>> if status["status"] == "completed":
             ...     result = note_manager.fetch_note("job-id")
-            ...     print(f"Title: {result['noteTitle']}")
+            ...     print(f"Title: {result['note_title']}")
             ...     print(f"Note: {result['note']}")
             ```
 
@@ -1143,7 +1214,7 @@ class NoteManager:
                 raise JobError(
                     "Transcription not completed",
                     job_id=job_id,
-                    status="not_transcribed",
+                    status="incomplete",
                     details=e.details
                 )
             raise

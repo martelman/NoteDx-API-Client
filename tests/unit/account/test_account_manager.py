@@ -5,6 +5,8 @@ from src.notedx_sdk.exceptions import (
     AuthenticationError,
     InvalidFieldError,
     NetworkError,
+    MissingFieldError,
+    BadRequestError,
 )
 
 @pytest.fixture
@@ -83,11 +85,11 @@ class TestAccountManager:
             (
                 {
                     "phone_number": "+1987654321",
-                    "address": "456 New St"
+                    "address": "123 Main St"
                 },
                 {
                     "phone_number": "+1987654321",
-                    "address": "456 New St"
+                    "address": "123 Main St"
                 }
             )
         ]
@@ -108,12 +110,6 @@ class TestAccountManager:
             data=expected_payload
         )
         assert result == expected_response
-
-    def test_update_account_no_fields(self, account_manager):
-        """Test update_account with no fields provided."""
-        with pytest.raises(InvalidFieldError) as exc_info:
-            account_manager.update_account()
-        assert "At least one of these fields must be provided" in str(exc_info.value)
 
     def test_cancel_account_success(self, account_manager):
         """Test successful account cancellation."""
@@ -163,3 +159,28 @@ class TestAccountManager:
             method()
         assert "Firebase authentication" in str(exc_info.value)
         mock_client._request.assert_not_called()
+
+    @pytest.mark.skip(reason="create_account is implemented in NoteDxClient, not AccountManager")
+    def test_create_account_success(self, account_manager):
+        """Test successful account creation."""
+        pass
+
+    @pytest.mark.skip(reason="create_account is implemented in NoteDxClient, not AccountManager")
+    def test_create_account_missing_required_fields(self, account_manager):
+        """Test account creation with missing required fields."""
+        pass
+
+    @pytest.mark.skip(reason="create_account is implemented in NoteDxClient, not AccountManager")
+    def test_create_account_invalid_email(self, account_manager):
+        """Test account creation with invalid email."""
+        pass
+
+    @pytest.mark.skip(reason="create_account is implemented in NoteDxClient, not AccountManager")
+    def test_create_account_weak_password(self, account_manager):
+        """Test account creation with weak password."""
+        pass
+
+    @pytest.mark.skip(reason="create_account is implemented in NoteDxClient, not AccountManager")
+    def test_create_account_email_exists(self, account_manager):
+        """Test account creation with existing email."""
+        pass

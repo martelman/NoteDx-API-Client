@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union
 import requests
 import logging
 
@@ -13,6 +13,8 @@ from .helpers import (
     build_headers
 )
 from .exceptions import (
+    ConflictError,
+    InvalidFieldError,
     NoteDxError,
     AuthenticationError,
     AuthorizationError,
@@ -39,6 +41,7 @@ class NoteDxClient:
     and resource management with robust error handling.
     
     Features:
+        - Account creation and management
         - Authentication handling (Firebase email/password and API key)
         - Environment configuration
         - Type-safe interfaces
@@ -60,6 +63,14 @@ class NoteDxClient:
     
     Example:
         ```python
+        # Create a new account
+        result = NoteDxClient.account.create_account(
+            email="user@example.com",
+            password="secure-password",
+            company_name="Medical Center Inc."
+        )
+        print(f"Sandbox API Key: {result['sandbox_api_key']}")
+        
         # Using email/password authentication
         client = NoteDxClient(
             email="user@example.com",
@@ -80,6 +91,8 @@ class NoteDxClient:
     Notes:
         - The session parameter allows for custom SSL, proxy, and timeout configuration
         - Auto-login can be disabled if you want to handle authentication manually
+        - Each account starts with 100 free jobs (live API key)
+        - Sandbox API keys have unlimited usage for testing
     """
 
     MAX_AUTH_RETRIES = 3
@@ -169,10 +182,11 @@ class NoteDxClient:
         """
         Initialize the NoteDx API client.
 
-        The client can be initialized with either:
+        The client can be initialized with:
 
-        1. Email and password for full account access (using Firebase Auth)
+        1. Email and password for account access (using Firebase Auth)
         2. API key for note generation only
+        3. Both email/password and API key for full account access and note generation
         3. No credentials (will read from environment variables)
 
         Args:
@@ -262,19 +276,12 @@ class NoteDxClient:
                 - email (str): User's email address
                 - id_token (str): Firebase ID token for API requests
                 - refresh_token (str): Token for refreshing authentication
-                - requires_password_change (bool): Whether user needs to change password
+
 
         Raises:
             AuthenticationError: If credentials are invalid or missing
             NetworkError: If connection fails or request times out
             NoteDxError: For other API errors
-
-        Example:
-            ```python
-            >>> client = NoteDxClient(email="user@example.com", password="pass", auto_login=False)
-            >>> auth_info = client.login()
-            >>> print(f"Logged in as: {auth_info['email']}")
-            ```
         """
         if not self._email or not self._password:
             logger.error("Missing email/password for login")
@@ -314,13 +321,6 @@ class NoteDxClient:
             if not self._token or not self._refresh_token:
                 logger.error("Login failed: Missing required tokens in response")
                 raise AuthenticationError("Missing required tokens in response")
-            
-            # Check if password change is required
-            if data.get("requires_password_change"):
-                logger.warning(
-                    "Password change required for user %s. Use client.change_password() to update.",
-                    self._email
-                )
             
             logger.info("Successfully logged in as: %s", self._email)
             return data
@@ -408,10 +408,6 @@ class NoteDxClient:
             logger.warning("Token refresh failed, clearing stored tokens")
             self._token = None
             self._refresh_token = None
-            raise
-
-        except Exception as e:
-            logger.error("Token refresh failed: %s", str(e))
             raise
 
     def set_token(self, token: str, refresh_token: Optional[str] = None) -> None:
@@ -646,6 +642,61 @@ class NoteDxClient:
         )
         return False
 
+    @classmethod
+    def _create_account_request(
+        cls,
+        method: str,
+        endpoint: str,
+        data: Any = None,
+        params: Dict[str, Any] = None,
+        timeout: int = 60
+    ) -> Dict[str, Any]:
+        """Internal method for making unauthenticated requests during account creation"""
+        base_url = get_env("NOTEDX_API_URL", "https://api.notedx.io/v1")
+        url = f"{base_url}/{endpoint.lstrip('/')}"
+        
+        try:
+            response = requests.request(
+                method=method,
+                url=url,
+                headers={},
+                json=data,
+                params=params,
+                timeout=timeout
+            )
+
+            try:
+                response_data = response.json()
+            except ValueError:
+                response_data = {"message": response.text}
+
+            if 200 <= response.status_code < 300:
+                return response_data
+
+            error_msg = (
+                response_data.get("message") or
+                response_data.get("error", {}).get("message") or
+                str(response_data)
+            )
+            error_code = response_data.get("error", {}).get("code")
+            error_details = response_data.get("details", {})
+
+            if response.status_code == 400:
+                raise BadRequestError(error_msg, error_code, error_details)
+            elif response.status_code == 409:
+                raise ConflictError(error_msg, error_code, error_details)
+            else:
+                raise NoteDxError(error_msg, error_code, error_details)
+
+        except requests.Timeout:
+            raise NetworkError(f"Request timed out after {timeout} seconds")
+        except requests.ConnectionError as e:
+            raise NetworkError(f"Connection error: {str(e)}")
+        except Exception as e:
+            if not isinstance(e, NoteDxError):
+                raise NetworkError(f"Request failed: {str(e)}")
+            raise
+
     def _request(
         self,
         method: str,
@@ -655,53 +706,34 @@ class NoteDxClient:
         timeout: int = 60
     ) -> Dict[str, Any]:
         """
-        Make an authenticated HTTP request to the NoteDx API.
-
-        This internal method handles:
-
-        - Authentication token/API key management
-        - Request retries with exponential backoff
-        - Error response parsing and exception mapping
-        - Request/response logging with sensitive data redaction
-        - Token refresh on authentication failures
+        Make an HTTP request to the NoteDx API.
 
         Args:
-            method (str): HTTP method (GET, POST, etc.)
-            endpoint (str): API endpoint path (e.g., "auth/login")
-            data (Any, optional): Request body data. Will be JSON-encoded.
-            params (Dict[str, Any], optional): URL query parameters
-            timeout (int, optional): Request timeout in seconds. Defaults to 60.
+            method: HTTP method (GET, POST, etc)
+            endpoint: API endpoint path
+            data: Request body data
+            params: URL parameters
+            timeout: Request timeout in seconds
 
         Returns:
-            Dict[str, Any]: Parsed API response data
+            API response data as dictionary
 
         Raises:
-            NetworkError: For connection issues or timeouts
-            AuthenticationError: For invalid/expired credentials
-            AuthorizationError: For permission issues
-            PaymentRequiredError: For billing/payment issues
-            InactiveAccountError: For deactivated accounts
-            BadRequestError: For invalid request data
-            NotFoundError: For invalid endpoints/resources
-            RateLimitError: For exceeding API rate limits
-            InternalServerError: For API server errors
-
-        Note:
-            - Automatically handles token refresh on 401/403 errors
-            - Implements exponential backoff for retries
-            - Redacts sensitive data in logs
-            - Some endpoints don't require authentication
+            Various NoteDxError subclasses based on response
         """
-        url = f"{self.base_url}/{endpoint.strip('/')}"
-        
-        # For endpoints that don't require authentication, skip token
-        no_auth_endpoints = {"auth/login", "auth/refresh"}
+        if not endpoint:
+            raise ValueError("Endpoint is required")
+
+        # Construct URL
+        base_url = get_env("NOTEDX_API_URL", "https://api.notedx.io/v1")
+        url = f"{base_url}/{endpoint.lstrip('/')}"
+
+        no_auth_endpoints = {"auth/login", "auth/refresh", "auth/create-account"}
         
         if endpoint in no_auth_endpoints:
             headers = {}
             logger.debug("Making unauthenticated request to %s", endpoint)
         else:
-            # Check if we're switching HTTP methods on the same endpoint
             last_method = self._last_successful_methods.get(endpoint)
             if last_method and last_method != method:
                 logger.debug(
@@ -720,34 +752,28 @@ class NoteDxClient:
                             self.login()
                 elif self._email and self._password:
                     self.login()
-            
-            # For authenticated endpoints, ensure we have a valid token
+
             if not self._token and self._email and self._password:
                 logger.debug("No token available for %s. Attempting login", endpoint)
                 self.login()
-            
-            # Now check if we have authentication
+
             if not self._token and not self._api_key:
                 logger.error("No valid authentication available for %s", endpoint)
                 raise AuthenticationError("No valid authentication token or API key available")
-            
-            # Build headers with token or API key
+
             headers = build_headers(token=self._token, api_key=self._api_key)
-            
-            # Log headers with sensitive data redacted
+
             log_headers = {k: '***' if k in ['Authorization', 'X-Api-Key'] else v 
                          for k, v in headers.items()}
             logger.debug("Using headers: %s", log_headers)
 
         try:
-            # Log request details
             log_data = {
                 'method': method,
                 'url': url,
                 'params': params
             }
             if data:
-                # Redact sensitive fields in request data
                 log_data['data'] = self._redact_sensitive_data(data)
             logger.debug("Making request: %s", log_data)
 
@@ -776,6 +802,11 @@ class NoteDxClient:
             if 200 <= response.status_code < 300:
                 self._last_successful_methods[endpoint] = method
                 self._auth_retry_counts[endpoint] = 0
+                
+                # For login endpoint, log success
+                if endpoint == "auth/login":
+                    logger.info("Successfully logged in as: %s", self._email)
+                    
                 return response_data
 
             # Handle rate limiting
@@ -800,72 +831,73 @@ class NoteDxClient:
                 "Unknown error"
             )
             error_code = response_data.get("error", {}).get("code")
+            error_details = response_data.get("details", {})
             
             if response.status_code == 401:
-                # Handle invalid password error for password change
-                if endpoint == "auth/change-password" and error_code == "INVALID_PASSWORD":
-                    logger.error("Invalid current password for password change")
-                    raise AuthenticationError(error_msg, error_code, response_data)
                 # Handle Firebase auth errors
                 if "Invalid API Key" in error_msg:
                     logger.error("Invalid API key used for %s", endpoint)
-                    raise AuthenticationError(error_msg, error_code, response_data)
+                    raise AuthenticationError(error_msg, error_code, error_details)
                 elif "User not found" in error_msg:
                     logger.error("User not found for %s", endpoint)
-                    raise AuthenticationError(error_msg, "USER_NOT_FOUND", response_data)
+                    raise AuthenticationError(error_msg, "USER_NOT_FOUND", error_details)
                 elif "Invalid credentials" in error_msg:
                     logger.error("Invalid credentials for %s", endpoint)
-                    raise AuthenticationError(error_msg, "INVALID_CREDENTIALS", response_data)
+                    raise AuthenticationError(error_msg, "INVALID_CREDENTIALS", error_details)
                 elif "Token expired" in error_msg or "expired" in error_msg.lower():
                     logger.info("Token expired for %s, attempting refresh", endpoint)
                     # Try to refresh token and retry request once
                     if endpoint != "auth/refresh":  # Prevent infinite recursion
                         if self._handle_auth_retry(endpoint, error_msg, error_code, response_data):
                             return self._request(method, endpoint, data, params, timeout)
-                    raise AuthenticationError(error_msg, "TOKEN_EXPIRED", response_data)
+                    raise AuthenticationError(error_msg, "TOKEN_EXPIRED", error_details)
                 else:
                     # Try to refresh token first, then fall back to re-login
                     if endpoint != "auth/refresh" and self._handle_auth_retry(endpoint, error_msg, error_code, response_data):
                         return self._request(method, endpoint, data, params, timeout)
-                    raise AuthenticationError(error_msg, error_code, response_data)
+                    raise AuthenticationError(error_msg, error_code, error_details)
 
             elif response.status_code == 402:
                 logger.error("Payment required for %s: %s", endpoint, error_msg)
-                raise PaymentRequiredError(error_msg, error_code, response_data)
+                raise PaymentRequiredError(error_msg, error_code, error_details)
             
             elif response.status_code == 403:
                 if "Account Inactive" in error_msg:
                     logger.error("Inactive account accessing %s", endpoint)
-                    raise InactiveAccountError(error_msg, error_code, response_data)
+                    raise InactiveAccountError(error_msg, error_code, error_details)
                 elif "Token revoked" in error_msg or "not authorized" in error_msg.lower():
                     logger.info("Token revoked or unauthorized for %s, attempting refresh", endpoint)
                     # Try to refresh token first, then fall back to re-login
                     if self._handle_auth_retry(endpoint, error_msg, error_code, response_data):
                         return self._request(method, endpoint, data, params, timeout)
-                    raise AuthorizationError(error_msg, error_code, response_data)
+                    raise AuthorizationError(error_msg, error_code, error_details)
                 # For any other 403, try refresh first, then re-login
                 if self._handle_auth_retry(endpoint, error_msg, error_code, response_data):
                     return self._request(method, endpoint, data, params, timeout)
-                raise AuthorizationError(error_msg, error_code, response_data)
+                raise AuthorizationError(error_msg, error_code, error_details)
 
             elif response.status_code == 404:
                 logger.error("Resource not found at %s", endpoint)
-                raise NotFoundError(error_msg, error_code, response_data)
+                raise NotFoundError(error_msg, error_code, error_details)
             
             elif response.status_code == 400:
                 logger.error("Bad request to %s: %s", endpoint, error_msg)
-                raise BadRequestError(error_msg, error_code, response_data)
+                raise BadRequestError(error_msg, error_code, error_details)
+            
+            elif response.status_code == 409:
+                logger.error("Conflict error from %s: %s", endpoint, error_msg)
+                raise ConflictError(error_msg, error_code, error_details)
             
             elif response.status_code >= 500:
                 logger.error("Server error from %s: %s", endpoint, error_msg)
-                raise InternalServerError(error_msg, error_code, response_data)
+                raise InternalServerError(error_msg, error_code, error_details)
             
             else:
                 logger.error(
                     "Unexpected status code %d from %s: %s",
                     response.status_code, endpoint, error_msg
                 )
-                raise NoteDxError(error_msg, error_code, response_data)
+                raise NoteDxError(error_msg, error_code, error_details)
 
         except requests.Timeout:
             logger.error("Request to %s timed out after %d seconds", endpoint, timeout)
@@ -900,7 +932,8 @@ class NoteDxClient:
             logger.error("Unexpected error in request to %s: %s", endpoint, str(e))
             raise
 
-    def _redact_sensitive_data(self, data: Any) -> Any:
+    @staticmethod
+    def _redact_sensitive_data(data: Any) -> Any:
         """Redact sensitive information from data for logging purposes.
 
         Parameters:
@@ -914,9 +947,131 @@ class NoteDxClient:
                 k: '***' if k.lower() in {
                     'password', 'token', 'key', 'secret', 'authorization',
                     'refresh_token', 'id_token', 'api_key'
-                } else self._redact_sensitive_data(v)
+                } else NoteDxClient._redact_sensitive_data(v)
                 for k, v in data.items()
             }
         elif isinstance(data, list):
-            return [self._redact_sensitive_data(item) for item in data]
+            return [NoteDxClient._redact_sensitive_data(item) for item in data]
         return data
+
+    @classmethod
+    def create_account(
+        cls,
+        email: str,
+        password: str,
+        company_name: str,
+        contact_phone: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Create a new NoteDx account.
+
+        ```bash
+        POST /auth/create-account
+        ```
+
+        This operation:
+
+        1. Creates a new user account
+        2. Generates sandbox and live API keys
+        3. Sends email verification link
+        4. Sets up initial account settings
+
+        Args:
+            email: Email address for the account
+            password: Account password (must be at least 8 characters)
+            company_name: Company or organization name
+            contact_phone: Optional contact phone number
+
+        Returns:
+            Dict containing:
+
+            - message: Success message from the API
+            - user_id: Created account identifier
+            - sandbox_api_key: API key for testing (unlimited usage)
+            - live_api_key: API key for production (includes free trial)
+            - requires_verification: True (email verification required)
+            - next_steps: List of steps to complete setup
+
+        Raises:
+            BadRequestError: If required fields are missing or invalid
+            InvalidFieldError: If email format is invalid
+            ConflictError: If email is already registered
+            NetworkError: If connection issues occur
+        """
+        logger.debug("Preparing account creation request")
+
+        # Validate password length
+        if len(password) < 8:
+            logger.error("Password validation failed: too short")
+            raise InvalidFieldError(
+                "password",
+                "INVALID_PASSWORD_LENGTH",
+                {"min_length": 8}
+            )
+
+        # Prepare request data
+        create_data = {
+            "email": email.strip(),
+            "password": password.strip(),
+            "company_name": company_name.strip()
+        }
+
+        # Add optional phone if provided
+        if contact_phone:
+            create_data["contact_phone"] = contact_phone.strip()
+
+        try:
+            response = cls._create_account_request(
+                "POST",
+                "auth/create-account",
+                data=create_data
+            )
+
+            # Log success with important next steps
+            sandbox_key = response.get('sandbox_api_key')
+            live_key = response.get('live_api_key')
+            
+            logger.warning(
+                "Account created successfully! Important next steps:\n"
+                "1. Check your email (%s) for the verification link\n"
+                "2. Click the verification link to activate your account\n"
+                "3. List your API keys, update them and or save them:\n"
+                "   - Sandbox API Key (unlimited testing): %s\n"
+                "   - Live API Key (includes free trial and LLM endpoints): %s",
+                email,
+                sandbox_key[:8] + '...' if sandbox_key else 'Not generated',
+                live_key[:8] + '...' if live_key else 'Not generated'
+            )
+
+            # Create a client instance and set the API key
+            client = cls(email=email, password=password, auto_login=False)
+            if live_key:
+                client.set_api_key(live_key)
+            
+            # Log additional details at debug level
+            log_data = {
+                'email': email,
+                'company': company_name,
+                'user_id': response.get('user_id'),
+                'requires_verification': response.get('requires_verification', True),
+                'next_steps': response.get('next_steps', []),
+                'has_sandbox_key': bool(sandbox_key),
+                'has_live_key': bool(live_key)
+            }
+            logger.debug("Account creation details", extra=log_data)
+
+            return response
+
+        except Exception as e:
+            # Log error (without sensitive data)
+            logger.error(
+                "Failed to create account",
+                extra={
+                    'error_type': type(e).__name__,
+                    'code': getattr(e, 'code', None),
+                    'details': getattr(e, 'details', {}),
+                    'email': email
+                },
+                exc_info=True
+            )
+            raise

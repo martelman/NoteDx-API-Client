@@ -1,6 +1,6 @@
 <img src="./assets/notedx-logo-black.png" alt="NoteDx Logo" width="200" height="auto">
 
-# NoteDx Python SDK - Beta Access Available!
+# NoteDx Python SDK
 
 The NoteDx Python SDK provides a simple and intuitive way to interact with the NoteDx API for medical note generation and management. Fully compliant to handling of healthcare data in the US and Canada including Quebec.
 
