@@ -481,6 +481,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#notedx_sdk.client.NoteDxClient.create_account" class="md-nav__link">
+    <span class="md-ellipsis">
+      create_account
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -853,6 +862,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#notedx_sdk.client.NoteDxClient.create_account" class="md-nav__link">
+    <span class="md-ellipsis">
+      create_account
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -999,6 +1017,7 @@ and resource management with robust error handling.</p>
 <details class="features" open>
   <summary>Features</summary>
   <ul>
+<li>Account creation and management</li>
 <li>Authentication handling (Firebase email/password and API key)</li>
 <li>Environment configuration</li>
 <li>Type-safe interfaces</li>
@@ -1172,21 +1191,29 @@ and resource management with robust error handling.</p>
 
 <details class="example" open>
   <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Using email/password authentication</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">client</span> <span class="o">=</span> <span class="n">NoteDxClient</span><span class="p">(</span>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Create a new account</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">result</span> <span class="o">=</span> <span class="n">NoteDxClient</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">create_account</span><span class="p">(</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">email</span><span class="o">=</span><span class="s2">&quot;user@example.com&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">password</span><span class="o">=</span><span class="s2">&quot;password123&quot;</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># Client automatically logs in</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nb">print</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">get_account</span><span class="p">())</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">password</span><span class="o">=</span><span class="s2">&quot;secure-password&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">company_name</span><span class="o">=</span><span class="s2">&quot;Medical Center Inc.&quot;</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sandbox API Key: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;sandbox_api_key&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1"># Using API key authentication</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">client</span> <span class="o">=</span> <span class="n">NoteDxClient</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="s2">&quot;your-api-key&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># Process an audio file</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">notes</span><span class="o">.</span><span class="n">process_audio</span><span class="p">(</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">file_path</span><span class="o">=</span><span class="s2">&quot;recording.mp3&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">template</span><span class="o">=</span><span class="s2">&quot;primaryCare&quot;</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="p">)</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1"># Using email/password authentication</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">client</span> <span class="o">=</span> <span class="n">NoteDxClient</span><span class="p">(</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">email</span><span class="o">=</span><span class="s2">&quot;user@example.com&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">password</span><span class="o">=</span><span class="s2">&quot;password123&quot;</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="p">)</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="c1"># Client automatically logs in</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="nb">print</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">get_account</span><span class="p">())</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="c1"># Using API key authentication</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="n">client</span> <span class="o">=</span> <span class="n">NoteDxClient</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="s2">&quot;your-api-key&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="c1"># Process an audio file</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">notes</span><span class="o">.</span><span class="n">process_audio</span><span class="p">(</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    <span class="n">file_path</span><span class="o">=</span><span class="s2">&quot;recording.mp3&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    <span class="n">template</span><span class="o">=</span><span class="s2">&quot;primaryCare&quot;</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="p">)</span>
 </code></pre></div>
 </details>
 <details class="notes" open>
@@ -1194,13 +1221,16 @@ and resource management with robust error handling.</p>
   <ul>
 <li>The session parameter allows for custom SSL, proxy, and timeout configuration</li>
 <li>Auto-login can be disabled if you want to handle authentication manually</li>
+<li>Each account starts with 100 free jobs (live API key)</li>
+<li>Sandbox API keys have unlimited usage for testing</li>
 </ul>
 </details>  
       <p>Initialize the NoteDx API client.</p>
-<p>The client can be initialized with either:</p>
+<p>The client can be initialized with:</p>
 <ol>
-<li>Email and password for full account access (using Firebase Auth)</li>
+<li>Email and password for account access (using Firebase Auth)</li>
 <li>API key for note generation only</li>
+<li>Both email/password and API key for full account access and note generation</li>
 <li>No credentials (will read from environment variables)</li>
 </ol>
 
@@ -1606,7 +1636,6 @@ for subsequent requests.</p>
 <li>email (str): User's email address</li>
 <li>id_token (str): Firebase ID token for API requests</li>
 <li>refresh_token (str): Token for refreshing authentication</li>
-<li>requires_password_change (bool): Whether user needs to change password</li>
 </ul>
             </div>
               <p>
@@ -1669,13 +1698,6 @@ for subsequent requests.</p>
     </tbody>
   </table>
 
-<details class="example" open>
-  <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">client</span> <span class="o">=</span> <span class="n">NoteDxClient</span><span class="p">(</span><span class="n">email</span><span class="o">=</span><span class="s2">&quot;user@example.com&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s2">&quot;pass&quot;</span><span class="p">,</span> <span class="n">auto_login</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">auth_info</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">login</span><span class="p">()</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Logged in as: </span><span class="si">{</span><span class="n">auth_info</span><span class="p">[</span><span class="s1">&#39;email&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</code></pre></div>
-</details>
   </div>
 
 </div>
@@ -1976,12 +1998,11 @@ API keys provide limited access focused on note generation endpoints.</p>
 
   <div class="doc doc-contents ">
   
-      <p>Change the authenticated user's password.</p>
+      <p>Change the password for the currently logged in user.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>POST<span class="w"> </span>/auth/change-password
 </code></pre></div>
 <p>This method wraps the /auth/change-password endpoint, handling password updates
-and subsequent re-authentication if required. It validates password requirements
-before making the request.</p>
+and token management. On successful password change, it may require re-authentication.</p>
 
 
 
@@ -1997,7 +2018,7 @@ before making the request.</p>
           <td><code>current_password</code></td>
           <td class="doc-param-details">
             <div class="doc-md-description">
-              <p>The user's current password</p>
+              <p>Current password for verification</p>
             </div>
             <p>
                 <span class="doc-param-annotation">
@@ -2011,7 +2032,7 @@ before making the request.</p>
           <td><code>new_password</code></td>
           <td class="doc-param-details">
             <div class="doc-md-description">
-              <p>The desired new password (must be at least 8 characters)</p>
+              <p>New password to set</p>
             </div>
             <p>
                 <span class="doc-param-annotation">
@@ -2040,11 +2061,9 @@ before making the request.</p>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>Password change response containing:</p>
+              <p>Response data containing:</p>
 <ul>
-<li>message (str): Success message</li>
-<li>user_id (str): Firebase user ID</li>
-<li>email (str): User's email</li>
+<li>success (bool): Whether password was changed</li>
 <li>requires_reauth (bool): Whether re-authentication is required</li>
 </ul>
             </div>
@@ -2077,7 +2096,7 @@ before making the request.</p>
           </td>
           <td class="doc-raises-details">
             <div class="doc-md-description">
-              <p>If current password is invalid or user not logged in</p>
+              <p>If not logged in or current password is incorrect</p>
             </div>
           </td>
         </tr>
@@ -2090,6 +2109,18 @@ before making the request.</p>
           <td class="doc-raises-details">
             <div class="doc-md-description">
               <p>If new password doesn't meet requirements</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <span class="doc-raises-annotation">
+                <code><span title="notedx_sdk.exceptions.NetworkError">NetworkError</span></code>
+            </span>
+          </td>
+          <td class="doc-raises-details">
+            <div class="doc-md-description">
+              <p>If connection fails or request times out</p>
             </div>
           </td>
         </tr>
@@ -2110,15 +2141,294 @@ before making the request.</p>
 
 <details class="example" open>
   <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="o">...</span>     <span class="n">result</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">change_password</span><span class="p">(</span><span class="s2">&quot;old_pass&quot;</span><span class="p">,</span> <span class="s2">&quot;new_secure_pass&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="o">...</span>     <span class="k">if</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;requires_reauth&quot;</span><span class="p">]:</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="o">...</span>         <span class="c1"># Need to log in again with new password</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="o">...</span>         <span class="n">client</span><span class="o">.</span><span class="n">login</span><span class="p">()</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="o">...</span> <span class="k">except</span> <span class="n">BadRequestError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="o">...</span>     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid password: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">client</span> <span class="o">=</span> <span class="n">NoteDxClient</span><span class="p">(</span><span class="n">email</span><span class="o">=</span><span class="s2">&quot;user@example.com&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s2">&quot;old-pass&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">result</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">change_password</span><span class="p">(</span><span class="s2">&quot;old-pass&quot;</span><span class="p">,</span> <span class="s2">&quot;new-pass&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="k">if</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;requires_reauth&quot;</span><span class="p">]:</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="o">...</span>     <span class="n">client</span><span class="o">.</span><span class="n">login</span><span class="p">()</span>  <span class="c1"># Re-authenticate with new password</span>
 </code></pre></div>
 </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h4 id="notedx_sdk.client.NoteDxClient.create_account" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">create_account</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#notedx_sdk.client.NoteDxClient.create_account" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_account</span><span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">email</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">company_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">contact_phone</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Create a new NoteDx account.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>POST<span class="w"> </span>/auth/create-account
+</code></pre></div>
+<p>This operation:</p>
+<ol>
+<li>Creates a new user account</li>
+<li>Generates sandbox and live API keys</li>
+<li>Sends email verification link</li>
+<li>Sets up initial account settings</li>
+</ol>
+
+
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>PARAMETER</b></th>
+        <th><b> DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>email</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>Email address for the account</p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code>str</code>
+                </span>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td><code>password</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>Account password (must be at least 8 characters)</p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code>str</code>
+                </span>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td><code>company_name</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>Company or organization name</p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code>str</code>
+                </span>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td><code>contact_phone</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>Optional contact phone number</p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code><span title="typing.Optional">Optional</span>[str]</code>
+                </span>
+                <span class="doc-param-default">
+                  <b>DEFAULT:</b> 
+                    <code>None</code>
+                </span>
+            </p>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>RETURNS</b></th>
+        <th><b>DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+              <span class="doc-returns-annotation">
+                  <code><span title="typing.Dict">Dict</span>[str, <span title="typing.Any">Any</span>]</code>
+              </span>
+          </td>
+          <td class="doc-returns-details">
+            <div class="doc-md-description">
+              <p>Dict containing:</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+              <span class="doc-returns-annotation">
+                  <code><span title="typing.Dict">Dict</span>[str, <span title="typing.Any">Any</span>]</code>
+              </span>
+          </td>
+          <td class="doc-returns-details">
+            <div class="doc-md-description">
+              <ul>
+<li>message: Success message from the API</li>
+</ul>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+              <span class="doc-returns-annotation">
+                  <code><span title="typing.Dict">Dict</span>[str, <span title="typing.Any">Any</span>]</code>
+              </span>
+          </td>
+          <td class="doc-returns-details">
+            <div class="doc-md-description">
+              <ul>
+<li>user_id: Created account identifier</li>
+</ul>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+              <span class="doc-returns-annotation">
+                  <code><span title="typing.Dict">Dict</span>[str, <span title="typing.Any">Any</span>]</code>
+              </span>
+          </td>
+          <td class="doc-returns-details">
+            <div class="doc-md-description">
+              <ul>
+<li>sandbox_api_key: API key for testing (unlimited usage)</li>
+</ul>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+              <span class="doc-returns-annotation">
+                  <code><span title="typing.Dict">Dict</span>[str, <span title="typing.Any">Any</span>]</code>
+              </span>
+          </td>
+          <td class="doc-returns-details">
+            <div class="doc-md-description">
+              <ul>
+<li>live_api_key: API key for production (includes free trial)</li>
+</ul>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+              <span class="doc-returns-annotation">
+                  <code><span title="typing.Dict">Dict</span>[str, <span title="typing.Any">Any</span>]</code>
+              </span>
+          </td>
+          <td class="doc-returns-details">
+            <div class="doc-md-description">
+              <ul>
+<li>requires_verification: True (email verification required)</li>
+</ul>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+              <span class="doc-returns-annotation">
+                  <code><span title="typing.Dict">Dict</span>[str, <span title="typing.Any">Any</span>]</code>
+              </span>
+          </td>
+          <td class="doc-returns-details">
+            <div class="doc-md-description">
+              <ul>
+<li>next_steps: List of steps to complete setup</li>
+</ul>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>RAISES</b></th>
+        <th><b>DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+            <span class="doc-raises-annotation">
+                <code><span title="notedx_sdk.exceptions.BadRequestError">BadRequestError</span></code>
+            </span>
+          </td>
+          <td class="doc-raises-details">
+            <div class="doc-md-description">
+              <p>If required fields are missing or invalid</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <span class="doc-raises-annotation">
+                <code><span title="notedx_sdk.exceptions.InvalidFieldError">InvalidFieldError</span></code>
+            </span>
+          </td>
+          <td class="doc-raises-details">
+            <div class="doc-md-description">
+              <p>If email format is invalid</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <span class="doc-raises-annotation">
+                <code><span title="notedx_sdk.exceptions.ConflictError">ConflictError</span></code>
+            </span>
+          </td>
+          <td class="doc-raises-details">
+            <div class="doc-md-description">
+              <p>If email is already registered</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <span class="doc-raises-annotation">
+                <code><span title="notedx_sdk.exceptions.NetworkError">NetworkError</span></code>
+            </span>
+          </td>
+          <td class="doc-raises-details">
+            <div class="doc-md-description">
+              <p>If connection issues occur</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
   </div>
 
 </div>

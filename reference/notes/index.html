@@ -1429,11 +1429,12 @@ The template determines how the audio content will be structured in the final no
             </p>
           </td>
         </tr>
-        <tr>
-          <td><code>Note</code></td>
-          <td class="doc-param-details">
-            <div class="doc-md-description">
-              <ul>
+    </tbody>
+  </table>
+
+<details class="note" open>
+  <summary>Note</summary>
+  <ul>
 <li>If left empty, the default documentation style of the template is used, i.e. <code>structured</code> </li>
 <li>Common sections are: Identification, Chief complaint, Past medical and surgical history, Past investigations, Medication and allergies, Lifestyle habits, Family history, Social history, HPI, Physical exam, Assessment, Plan.</li>
 </ul>
@@ -1456,56 +1457,14 @@ The template determines how the audio content will be structured in the final no
 <li><code>wfw</code> - Word for word transcription, supports inclusion of formatting and punctuation during dictation</li>
 <li><code>smartInsert</code> - Smart insertion mode</li>
 </ul>
-            </div>
-            <p>
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td><code>custom</code></td>
-          <td class="doc-param-details">
-            <div class="doc-md-description">
-              <p>Additional parameters for note generation (optional).<br />
-Dictionary that can contain:</p>
-<ul>
-<li><code>context</code>: Additional patient context (history, demographics, medication, etc.)</li>
-<li><code>template</code>: A complete custom template as a string (SOAP note, other etc...)</li>
-</ul>
-            </div>
-            <p>
-                <span class="doc-param-annotation">
-                  <b>TYPE:</b>
-                    <code><span title="typing.Optional">Optional</span>[<span title="typing.Dict">Dict</span>[str, <span title="typing.Any">Any</span>]]</code>
-                </span>
-                <span class="doc-param-default">
-                  <b>DEFAULT:</b> 
-                    <code>None</code>
-                </span>
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td><code>chunk_size</code></td>
-          <td class="doc-param-details">
-            <div class="doc-md-description">
-              <p>Size of upload chunks in bytes (optional).<br />
-Defaults to 1MB. Adjust for large files or slow connections.</p>
-            </div>
-            <p>
-                <span class="doc-param-annotation">
-                  <b>TYPE:</b>
-                    <code><span title="typing.Optional">Optional</span>[int]</code>
-                </span>
-                <span class="doc-param-default">
-                  <b>DEFAULT:</b> 
-                    <code>None</code>
-                </span>
-            </p>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-
+<p>custom: Additional parameters for note generation (optional).<br />
+    Dictionary that can contain:</p>
+<div class="highlight"><pre><span></span><code>* `context`: Additional patient context (history, demographics, medication, etc.)
+* `template`: A complete custom template as a string (SOAP note, other etc...)
+</code></pre></div>
+<p>chunk_size: Size of upload chunks in bytes (optional).<br />
+    Defaults to 1MB. Adjust for large files or slow connections.</p>
+</details>
 
 
   <table>
@@ -1594,7 +1553,36 @@ Defaults to 1MB. Adjust for large files or slow connections.</p>
           </td>
           <td class="doc-raises-details">
             <div class="doc-md-description">
-              <p>If account payment is required</p>
+              <p>If:</p>
+<ul>
+<li>Free trial jobs are depleted (100 jobs limit)</li>
+<li>Payment is required for subscription</li>
+<li>Account has exceeded usage limits</li>
+</ul>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <span class="doc-raises-annotation">
+                <code><span title="notedx_sdk.exceptions.AuthorizationError">AuthorizationError</span></code>
+            </span>
+          </td>
+          <td class="doc-raises-details">
+            <div class="doc-md-description">
+              <p>If API key lacks permissions</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <span class="doc-raises-annotation">
+                <code><span title="notedx_sdk.exceptions.InactiveAccountError">InactiveAccountError</span></code>
+            </span>
+          </td>
+          <td class="doc-raises-details">
+            <div class="doc-md-description">
+              <p>If account is inactive or pending setup</p>
             </div>
           </td>
         </tr>
@@ -1702,6 +1690,9 @@ Defaults to 1MB. Adjust for large files or slow connections.</p>
   <ul>
 <li>Each language need its own custom template if you want the note to be generated accurately.</li>
 <li>For example, if you pass a custom template in english, but use <code>lang</code> and <code>output_language</code> as french, the note will be generated in french but the custom template but the sections might be in english.</li>
+<li>Free trial users get 100 jobs before requiring payment</li>
+<li>Job processing typically takes 20-30 seconds</li>
+<li>Maximum file size is 500MB</li>
 </ul>
 </details>
   </div>
@@ -1850,7 +1841,11 @@ If not specified, uses the original language.</li>
           <td><code>documentation_style</code></td>
           <td class="doc-param-details">
             <div class="doc-md-description">
-              <p>Style of the documentation (optional, see process_audio() for details).</p>
+              <p>Style of the documentation (optional):</p>
+<ul>
+<li>'soap': The classic SOAP note style</li>
+<li>'problemBased': Problem based documentation style</li>
+</ul>
             </div>
             <p>
                 <span class="doc-param-annotation">
@@ -2104,24 +2099,12 @@ Obtained from process_audio() or regenerate_note().</p>
         <tr>
           <td>
             <span class="doc-raises-annotation">
-                <code><span title="notedx_sdk.exceptions.ValidationError">ValidationError</span></code>
-            </span>
-          </td>
-          <td class="doc-raises-details">
-            <div class="doc-md-description">
-              <p>If job_id is invalid</p>
-            </div>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <span class="doc-raises-annotation">
                 <code><span title="notedx_sdk.exceptions.JobNotFoundError">JobNotFoundError</span></code>
             </span>
           </td>
           <td class="doc-raises-details">
             <div class="doc-md-description">
-              <p>If job is not found</p>
+              <p>If job_id is not found</p>
             </div>
           </td>
         </tr>
@@ -2246,8 +2229,17 @@ Job must be in 'completed' status.</p>
               <p>A dictionary containing:</p>
 <ul>
 <li>note (str): The generated medical note text</li>
-<li>noteTitle (str, optional): Title for the note</li>
+<li>note_title (str, optional): Title for the note</li>
 <li>job_id (str): The job ID (for reference)</li>
+<li>status (str): Job status (should be 'completed')</li>
+<li>lang (str): Source language of the transcript</li>
+<li>output_language (str): Target language for the note</li>
+<li>recording_type (str): Type of recording (dictation/conversation)</li>
+<li>visit_type (str): Type of visit (initialEncounter/followUp)</li>
+<li>template (str): Template used for generation</li>
+<li>is_sandbox (bool): Whether this is a sandbox job</li>
+<li>timestamp (str): Job creation timestamp</li>
+<li>ttl (int): Time-to-live in seconds for the job data</li>
 </ul>
             </div>
               <p>
@@ -2340,7 +2332,7 @@ Job must be in 'completed' status.</p>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">status</span> <span class="o">=</span> <span class="n">note_manager</span><span class="o">.</span><span class="n">fetch_status</span><span class="p">(</span><span class="s2">&quot;job-id&quot;</span><span class="p">)</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="k">if</span> <span class="n">status</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;completed&quot;</span><span class="p">:</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="o">...</span>     <span class="n">result</span> <span class="o">=</span> <span class="n">note_manager</span><span class="o">.</span><span class="n">fetch_note</span><span class="p">(</span><span class="s2">&quot;job-id&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="o">...</span>     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Title: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;noteTitle&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="o">...</span>     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Title: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;note_title&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="o">...</span>     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Note: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;note&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
 </details>
