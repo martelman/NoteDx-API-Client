@@ -63,14 +63,6 @@ class NoteDxClient:
     
     Example:
         ```python
-        # Create a new account
-        result = NoteDxClient.account.create_account(
-            email="user@example.com",
-            password="secure-password",
-            company_name="Medical Center Inc."
-        )
-        print(f"Sandbox API Key: {result['sandbox_api_key']}")
-        
         # Using email/password authentication
         client = NoteDxClient(
             email="user@example.com",

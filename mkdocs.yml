@@ -28,6 +28,43 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
+  icon:
+    admonition:
+      note: octicons/tag-16
+      abstract: octicons/checklist-16
+      info: octicons/info-16
+      tip: octicons/squirrel-16
+      success: octicons/check-16
+      question: octicons/question-16
+      warning: octicons/alert-16
+      failure: octicons/x-circle-16
+      danger: octicons/zap-16
+      bug: octicons/bug-16
+      example: octicons/beaker-16
+      quote: octicons/quote-16
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - API Reference:
+    - Client: reference/client.md
+    - Account Management: reference/account.md
+    - API Key Management: reference/api-keys.md
+    - Note Generation: reference/notes.md
+    - Webhook Management: reference/webhooks.md
+  - Code Examples: examples.md
+  - Billing: billing.md
+  - Changelog: changelog.md
+  - API Console ↗: https://notedx-api.firebaseapp.com
+
+extra:
+  analytics:
+    provider: google
+    property: !ENV GOOGLE_ANALYTICS_KEY
+  social:
+    - icon: fontawesome/solid/right-to-bracket
+      link: https://notedx-api.firebaseapp.com
+      name: API Console Login
 
 plugins:
   - search
@@ -63,16 +100,10 @@ markdown_extensions:
   - tables
   - toc:
       permalink: true
+  - attr_list
+  - md_in_html
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
-nav:
-  - Home: index.md
-  - Getting Started: getting-started.md
-  - API Reference:
-    - Client: reference/client.md
-    - Account Management: reference/account.md
-    - API Key Management: reference/api-keys.md
-    - Note Generation: reference/notes.md
-    - Webhook Management: reference/webhooks.md
-  - Code Examples: examples.md
-  - Billing: billing.md
-  - Changelog: changelog.md 
+ 
