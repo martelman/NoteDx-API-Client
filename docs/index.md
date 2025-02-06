@@ -4,6 +4,8 @@
 
 The NoteDx Python SDK provides a simple and intuitive way to interact with the NoteDx API for medical note generation and management. Fully compliant to handling of healthcare data in the US and Canada including Quebec.
 
+[Login to API Console :octicons-sign-in-16:](https://notedx-api.firebaseapp.com){ .md-button .md-button--primary }
+
 ## Features
 
 - 🔒 **Secure Authentication**: API key for usage and Firebase authentication for your account management.

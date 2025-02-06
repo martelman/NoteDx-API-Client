@@ -23,22 +23,8 @@ poetry add notedx-sdk
 
 ## Create an Account
 
-First, create your NoteDx account:
-
-```python
-from notedx_sdk import NoteDxClient
-
-# Create a new account
-result = NoteDxClient.create_account(
-    email="user@example.com",
-    password="secure-password",  # Must be at least 8 characters
-    company_name="Your Company Name"
-)
-
-# Save your API keys
-sandbox_key = result['sandbox_api_key']  # For testing (unlimited usage)
-live_key = result['live_api_key']    # For production (includes 100 free jobs)
-```
+Go to the [NoteDx Admin](https://notedx-api.firebaseapp.com/) and create an account and manage it in the admin dashboard.
+You can also use the API to manage it.
 
 After creating your account:
 

@@ -2,6 +2,12 @@
 
 All notable changes to the NoteDx SDK will be documented in this file.
 
+## [0.1.6] - 2025-02-07
+
+### Changed
+- Built a front end for the NoteDx admin methods. This will be the method to manage your NoteDx account.
+- Removed the create_account method from the NoteDxClient class.
+
 ## [0.1.5] - 2025-01-17
 
 ### Added
@@ -18,7 +24,6 @@ All notable changes to the NoteDx SDK will be documented in this file.
 ### Fixed
 - Authentication retry logic for expired tokens
 - Token refresh handling during method changes
-- API key validation in request headers
 
 ## [0.1.4] - 2025-01-14
 
