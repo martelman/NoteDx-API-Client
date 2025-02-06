@@ -94,15 +94,16 @@ except ValidationError as e:
 
 ```json
 {
-  "event": "note.completed",
   "job_id": "job_abc123",
-  "timestamp": "2024-01-23T12:34:56Z",
-  "data": {
-    "status": "completed",
-    "note_id": "note_xyz789"
-  }
+  "status": "completed",
+  "note_url": "https://api.notedx.io/v1/fetch-note/job_abc123"
 }
 ```
+
+Additional fields that may be included:
+
+- For transcribed status: `transcript_url`
+- For error status: `error` object (except billing-related errors)
 
 ## REST API Equivalent
 

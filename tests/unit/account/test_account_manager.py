@@ -159,28 +159,3 @@ class TestAccountManager:
             method()
         assert "Firebase authentication" in str(exc_info.value)
         mock_client._request.assert_not_called()
-
-    @pytest.mark.skip(reason="create_account is implemented in NoteDxClient, not AccountManager")
-    def test_create_account_success(self, account_manager):
-        """Test successful account creation."""
-        pass
-
-    @pytest.mark.skip(reason="create_account is implemented in NoteDxClient, not AccountManager")
-    def test_create_account_missing_required_fields(self, account_manager):
-        """Test account creation with missing required fields."""
-        pass
-
-    @pytest.mark.skip(reason="create_account is implemented in NoteDxClient, not AccountManager")
-    def test_create_account_invalid_email(self, account_manager):
-        """Test account creation with invalid email."""
-        pass
-
-    @pytest.mark.skip(reason="create_account is implemented in NoteDxClient, not AccountManager")
-    def test_create_account_weak_password(self, account_manager):
-        """Test account creation with weak password."""
-        pass
-
-    @pytest.mark.skip(reason="create_account is implemented in NoteDxClient, not AccountManager")
-    def test_create_account_email_exists(self, account_manager):
-        """Test account creation with existing email."""
-        pass

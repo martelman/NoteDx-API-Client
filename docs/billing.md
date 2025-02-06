@@ -16,9 +16,9 @@ After the free trial, we use a **tiered token pricing** model:
 
 | Tier | Token Range | Price per 1,000 tokens |
 |------|-------------|------------------------|
-| 1 | 1 - 500,000 | $0.11 |
-| 2 | 500,001 - 2,500,000 | $0.095 |
-| 3 | 2,500,001 - 10,000,000 | $0.08 |
+| 1 | 1 - 500,000 | $0.0825 |
+| 2 | 500,001 - 2,500,000 | $0.0715 |
+| 3 | 2,500,001 - 10,000,000 | $0.0685 |
 | 4 | 10,000,001 - 50,000,000 | $0.065 |
 | 5 | 50,000,001+ | $0.05 |
 
@@ -26,15 +26,15 @@ After the free trial, we use a **tiered token pricing** model:
 
 - Pricing is based on the total number of tokens processed
 - Each tier's rate applies only to tokens within that tier's range
-- Tokens are counted for both transcription and note generation
+- Tokens are counted for both transcription and note generation (output only, i.e, number of tokens in the output.)
 - Billing is calculated monthly based on total token usage
 
 Example:
 If you process 600,000 tokens in a month:
 
-- First 500,000 tokens: $0.11 per 1,000 = $55
-- Next 100,000 tokens: $0.095 per 1,000 = $9.50
-- Total monthly cost = $64.50
+- First 500,000 tokens: $0.0825 per 1,000 = $41.25
+- Next 100,000 tokens: $0.0715 per 1,000 = $7.15
+- Total monthly cost = $48.40
 
 ## Account Status
 
@@ -75,11 +75,11 @@ Your account can be in one of these states:
 
 ### Short Visit Note
 - Average dictation + note ≈ 900 tokens total
-- Cost: 900 tokens × $0.11/1000 = $0.099
+- Cost: 900 tokens × $0.0825/1000 = $0.074
 
 ### Long Consultation
 - Average dictation + note ≈ 2,100 tokens total
-- Cost: 2,100 tokens × $0.11/1000 = $0.231
+- Cost: 2,100 tokens × $0.0825/1000 = $0.173
 
 ### Monthly Usage Example
 Typical usage of power users (15 consultations/day, 5 days/week):
@@ -87,7 +87,7 @@ Typical usage of power users (15 consultations/day, 5 days/week):
 - 240 short visits: 216,000 tokens (900 × 240)
 - 60 long consultations: 126,000 tokens (2,100 × 60)
 - Total monthly tokens: 342,000 tokens
-- Cost: 342,000 tokens × $0.11/1000 = $37.62/month (Tier 1)
+- Cost: 342,000 tokens × $0.0825/1000 = $28.22/month (Tier 1)
 
 ***
 

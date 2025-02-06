@@ -26,7 +26,6 @@ class AccountManager:
     Note:
         Most methods in this class require Firebase authentication (email/password).
         API key authentication is not supported for account management operations.
-        Account creation is handled by NoteDxClient.create_account().
 
     
     Example:
