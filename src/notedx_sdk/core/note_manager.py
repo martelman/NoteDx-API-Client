@@ -582,6 +582,7 @@ class NoteManager:
             * The custom object can be used in `regenerate_note()` to generate new notes from existing transcripts
             * The `context` key adds patient information not in the audio recording
             * `smartInsert` mode allows adding text snippets within a note (e.g., "Include a normal right knee exam")
+            * **IMPORTANT**: If both a custom template and documentation_style are provided, the documentation_style will override the custom template structure
 
         Note:
             - Each language need its own custom template if you want the note to be generated accurately.
@@ -820,6 +821,12 @@ class NoteManager:
             >>> new_job_id = response["job_id"]
             >>> # Use new_job_id to fetch regenerated note
             ```
+
+        Note:
+            - Poll at least 5 seconds apart if you chose this method. Webhooks are **HIGHLY** recommended.
+            - The full Job typically complete within 20-30 seconds.
+            - Status history is preserved for 48 hours
+            - **IMPORTANT**: If both a custom template and documentation_style are provided, the documentation_style will override the custom template structure
         """
         # Validate all inputs first
         if not job_id:

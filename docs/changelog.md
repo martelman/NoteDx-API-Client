@@ -2,6 +2,12 @@
 
 All notable changes to the NoteDx SDK will be documented in this file.
 
+## [0.1.7] - 2025-02-10
+
+### Changed
+- Updated the documentation.
+- Few bug fixes.
+
 ## [0.1.6] - 2025-02-07
 
 ### Changed
