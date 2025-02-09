@@ -1754,6 +1754,7 @@ The template determines how the audio content will be structured in the final no
 <li>The custom object can be used in <code>regenerate_note()</code> to generate new notes from existing transcripts</li>
 <li>The <code>context</code> key adds patient information not in the audio recording</li>
 <li><code>smartInsert</code> mode allows adding text snippets within a note (e.g., "Include a normal right knee exam")</li>
+<li><strong>IMPORTANT</strong>: If both a custom template and documentation_style are provided, the documentation_style will override the custom template structure</li>
 </ul>
 </details>
 <details class="note" open>
@@ -2062,6 +2063,15 @@ If not specified, uses the original language.</li>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">new_job_id</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;job_id&quot;</span><span class="p">]</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="o">&gt;&gt;&gt;</span> <span class="c1"># Use new_job_id to fetch regenerated note</span>
 </code></pre></div>
+</details>
+<details class="note" open>
+  <summary>Note</summary>
+  <ul>
+<li>Poll at least 5 seconds apart if you chose this method. Webhooks are <strong>HIGHLY</strong> recommended.</li>
+<li>The full Job typically complete within 20-30 seconds.</li>
+<li>Status history is preserved for 48 hours</li>
+<li><strong>IMPORTANT</strong>: If both a custom template and documentation_style are provided, the documentation_style will override the custom template structure</li>
+</ul>
 </details>
   </div>
 
