@@ -9,7 +9,7 @@
 
 Official Python SDK for the NoteDx API - a powerful medical note generation service that converts audio recordings into structured medical notes, fully compliant with data privay laws in Canada and the US.
 
-Beta release!
+API console, click [here](https://notedx-api.web.app/auth/login)
 
 ## Features
 
@@ -45,14 +45,18 @@ response = client.notes.process_audio(
     documentation_style="problemBased",
     output_language="fr",
     custom={
-        "context": "Patient is 30 years old, male, with a history of hypertension and diabetes."
+        "context": "Patient is 30 years old, male, with a history of hypertension and diabetes.",
+        "template": "A custom template for your use case"
+    },
+    custom_metadata={
+        "custom_metadata": "Some custom metadata for your use case"
     }
 )
 
 # Get job ID
 job_id = response["job_id"]
 
-# Check status
+# Check status - ( Or better, use the webhook implementation )
 status = client.notes.fetch_status(job_id)
 
 # Get note when ready
