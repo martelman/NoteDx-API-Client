@@ -39,7 +39,7 @@ VALID_LANGUAGES = ['en', 'fr']
 VALID_TEMPLATES = [
     'primaryCare', 'er', 'psychiatry', 'surgicalSpecialties',
     'medicalSpecialties', 'nursing', 'radiology', 'pharmacy', 'procedures',
-    'letter', 'social', 'wfw','smartInsert'
+    'letter', 'social', 'wfw','smartInsert', 'interventionalRadiology'
 ]
 
 # Valid audio formats and their MIME types
@@ -421,10 +421,11 @@ class NoteManager:
         output_language: Optional[Literal['en', 'fr']] = None,
         template: Optional[Literal['primaryCare', 'er', 'psychiatry', 'surgicalSpecialties', 
                                  'medicalSpecialties', 'nursing', 'radiology', 'procedures', 
-                                 'letter', 'pharmacy', 'social', 'wfw', 'smartInsert']] = None,
+                                 'letter', 'pharmacy', 'social', 'wfw', 'smartInsert', 'interventionalRadiology']] = None,
         documentation_style: Optional[Literal['soap', 'problemBased']] = None,
         custom: Optional[Dict[str, Any]] = None,
-        chunk_size: Optional[int] = None  # Now optional, will be calculated if not provided
+        chunk_size: Optional[int] = None,
+        custom_metadata: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Converts an audio recording into a medical note using the specified template.
 
@@ -470,6 +471,8 @@ class NoteManager:
             
                 * `soap`: The classic SOAP note style
                 * `problemBased`: Problem based documentation style, where each problem is a section of the note
+
+            custom_metadata: Additional metadata for the note (optional). Will be passed to webhooks and jobs for internal use.
             
         Note:
             - If left empty, the default documentation style of the template is used, i.e. `structured` 
@@ -485,6 +488,7 @@ class NoteManager:
             * `nursing` - Nursing notes 
             * `pharmacy` - Pharmacy notes
             * `radiology` - Radiology reports
+            * `interventionalRadiology` - Interventional Radiology reports
             * `procedures` - Procedure notes (small procedures, biopsies, outpatient surgeries, etc.)
             * `letter` - Medical letter to the referring physician
             * `social` - Social worker notes
@@ -625,6 +629,8 @@ class NoteManager:
                 data['custom'] = custom
             if documentation_style:
                 data['documentation_style'] = documentation_style
+            if custom_metadata:
+                data['custom_metadata'] = custom_metadata
 
             # Create job and get upload URL
             self.logger.debug("Creating job with parameters: %s", data)
@@ -757,10 +763,11 @@ class NoteManager:
         job_id: str,
         template: Optional[Literal['primaryCare', 'er', 'psychiatry', 'surgicalSpecialties', 
                                  'medicalSpecialties', 'nursing', 'radiology', 'procedures', 
-                                 'letter', 'social', 'wfw', 'smartInsert']] = None,
+                                 'letter', 'social', 'wfw', 'smartInsert', 'interventionalRadiology']] = None,
         output_language: Optional[Literal['en', 'fr']] = None,
         documentation_style: Optional[Literal['soap', 'problemBased']] = None,
-        custom: Optional[Dict[str, Any]] = None
+        custom: Optional[Dict[str, Any]] = None,
+        custom_metadata: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         Generates a new medical note from an existing transcript with different parameters.
@@ -795,6 +802,8 @@ class NoteManager:
             
                 - 'soap': The classic SOAP note style
                 - 'problemBased': Problem based documentation style
+
+            custom_metadata: Additional metadata for the note (optional). Will be passed to webhooks and jobs for internal use.
 
         Returns:
             dict: A dictionary containing:
@@ -922,6 +931,8 @@ class NoteManager:
             data['custom'] = custom
         if documentation_style:
             data['documentation_style'] = documentation_style
+        if custom_metadata:
+            data['custom_metadata'] = custom_metadata
 
         try:
             self.logger.info(
