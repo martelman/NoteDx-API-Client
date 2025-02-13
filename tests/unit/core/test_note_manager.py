@@ -250,7 +250,7 @@ def test_validate_input_valid_values(note_manager):
 @pytest.mark.parametrize("field,invalid_value,expected_error", [
     ('visit_type', 'invalid', "Invalid value for visit_type. Must be one of: initialEncounter, followUp"),
     ('recording_type', 'invalid', "Invalid value for recording_type. Must be one of: dictation, conversation"),
-    ('template', 'invalid', "Invalid value for template. Must be one of: primaryCare, er, psychiatry, surgicalSpecialties, medicalSpecialties, nursing, radiology, pharmacy, procedures, letter, social, wfw, smartInsert"),
+    ('template', 'invalid', "Invalid value for template. Must be one of: primaryCare, er, psychiatry, surgicalSpecialties, medicalSpecialties, nursing, radiology, pharmacy, procedures, letter, social, wfw, smartInsert, interventionalRadiology"),
     ('lang', 'es', "Invalid value for lang. Must be one of: en, fr"),
     ('output_language', 'es', "Invalid value for output_language. Must be one of: en, fr")
 ])
