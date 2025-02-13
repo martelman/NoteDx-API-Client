@@ -2,6 +2,16 @@
 
 All notable changes to the NoteDx SDK will be documented in this file.
 
+## [0.1.8] - 2025-02-13
+
+### Added
+- `process_audio` and `regenerate_note` methods accept a `custom_metadata` object for internal use and tracking.
+- Added `interventionalRadiology` template.
+
+### Changed
+- Updated the documentation.
+
+
 ## [0.1.7] - 2025-02-10
 
 ### Changed
