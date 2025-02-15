@@ -425,7 +425,8 @@ class NoteManager:
         documentation_style: Optional[Literal['soap', 'problemBased']] = None,
         custom: Optional[Dict[str, Any]] = None,
         chunk_size: Optional[int] = None,
-        custom_metadata: Optional[Dict[str, Any]] = None
+        custom_metadata: Optional[Dict[str, Any]] = None,
+        webhook_env: Optional[Literal['prod', 'dev']] = None
     ) -> Dict[str, Any]:
         """Converts an audio recording into a medical note using the specified template.
 
@@ -473,7 +474,13 @@ class NoteManager:
                 * `problemBased`: Problem based documentation style, where each problem is a section of the note
 
             custom_metadata: Additional metadata for the note (optional). Will be passed to webhooks and jobs for internal use.
-            
+
+            webhook_env: Environment of the webhook (optional).
+
+                * `prod`: Production webhook endpoint
+                * `dev`: Development webhook endpoint
+                If not specified, the webhook will be sent to the development endpoint.
+
         Note:
             - If left empty, the default documentation style of the template is used, i.e. `structured` 
             - Common sections are: Identification, Chief complaint, Past medical and surgical history, Past investigations, Medication and allergies, Lifestyle habits, Family history, Social history, HPI, Physical exam, Assessment, Plan.
@@ -631,6 +638,8 @@ class NoteManager:
                 data['documentation_style'] = documentation_style
             if custom_metadata:
                 data['custom_metadata'] = custom_metadata
+            if webhook_env:
+                data['webhook_env'] = webhook_env
 
             # Create job and get upload URL
             self.logger.debug("Creating job with parameters: %s", data)

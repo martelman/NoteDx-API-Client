@@ -2,6 +2,14 @@
 
 All notable changes to the NoteDx SDK will be documented in this file.
 
+## [0.1.9] - 2025-02-16
+
+### Added
+- `process_audio` accepts `webhook_env` parameter to specify the environment of the webhook. Either `prod` or `dev`, allowing the use of a live key in any environment.
+
+### Changed
+- Updated the documentation.
+
 ## [0.1.8] - 2025-02-13
 
 ### Added
