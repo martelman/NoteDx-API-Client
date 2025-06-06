@@ -990,7 +990,7 @@ class NoteManager:
             })
             
             try:
-                response = self._client._request("POST", "process-text", data=data)
+                response = self._request("POST", "process-text", data=data)
             except AuthenticationError as e:
                 if "Invalid API key" in str(e):
                     self.logger.error("Invalid API key provided")
