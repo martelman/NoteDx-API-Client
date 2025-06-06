@@ -28,7 +28,7 @@ def mock_client():
     """Create a mock client with test API key and base URL."""
     mock_client = Mock()
     mock_client._api_key = "test_api_key"
-    mock_client.base_url = "https://api.notedx.com/v1"
+    mock_client.base_url = "https://api.notedx.io/v1"
     return mock_client
 
 @pytest.fixture
