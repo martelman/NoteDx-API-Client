@@ -2,6 +2,12 @@
 
 All notable changes to the NoteDx SDK will be documented in this file.
 
+## [0.1.10] - 2025-06-06
+
+### Added
+- `process_text` added as endpoint, where you can provide the transcripted text in order to generate a medical note.
+
+
 ## [0.1.9] - 2025-02-16
 
 ### Added

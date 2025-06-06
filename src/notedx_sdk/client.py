@@ -78,6 +78,14 @@ class NoteDxClient:
             file_path="recording.mp3",
             template="primaryCare"
         )
+        
+        # Process text directly
+        response = client.notes.process_text(
+            text="Patient presents with chest pain for 2 hours...",
+            template="primaryCare",
+            visit_type="initialEncounter",
+            recording_type="dictation"
+        )
         ```
     
     Notes:

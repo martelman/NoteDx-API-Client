@@ -767,6 +767,273 @@ class NoteManager:
             self.logger.error("Error in process_audio: %s", str(e))
             raise
 
+    def process_text(
+        self,
+        text: str,
+        visit_type: Optional[Literal['initialEncounter', 'followUp']] = None,
+        recording_type: Optional[Literal['dictation', 'conversation']] = None,
+        patient_consent: Optional[bool] = None,
+        lang: Literal['en', 'fr'] = 'en',
+        output_language: Optional[Literal['en', 'fr']] = None,
+        template: Optional[Literal['primaryCare', 'er', 'psychiatry', 'surgicalSpecialties', 
+                                 'medicalSpecialties', 'nursing', 'radiology', 'procedures', 
+                                 'letter', 'pharmacy', 'social', 'wfw', 'smartInsert', 'interventionalRadiology']] = None,
+        documentation_style: Optional[Literal['soap', 'problemBased']] = None,
+        custom: Optional[Dict[str, Any]] = None,
+        custom_metadata: Optional[Dict[str, Any]] = None,
+        webhook_env: Optional[Literal['prod', 'dev']] = None
+    ) -> Dict[str, Any]:
+        """
+        Converts text directly into a medical note using the specified template.
+
+        ```bash
+        POST /process-text
+        ```
+
+        This method handles the complete flow of text processing and note generation:
+
+        1. Validates the text input and parameters
+        2. Initiates the note generation process directly
+        3. Returns a job ID for tracking progress
+
+        Parameters:
+            text: The text content to process into a medical note.
+                Cannot be empty or whitespace only.
+
+            visit_type: Type of medical visit (optional).  
+                * `initialEncounter`: First visit with patient
+                * `followUp`: Subsequent visit  
+                Required for standard templates, optional for 'wfw'/'smartInsert'.
+
+            recording_type: Type of content (optional).  
+                * `dictation`: Single speaker dictation style
+                * `conversation`: Multi-speaker conversation style (requires patient_consent)  
+                Required for standard templates, optional for 'wfw'/'smartInsert'.
+
+            patient_consent: Whether patient consent was obtained (optional).  
+                Required for conversation mode, optional otherwise.
+
+            lang: Source language of the text. Defaults to 'en'.  
+                * `en`: English
+                * `fr`: French
+
+            output_language: Target language for the note (optional).  
+                If not specified, uses the same language as the source.
+
+            template: Medical note template to use.  
+                The template determines how the text content will be structured in the final note.
+            
+            documentation_style: Style of the documentation (optional).
+            
+                * `soap`: The classic SOAP note style
+                * `problemBased`: Problem based documentation style, where each problem is a section of the note
+
+            custom: Additional parameters for note generation (optional).  
+                Dictionary that can contain:
+
+                * `context`: Additional patient context (history, demographics, medication, etc.)
+                * `template`: A complete custom template as a string (SOAP note, other etc...)
+
+            custom_metadata: Additional metadata for the note (optional). Will be passed to webhooks and jobs for internal use.
+
+            webhook_env: Environment of the webhook (optional).
+
+                * `prod`: Production webhook endpoint
+                * `dev`: Development webhook endpoint
+                If not specified, the webhook will be sent to the development endpoint.
+
+        Note:
+            - If left empty, the default documentation style of the template is used, i.e. `structured` 
+            - Common sections are: Identification, Chief complaint, Past medical and surgical history, Past investigations, Medication and allergies, Lifestyle habits, Family history, Social history, HPI, Physical exam, Assessment, Plan.
+
+            **Standard templates** (require visit_type and recording_type):
+
+            * `primaryCare` - Primary care visit for a general practitioner
+            * `er` - Emergency room visit
+            * `psychiatry` - Psychiatric evaluation
+            * `surgicalSpecialties` - Surgical specialties (Any)
+            * `medicalSpecialties` - Medical specialties (Any)
+            * `nursing` - Nursing notes 
+            * `pharmacy` - Pharmacy notes
+            * `radiology` - Radiology reports
+            * `interventionalRadiology` - Interventional Radiology reports
+            * `procedures` - Procedure notes (small procedures, biopsies, outpatient surgeries, etc.)
+            * `letter` - Medical letter to the referring physician
+            * `social` - Social worker notes
+
+            **Special templates** (only require text and lang):
+
+            * `wfw` - Word for word transcription, supports inclusion of formatting and punctuation during dictation
+            * `smartInsert` - Smart insertion mode
+
+        Returns:
+            dict: A dictionary containing:
+
+                * `job_id`: Unique identifier for tracking the job
+                * `success`: Boolean indicating if the job was created successfully
+
+        Raises:
+            MissingFieldError: If required parameters are missing
+            InvalidFieldError: If parameter values are invalid
+            ValidationError: If text is empty or invalid
+            AuthenticationError: If API key is invalid
+            PaymentRequiredError: If:
+
+                * Free trial jobs are depleted (100 jobs limit)
+                * Payment is required for subscription
+                * Account has exceeded usage limits
+                
+            AuthorizationError: If API key lacks permissions
+            InactiveAccountError: If account is inactive or pending setup
+            NetworkError: If connection issues occur
+            BadRequestError: If API rejects the request
+            InternalServerError: If server error occurs
+
+        Examples:
+            Standard template usage:
+            ```python
+            response = note_manager.process_text(
+                text="Patient presents with chest pain...",
+                visit_type="initialEncounter",
+                recording_type="dictation",
+                template="primaryCare"
+            )
+            job_id = response["job_id"]
+            ```
+
+            Word-for-word processing:
+            ```python
+            response = note_manager.process_text(
+                text="Patient complains of headache for 3 days...",
+                lang="en",
+                template="wfw"
+            )
+            ```
+
+            With custom template:
+            ```python
+            custom = {
+                "context": "Past medical history: Diabetes, hypertension",
+                "template": "Custom SOAP note format..."
+            }
+            response = note_manager.process_text(
+                text="Patient visit notes...",
+                template="primaryCare",
+                visit_type="followUp",
+                recording_type="dictation",
+                custom=custom
+            )
+            ```
+
+        Notes:
+            - The `custom` object provides powerful customization capabilities
+            - Text processing is typically faster than audio processing
+            - Job processing typically takes 10-20 seconds
+            - Free trial users get 100 jobs before requiring payment
+        """
+        
+        # Validate text input
+        self.logger.info("Starting text processing for provided text content")
+        if not text:
+            self.logger.error("Missing required field: text")
+            raise MissingFieldError("text")
+            
+        text = text.strip()
+        if not text:
+            self.logger.error("Text field cannot be empty")
+            raise ValidationError(
+                "Text field cannot be empty or whitespace only",
+                field="text"
+            )
+
+        # Validate input parameters using the same validation as audio processing
+        self._validate_input(
+            visit_type=visit_type,
+            recording_type=recording_type,
+            lang=lang,
+            template=template,
+            patient_consent=patient_consent,
+            output_language=output_language,
+            custom=custom
+        )
+
+        try:
+            # Prepare request data
+            data = {
+                'text': text,
+                'lang': lang,
+                'template': template
+            }
+
+            # Add optional fields if provided
+            if visit_type:
+                data['visit_type'] = visit_type
+            if recording_type:
+                data['recording_type'] = recording_type
+            if patient_consent is not None:
+                data['patient_consent'] = patient_consent
+            if output_language:
+                data['output_language'] = output_language
+            if custom:
+                data['custom'] = custom
+            if documentation_style:
+                data['documentation_style'] = documentation_style
+            if custom_metadata:
+                data['custom_metadata'] = custom_metadata
+            if webhook_env:
+                data['webhook_env'] = webhook_env
+
+            # Make request to process-text endpoint
+            self.logger.debug("Creating text processing job with parameters: %s", {
+                **data,
+                'text': f"{text[:100]}..." if len(text) > 100 else text  # Truncate text in logs
+            })
+            
+            try:
+                response = self._client._request("POST", "process-text", data=data)
+            except AuthenticationError as e:
+                if "Invalid API key" in str(e):
+                    self.logger.error("Invalid API key provided")
+                    raise AuthenticationError("Invalid API key provided")
+                elif "Missing user ID" in str(e):
+                    self.logger.error("API key has no associated user")
+                    raise AuthenticationError("API key has no associated user")
+                raise
+            except PaymentRequiredError as e:
+                if "Free trial jobs depleted" in str(e):
+                    self.logger.error("Free trial jobs (100) depleted")
+                    raise PaymentRequiredError(
+                        "Free trial jobs (100) depleted. Please subscribe to continue.",
+                        details=e.details
+                    )
+                elif "Payment required" in str(e):
+                    self.logger.error("Payment required for subscription")
+                    raise PaymentRequiredError(
+                        "Payment required to activate subscription",
+                        details=e.details
+                    )
+                raise
+            except AuthorizationError as e:
+                if "Account is inactive" in str(e):
+                    self.logger.error("Account is inactive")
+                    raise InactiveAccountError(
+                        "Account is inactive. Please complete subscription setup or contact support.",
+                        details=e.details
+                    )
+                raise
+
+            job_id = response.get("job_id")
+            if not job_id:
+                self.logger.error("No job_id returned from process-text endpoint")
+                raise BadRequestError("No job_id returned from API")
+
+            self.logger.info("Successfully created text processing job %s", job_id)
+            return response
+
+        except Exception as e:
+            self.logger.error("Error in process_text: %s", str(e))
+            raise
+
     def regenerate_note(
         self,
         job_id: str,
