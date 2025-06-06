@@ -576,3 +576,294 @@ def test_process_audio_service_unavailable(note_manager):
                 template="primaryCare"
             )
         assert "Service temporarily unavailable" in str(exc_info.value)
+
+# Tests for process_text method
+
+def test_process_text_success(note_manager):
+    """Test successful text processing."""
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.text = '{"job_id": "test-job", "success": true}'
+    mock_response.json.return_value = {"job_id": "test-job", "success": True}
+
+    # Mock the client's _request method
+    note_manager._client._request = Mock(return_value={"job_id": "test-job", "success": True})
+
+    result = note_manager.process_text(
+        text="Patient presents with chest pain for 2 hours...",
+        visit_type="initialEncounter",
+        recording_type="dictation",
+        template="primaryCare",
+        lang="en"
+    )
+    assert result == {"job_id": "test-job", "success": True}
+    
+    # Verify the request was made correctly
+    note_manager._client._request.assert_called_once()
+    args, kwargs = note_manager._client._request.call_args
+    assert args[0] == "POST"
+    assert args[1] == "process-text"
+    assert kwargs["data"]["text"] == "Patient presents with chest pain for 2 hours..."
+    assert kwargs["data"]["template"] == "primaryCare"
+
+def test_process_text_missing_text(note_manager):
+    """Test handling of missing text field."""
+    with pytest.raises(TypeError) as exc_info:
+        note_manager.process_text(
+            template="primaryCare",
+            visit_type="initialEncounter",
+            recording_type="dictation"
+        )
+    assert "missing 1 required positional argument: 'text'" in str(exc_info.value)
+
+def test_process_text_empty_text(note_manager):
+    """Test handling of empty text field."""
+    with pytest.raises(MissingFieldError) as exc_info:
+        note_manager.process_text(
+            text="",
+            template="primaryCare",
+            visit_type="initialEncounter",
+            recording_type="dictation"
+        )
+    assert "Missing required field: text" in str(exc_info.value)
+
+def test_process_text_none_text(note_manager):
+    """Test handling of None text field."""
+    with pytest.raises(MissingFieldError) as exc_info:
+        note_manager.process_text(
+            text=None,
+            template="primaryCare",
+            visit_type="initialEncounter",
+            recording_type="dictation"
+        )
+    assert "Missing required field: text" in str(exc_info.value)
+
+def test_process_text_whitespace_only(note_manager):
+    """Test handling of whitespace-only text."""
+    with pytest.raises(ValidationError) as exc_info:
+        note_manager.process_text(
+            text="   \n\t   ",
+            template="primaryCare",
+            visit_type="initialEncounter",
+            recording_type="dictation"
+        )
+    assert "Text field cannot be empty or whitespace only" in str(exc_info.value)
+
+def test_process_text_missing_required_fields(note_manager):
+    """Test handling of missing required fields."""
+    with pytest.raises(MissingFieldError) as exc_info:
+        note_manager.process_text(
+            text="Patient presents with symptoms...",
+            visit_type="initialEncounter",
+            recording_type="dictation"
+            # Missing required template field
+        )
+    assert "Missing required field: template" in str(exc_info.value)
+
+def test_process_text_invalid_field_values(note_manager):
+    """Test handling of invalid field values."""
+    with pytest.raises(InvalidFieldError) as exc_info:
+        note_manager.process_text(
+            text="Patient presents with symptoms...",
+            visit_type="invalid",
+            recording_type="dictation",
+            template="primaryCare"
+        )
+    assert "Invalid value for visit_type" in str(exc_info.value)
+
+def test_process_text_special_template_wfw(note_manager):
+    """Test text processing with 'wfw' template (special template)."""
+    note_manager._client._request = Mock(return_value={"job_id": "test-job", "success": True})
+
+    result = note_manager.process_text(
+        text="Word for word transcription test...",
+        template="wfw",
+        lang="en"
+    )
+    assert result == {"job_id": "test-job", "success": True}
+    
+    # Verify the request was made correctly
+    args, kwargs = note_manager._client._request.call_args
+    assert kwargs["data"]["template"] == "wfw"
+    assert "visit_type" not in kwargs["data"]  # Should not be required for special templates
+    assert "recording_type" not in kwargs["data"]
+
+def test_process_text_special_template_smartinsert(note_manager):
+    """Test text processing with 'smartInsert' template (special template)."""
+    note_manager._client._request = Mock(return_value={"job_id": "test-job", "success": True})
+
+    result = note_manager.process_text(
+        text="Smart insert mode test...",
+        template="smartInsert",
+        lang="en"
+    )
+    assert result == {"job_id": "test-job", "success": True}
+    
+    # Verify the request was made correctly
+    args, kwargs = note_manager._client._request.call_args
+    assert kwargs["data"]["template"] == "smartInsert"
+
+def test_process_text_with_custom_metadata(note_manager):
+    """Test text processing with custom metadata."""
+    note_manager._client._request = Mock(return_value={"job_id": "test-job", "success": True})
+
+    custom_metadata = {"department": "cardiology", "provider_id": "123"}
+    
+    result = note_manager.process_text(
+        text="Patient presents with chest pain...",
+        template="primaryCare",
+        visit_type="initialEncounter",
+        recording_type="dictation",
+        custom_metadata=custom_metadata
+    )
+    assert result == {"job_id": "test-job", "success": True}
+    
+    # Verify custom metadata was included
+    args, kwargs = note_manager._client._request.call_args
+    assert kwargs["data"]["custom_metadata"] == custom_metadata
+
+def test_process_text_with_custom_template(note_manager):
+    """Test text processing with custom template and context."""
+    note_manager._client._request = Mock(return_value={"job_id": "test-job", "success": True})
+
+    custom = {
+        "context": "Past medical history: Diabetes, hypertension",
+        "template": "Custom SOAP note template"
+    }
+    
+    result = note_manager.process_text(
+        text="Patient visit notes...",
+        template="primaryCare",
+        visit_type="followUp",
+        recording_type="dictation",
+        custom=custom
+    )
+    assert result == {"job_id": "test-job", "success": True}
+    
+    # Verify custom template was included
+    args, kwargs = note_manager._client._request.call_args
+    assert kwargs["data"]["custom"] == custom
+
+def test_process_text_with_documentation_style(note_manager):
+    """Test text processing with documentation style."""
+    note_manager._client._request = Mock(return_value={"job_id": "test-job", "success": True})
+
+    result = note_manager.process_text(
+        text="Patient presents with symptoms...",
+        template="primaryCare",
+        visit_type="initialEncounter",
+        recording_type="dictation",
+        documentation_style="soap"
+    )
+    assert result == {"job_id": "test-job", "success": True}
+    
+    # Verify documentation style was included
+    args, kwargs = note_manager._client._request.call_args
+    assert kwargs["data"]["documentation_style"] == "soap"
+
+def test_process_text_authentication_error(note_manager):
+    """Test handling of authentication error during text processing."""
+    from src.notedx_sdk.exceptions import AuthenticationError
+    
+    note_manager._client._request = Mock(side_effect=AuthenticationError("Invalid API key"))
+
+    with pytest.raises(AuthenticationError) as exc_info:
+        note_manager.process_text(
+            text="Patient presents with symptoms...",
+            template="primaryCare",
+            visit_type="initialEncounter",
+            recording_type="dictation"
+        )
+    assert "Invalid API key" in str(exc_info.value)
+
+def test_process_text_payment_required_error(note_manager):
+    """Test handling of payment required error during text processing."""
+    from src.notedx_sdk.exceptions import PaymentRequiredError
+    
+    note_manager._client._request = Mock(side_effect=PaymentRequiredError("Free trial jobs depleted"))
+
+    with pytest.raises(PaymentRequiredError) as exc_info:
+        note_manager.process_text(
+            text="Patient presents with symptoms...",
+            template="primaryCare",
+            visit_type="initialEncounter",
+            recording_type="dictation"
+        )
+    assert "Free trial jobs (100) depleted" in str(exc_info.value)
+
+def test_process_text_no_job_id_in_response(note_manager):
+    """Test handling when no job_id is returned from the API."""
+    note_manager._client._request = Mock(return_value={"success": True})  # Missing job_id
+
+    with pytest.raises(BadRequestError) as exc_info:
+        note_manager.process_text(
+            text="Patient presents with symptoms...",
+            template="primaryCare",
+            visit_type="initialEncounter",
+            recording_type="dictation"
+        )
+    assert "No job_id returned from API" in str(exc_info.value)
+
+def test_process_text_with_all_optional_parameters(note_manager):
+    """Test text processing with all optional parameters."""
+    note_manager._client._request = Mock(return_value={"job_id": "test-job", "success": True})
+
+    result = note_manager.process_text(
+        text="Comprehensive patient assessment...",
+        visit_type="followUp",
+        recording_type="conversation",
+        patient_consent=True,
+        lang="fr",
+        output_language="en",
+        template="medicalSpecialties",
+        documentation_style="problemBased",
+        custom={"context": "Previous visit notes"},
+        custom_metadata={"provider": "Dr. Smith"},
+        webhook_env="prod"
+    )
+    assert result == {"job_id": "test-job", "success": True}
+    
+    # Verify all parameters were included
+    args, kwargs = note_manager._client._request.call_args
+    data = kwargs["data"]
+    assert data["visit_type"] == "followUp"
+    assert data["recording_type"] == "conversation"
+    assert data["patient_consent"] == True
+    assert data["lang"] == "fr"
+    assert data["output_language"] == "en"
+    assert data["template"] == "medicalSpecialties"
+    assert data["documentation_style"] == "problemBased"
+    assert data["custom"] == {"context": "Previous visit notes"}
+    assert data["custom_metadata"] == {"provider": "Dr. Smith"}
+    assert data["webhook_env"] == "prod"
+
+def test_process_text_conversation_requires_consent(note_manager):
+    """Test that conversation recording type requires patient consent."""
+    with pytest.raises(ValidationError) as exc_info:
+        note_manager.process_text(
+            text="Multi-speaker conversation...",
+            template="primaryCare",
+            visit_type="initialEncounter",
+            recording_type="conversation"
+            # Missing patient_consent=True
+        )
+    assert "Patient consent is required for conversation mode" in str(exc_info.value)
+
+def test_process_text_long_text_truncation_in_logs(note_manager):
+    """Test that long text is truncated in debug logs."""
+    note_manager._client._request = Mock(return_value={"job_id": "test-job", "success": True})
+    
+    # Create a long text that should be truncated in logs
+    long_text = "A" * 200  # 200 characters
+    
+    result = note_manager.process_text(
+        text=long_text,
+        template="primaryCare",
+        visit_type="initialEncounter",
+        recording_type="dictation"
+    )
+    assert result == {"job_id": "test-job", "success": True}
+    
+    # The actual text should still be sent in full to the API
+    args, kwargs = note_manager._client._request.call_args
+    assert kwargs["data"]["text"] == long_text  # Full text sent to API
